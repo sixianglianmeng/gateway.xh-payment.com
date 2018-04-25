@@ -38,11 +38,11 @@ class Bank extends AllScoreBasePayment
         //外部账户ID
         $outAcctId = $this->order['merchant_user_id'];
 
-        $this->paymentConfig['bankList'];
-        if(empty($this->paymentConfig['bankList'][$this->order['bank_code']])){
+        $bankList = require Yii::getAlias("@app/config/payment/allscore/banks.php");
+        if(empty($bankList[$this->order['bank_code']])){
             throw new \Exception('银行代码配置错误:'.__LINE__,Macro::ERR_PAYMENT_BANK_CODE);
         }
-        $defaultBank = $this->paymentConfig['bankList'][$this->order['bank_code']]['code'];//$this->order['bank_code'];
+        $defaultBank = $bankList[$this->order['bank_code']]['code'];//$this->order['bank_code'];
 
         $channel = 'B2C';//B2C个人，b2b企业网银
         $certType = 'debit';//只使用储蓄卡，credit信用卡

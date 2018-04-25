@@ -21,7 +21,7 @@ $config['input_charset']= 'UTF-8';
 //访问模式,根据自己的服务器是否支持ssl访问，若支持请选择https；若不支持请选择http
 $config['transport']    = 'http';
 
-$config['MerchantPrivateKey']=realpath(__DIR__ . '/').'key/rsa_private_key.pem';
+//$config['MerchantPrivateKey']=realpath(__DIR__ . '/').'key/rsa_private_key.pem';
 $config['AllscorePublicKey']=realpath(__DIR__ . '/').'skey/allscore_public_key.pem';
 
 $config['qucik_pay_api_url']='http://58.132.206.38:8090/olgateway/';//快捷支付PAI接口

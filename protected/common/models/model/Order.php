@@ -19,4 +19,11 @@ class Order extends ActiveRecord
     {
         return '{{%orders}}';
     }
+
+
+    public static function getOrderByOrderNo(string $orderNo){
+        $order = Order::findOne(['order_no'=>$orderNo]);
+        return $order;
+    }
+
 }

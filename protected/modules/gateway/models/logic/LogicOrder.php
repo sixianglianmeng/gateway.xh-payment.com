@@ -4,6 +4,7 @@
 namespace app\modules\gateway\models\logic;
 
 use app\common\exceptions\InValidRequestException;
+use app\common\models\model\ChannelAccount;
 use app\common\models\model\UserPaymentInfo;
 use Yii;
 use app\common\models\model\User;
@@ -36,6 +37,7 @@ class LogicOrder
 
         $orderData['channel_id'] = $channelInfo->channel_id;
         $orderData['channel_merchant_id'] = $channelInfo->merchant_id;
+        $orderData['channel_app_id'] = $channelInfo->app_id;
 
         $hasOrder = Order::findOne(['app_id'=>$orderData['app_id'],'merchant_order_no'=>$request['order_no']]);
         if($hasOrder){
@@ -54,12 +56,27 @@ class LogicOrder
         return 'P'.date('ymdHis').mt_rand(10000,99999);
     }
 
-    static public function getPaymentChannelConfigFromOrderNo($orderNo){
+    static public function getOrderByOrderNo($orderNo){
         $order = Order::findOne(['order_no'=>$orderNo]);
         if(empty($order)){
             throw new InValidRequestException('订单不存在');
         }
+        return $order;
+    }
 
 
+    static public function getPaymentChannelAccount(Order $order)
+    {
+        $channel = ChannelAccount::findOne([
+            'channel_id'=>$order->channel_id,
+            'merchant_id'=>$order->channel_merchant_id,
+            'app_id'=>$order->channel_app_id,
+        ]);
+
+        if(empty($channel)){
+            throw new InValidRequestException('无法根据订单查找支付渠道信息');
+        }
+
+        return $channel;
     }
 }

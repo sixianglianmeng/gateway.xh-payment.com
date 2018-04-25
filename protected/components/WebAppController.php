@@ -40,11 +40,7 @@ class WebAppController extends Controller
     
     public function behaviors()
     {
-        $behaviors = [
-            'checkCommonParameters' => [
-                'class'     => \app\components\filters\CheckCommonParameters::className(),
-            ],
-        ];
+        $behaviors = [];
 
         return $behaviors;
     }
@@ -62,12 +58,14 @@ class WebAppController extends Controller
     
     public function runAction($id, $params = [])
     {
+        \Yii::$app->response->format = \yii\web\Response::FORMAT_HTML;
+
         try {
             return parent::runAction($id, $params);
         } catch (ParameterValidationExpandException $e) {
-            return ResponseHelper::formatOutput( Macro::PARAMETER_VALIDATION_FAILED, $e->getMessage());
+            return ResponseHelper::formatOutput( Macro::ERR_PARAM_FORMAT, $e->getMessage());
         } catch (SignatureNotMatchException $e) {
-            return ResponseHelper::formatOutput( Macro::SIGN_ERROR, $e->getMessage());
+            return ResponseHelper::formatOutput( Macro::ERR_PARAM_SIGN, $e->getMessage());
         } catch (UnauthorizedHttpException $e) {
             return ResponseHelper::formatOutput( $e->statusCode, $e->getMessage());
         } catch (\Exception $e) {
@@ -80,7 +78,8 @@ class WebAppController extends Controller
                 )
             );
             if (YII_DEBUG) {
-                throw $e;
+//                throw $e;
+                return ResponseHelper::formatOutput($e->getCode(), $e->getMessage());
             } else {
                 $code = Macro::INTERNAL_SERVER_ERROR;
                 if(property_exists($e,'statusCode')){

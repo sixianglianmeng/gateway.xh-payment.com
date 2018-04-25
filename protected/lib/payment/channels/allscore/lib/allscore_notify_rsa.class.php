@@ -67,26 +67,26 @@ class AllscoreNotify {
      * 针对return_url验证消息是否是商银信发出的合法消息
      * @return 验证结果
      */
-	function verifyReturn(){
-		if(empty($_GET)) {//判断GET来的数组是否为空
+	function verifyReturn($request){
+		if(empty($request)) {//判断GET来的数组是否为空
 			return false;
 		}
 		else {
 		    
-		    $sign=$_GET["sign"];
-		    logResult("2222222222222222222222222222222222222222222222222isSign=".$_GET["sign"]);
+		    $sign=$request["sign"];
+		    logResult("2222222222222222222222222222222222222222222222222isSign=".$request["sign"]);
 		    
 			//生成签名结果
-			$isSign = verifyRSA($_GET, $sign,trim($this->allscore_config['AllscorePublicKey']));
+			$isSign = verifyRSA($request, $sign,trim($this->allscore_config['AllscorePublicKey']));
 			//获取商银信远程服务器ATN结果（验证是否是商银信发来的消息）
 			//echo $mysign;
 			//logResult("2222222222222222222222222222222222222222222222222isSign=".$isSign);	
 			$responseTxt = 'true';
-			if (! empty($_GET["notifyId"])) {$responseTxt = $this->getResponse($_GET["notifyId"]);}
+			if (! empty($request["notifyId"])) {$responseTxt = $this->getResponse($request["notifyId"]);}
 			
 			//写日志记录
-			$log_text = "responseTxt=".$responseTxt."\n notify_url_rsa_log:sign=".$_GET["sign"]."&isSign=".$isSign.",";
-			$log_text = $log_text.createLinkString($_GET);
+			$log_text = "responseTxt=".$responseTxt."\n notify_url_rsa_log:sign=".$request["sign"]."&isSign=".$isSign.",";
+			$log_text = $log_text.createLinkString($request);
 			logResult($log_text);
 			
 			//验证

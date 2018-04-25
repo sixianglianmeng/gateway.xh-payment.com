@@ -5,6 +5,7 @@ use app\common\models\model\User;
 use app\components\Util;
 use app\components\WebAppController;
 use app\lib\payment\ChannelPayment;
+use app\lib\payment\channels\allscore\AllScoreBasePayment;
 use app\modules\gateway\models\logic\LogicOrder;
 use app\modules\gateway\models\logic\PaymentRequest;
 use Yii;
@@ -13,7 +14,7 @@ use app\modules\gateway\controllers\BaseController;
 /*
  * 微信后台接口
  */
-class OrderController extends WebAppController
+class AllscoreController extends WebAppController
 {
     /**
      * 前置action
@@ -29,8 +30,7 @@ class OrderController extends WebAppController
      */
     public function actionNotify()
     {
-        $payment = new ChannelPayment(null, null);
-        $url = $payment->parseReturnRequest($this->allParams);
+
     }
 
     /*
@@ -38,6 +38,8 @@ class OrderController extends WebAppController
      */
     public function actionReturn()
     {
+        $payment = new AllScoreBasePayment();
 
+        $order = $payment->parseReturnRequest($this->allParams);
     }
 }

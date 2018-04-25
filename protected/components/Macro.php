@@ -61,7 +61,9 @@ class Macro{
 
     const ERR_PAYMENT_CHANNEL_ACCOUNT = 10100;
     const ERR_PAYMENT_CHANNEL_ID = 10101;
-    const ERR_PAYMENT_BANK_CODE = 10101;
+    const ERR_PAYMENT_BANK_CODE = 10102;
+    const ERR_PAYMENT_CALLBACK_SIGN = 10103;
+    const ERR_PAYMENT_PROCESSING = 10104;
 
     const CONST_JSON = 'json';
     const CONST_HTML = 'html';
@@ -170,6 +172,6 @@ class Macro{
     ];
 
     public static function getAllBankCode(){
-return array_keys(BANK_LIST);
+        return array_keys(BANK_LIST);
     }
 }

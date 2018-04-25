@@ -70,9 +70,9 @@ class Controller extends \power\yii2\web\Controller
         try {
             return parent::runAction($id, $params);
         } catch (ParameterValidationExpandException $e) {
-            return ResponseHelper::formatOutput(Macro::PARAMETER_VALIDATION_FAILED,$e->getMessage());
+            return ResponseHelper::formatOutput(Macro::ERR_PARAM_FORMAT,$e->getMessage());
         } catch (SignatureNotMatchException $e) {
-            return ResponseHelper::formatOutput(Macro::SIGN_ERROR,$e->getMessage());
+            return ResponseHelper::formatOutput(Macro::ERR_PARAM_SIGN,$e->getMessage());
         } catch (\Exception $e) {
             LogHelper::error(
                 sprintf(
