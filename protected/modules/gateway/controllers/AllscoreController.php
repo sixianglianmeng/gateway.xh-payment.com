@@ -29,7 +29,8 @@ class OrderController extends WebAppController
      */
     public function actionNotify()
     {
-
+        $payment = new ChannelPayment(null, null);
+        $url = $payment->parseReturnRequest($this->allParams);
     }
 
     /*

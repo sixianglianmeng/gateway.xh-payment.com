@@ -7,7 +7,7 @@ use app\common\exceptions\InValidRequestException;
 use app\common\models\model\UserPaymentInfo;
 use Yii;
 use app\common\models\model\User;
-use app\modules\gateway\models\model\Order;
+use app\common\models\model\Order;
 
 class LogicOrder
 {
@@ -52,5 +52,14 @@ class LogicOrder
 
     static public function generateOrderNo(){
         return 'P'.date('ymdHis').mt_rand(10000,99999);
+    }
+
+    static public function getPaymentChannelConfigFromOrderNo($orderNo){
+        $order = Order::findOne(['order_no'=>$orderNo]);
+        if(empty($order)){
+            throw new InValidRequestException('订单不存在');
+        }
+
+
     }
 }

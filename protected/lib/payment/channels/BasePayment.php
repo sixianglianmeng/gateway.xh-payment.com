@@ -7,10 +7,10 @@ use app\common\models\model\ChannelAccount;
 use app\common\models\model\User;
 use app\common\models\model\UserPaymentInfo;
 use app\components\Macro;
-use app\modules\gateway\models\model\Order;
+use app\common\models\model\Order;
 use yii\base\Request;
 
-class Base
+class BasePayment
 {
     //订单信息
     protected $order = null;
@@ -76,9 +76,9 @@ class Base
     /*
      * 解析异步通知请求，返回订单
      *
-     * return app\modules\gateway\models\model\Order
+     * return app\common\models\model\Order
      */
-//    public function parseNotifyRequest(Request $request){
+//    public function parseNotifyRequest(array $request){
 //        //check sign
 //
 //        //get order id from request
@@ -91,9 +91,9 @@ class Base
     /*
      * 解析同步通知请求，返回订单
      *
-     * return app\modules\gateway\models\model\Order
+     * return app\common\models\model\Order
      */
-//    public function parseReturnRequest(Request $request){
+//    public function parseReturnRequest(array $request){
 //        //check sign
 //
 ////        //get order id from request

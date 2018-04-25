@@ -5,7 +5,7 @@ use Yii;
 use yii\base\Model;
 
 /**
- * Base form
+ * BasePayment form
  */
 class BaseForm extends Model
 {

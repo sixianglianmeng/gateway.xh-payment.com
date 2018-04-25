@@ -6,7 +6,7 @@ use Yii;
 /*
  * 商银信银行卡支付
  */
-class Bank extends AllScoreBase
+class Bank extends AllScoreBasePayment
 {
     public function __construct(...$arguments)
     {
@@ -20,15 +20,7 @@ class Bank extends AllScoreBase
      */
     public function createPaymentRedirectParams()
     {
-//        parent::createPaymentRedirectParams($order, $channelAccount);
-
-
         require_once (Yii::getAlias("@app/lib/payment/channels/allscore/lib/allscore_service.class.php"));
-
-//op_uid,op_username,order_no,merchant_order_no,channel_order_no,merchant_id,app_id,app_name,merchant_account,amount,paid_amount,channel_id,channel_merchant_id,pay_method_code,sub_pay_method_code,title,notify_status,notify_url,reutrn_url,client_ip,created_at,paid_at,updated_at,bak,notify_at,notify_times,next_notify_time,status,return_params
-
-// 必填参数//
-// $paygateway = "http://192.168.8.98:8088/webpay/serviceDirect.htm?";//支付接口（不可以修改）
         $service = "directPay"; // 快速付款交易服务（不可以修改）
         $inputCharset = trim($this->paymentConfig['input_charset']); // （不可以修改）
         $merchantId = $this->order['channel_merchant_id']; // 商户号(商银信公司提供)
@@ -119,4 +111,6 @@ class Bank extends AllScoreBase
 
 
     }
+
+
 }
