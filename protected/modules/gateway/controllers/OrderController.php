@@ -38,10 +38,12 @@ class OrderController extends BaseController
         $order = LogicOrder::addOrder($this->allParams,$this->merchant,$this->merchantPayment);
 
         //生成跳转连接
-        $channelAccountInfo = $paymentRequest->getPaymentChannelAccount();
+//        $channelAccountInfo = $paymentRequest->getPaymentChannelAccount();
         //跳转
         $payment = new ChannelPayment($order,$this->merchantPayment->paymentChannel);
-        $payment->createPaymentUrl();
+        $url = $payment->createPaymentRedirectParams();
+        echo $url;
+echo "<a href='$url' target='_blank'>充值</a>";
 
         //设置客户端唯一id
 //        $paymentRequest->setClientIdCookie();

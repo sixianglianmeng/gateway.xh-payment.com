@@ -1,7 +1,7 @@
 <?php
 namespace app\lib\payment\channels\allscore;
 
-class Wechat extends Base
+class Wechat extends AllScoreBase
 {
 
 }

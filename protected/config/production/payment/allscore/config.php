@@ -22,7 +22,7 @@ $config['input_charset']= 'UTF-8';
 $config['transport']    = 'http';
 
 $config['MerchantPrivateKey']=realpath(__DIR__ . '/').'key/rsa_private_key.pem';
-$config['AllscorePublicKey']=realpath(__DIR__ . '/').'key/allscore_public_key.pem';
+$config['AllscorePublicKey']=realpath(__DIR__ . '/').'skey/allscore_public_key.pem';
 
 $config['qucik_pay_api_url']='http://58.132.206.38:8090/olgateway/';//快捷支付PAI接口
 $config['request_gateway'] = 'http://58.132.206.38:8090/olgateway/serviceDirect.htm?';    //网关地址
@@ -47,7 +47,5 @@ $config['scancode_query_url'] = 'http://58.132.206.38:8090/olgateway/scan/scanPa
 
 $config['http_verify_url'] = 'http://58.132.206.38:8090:8090/olgateway/noticeQuery.htm?';  //http通知验证地址
 $config['https_verify_url'] = 'https://paymenta.allscore.com/olgateway/noticeQuery.htm?';  //https通知验证地址
-
-$config['bankList']= require realpath(__DIR__ . '/').'/banks.php';
 
 return $config;

@@ -1,1 +1,1 @@
-# paymnet
+# payment

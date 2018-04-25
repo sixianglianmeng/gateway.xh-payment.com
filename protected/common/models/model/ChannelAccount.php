@@ -31,4 +31,9 @@ class ChannelAccount extends ActiveRecord
     {
         return $this->hasOne(Channel::className(), ['id'=>'channel_id']);
     }
+
+    public function getAppSectets()
+    {
+        return json_decode($this->app_sectets,true);
+    }
 }

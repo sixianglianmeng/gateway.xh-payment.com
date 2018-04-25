@@ -39,7 +39,8 @@ class LogicOrder
 
         $hasOrder = Order::findOne(['app_id'=>$orderData['app_id'],'merchant_order_no'=>$request['order_no']]);
         if($hasOrder){
-            throw new InValidRequestException('请不要重复下单');
+//            throw new InValidRequestException('请不要重复下单');
+            return $hasOrder;
         }
 
         $newOrder = new Order();

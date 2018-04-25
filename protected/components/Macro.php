@@ -61,6 +61,7 @@ class Macro{
 
     const ERR_PAYMENT_CHANNEL_ACCOUNT = 10100;
     const ERR_PAYMENT_CHANNEL_ID = 10101;
+    const ERR_PAYMENT_BANK_CODE = 10101;
 
     const CONST_JSON = 'json';
     const CONST_HTML = 'html';
