@@ -6,10 +6,11 @@ use yii\db\ActiveRecord;
 
 class Order extends ActiveRecord
 {
-    //0未付款，10付款中，20已支付
+    //-10失败 0未付款，10付款中，20已支付
     const STATUS_NOTPAY=0;
     const STATUS_PAYING=10;
     const STATUS_PAID=20;
+    const STATUS_FAIL=-10;
 
     const NOTICE_STATUS_NONE = 0;
     const NOTICE_STATUS_SUCCESS = 10;

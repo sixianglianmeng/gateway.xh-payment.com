@@ -25,7 +25,7 @@ class VerifySign extends ActionFilter
 
         $merchant = User::findActive($merchantId);
         if(empty($merchant)){
-            throw new SignatureNotMatchException("商户信息不存在或未激活");
+            throw new SignatureNotMatchException("商户信息不存在或未激活:({$merchantId})");
         }
         Yii::$app->params['merchant'] = $merchant;
         Yii::$app->controller->merchant = $merchant;
@@ -59,7 +59,7 @@ class VerifySign extends ActionFilter
             $signType = strtoupper($arrParams['signType']);
         }
         
-        $strCalcSig = SignatureHelper::calcSign($arrParams, $strSecret,$signType);
+        $strCalcSig = SignatureHelper::calcSign($arrParams, $strSecret, $signType);
         if (strcmp($strCalcSig, $strSig) !== 0) {
             throw new SignatureNotMatchException("签名错误{$strSig},{$strCalcSig}");
         }

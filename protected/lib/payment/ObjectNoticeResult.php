@@ -17,6 +17,8 @@ class ObjectNoticeResult
     public $amount = null;
     //订单状态 Macro::SUCCESS为成功，其它为失败
     public $status = Macro::ERR_UNKNOWN;
+    //描述
+    public $msg = 'fail';
     //三方订单流水号
     public $channelOrderNo = null;
     //三方成功时间

@@ -32,6 +32,10 @@ class User extends ActiveRecord
         ];
     }
 
+    public function getPaymentInfo()
+    {
+        return $this->hasOne(UserPaymentInfo::className(), ['user_id'=>'id']);
+    }
 
     public static function findActive($id){
         return static::findOne(['id'=>$id,'status'=>self::STATUS_ACTIVE]);
@@ -50,5 +54,10 @@ class User extends ActiveRecord
     public function getAllParentAgentId()
     {
         return empty($this->all_parent_agent_id)?[]:json_decode($this->all_parent_agent_id,true);
+    }
+
+    public function getParentAgent()
+    {
+        return $this->hasOne(User::className(), ['id'=>'parent_agent_id']);
     }
 }

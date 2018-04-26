@@ -3,6 +3,7 @@ namespace app\common\models\logic;
 
 use app\common\models\model\Financial;
 use app\common\models\model\User;
+use app\components\Macro;
 use Yii;
 use yii\behaviors\TimestampBehavior;
 use yii\db\ActiveRecord;
@@ -29,18 +30,20 @@ class LogicUser
      *
      */
     public function changeUserBalance($amount, $eventType, $eventId, $clientIp='', $bak='', $opUid=0, $opUsername=''){
-        if(empty($this->user)){
+        if(empty($this->user) || $amount==0){
             return false;
         }
+        if($amount<0 && $this->user->balance<abs($amount)){
+            throw new \Exception("余额不足",Macro::ERR_BALANCE_NOT_ENOUGH);
+        }
+
         $db = Yii::$app->db;
         $transaction = $db->beginTransaction();
         try {
-//            $db->createCommand($sql1)->execute();
-//            $db->createCommand($sql2)->execute();
-            // ... executing other SQL statements ...
-
             $financial = Financial::findOne(['event_id'=>$eventId,'event_type'=>$eventType,'uid'=>$this->user->id]);
             if(!$financial){
+                Yii::info("changeUserBalance: uid:{$this->user->id},{$amount},{$eventType},{$eventId}");
+//                var_dump("changeUserBalance: uid:{$this->user->id},{$amount},{$eventType},{$eventId}");
 //                throw new \Exception('账户余额已经完成变动，请勿重复修改。');
 
                 //写入账变日志
@@ -51,7 +54,7 @@ class LogicUser
                 $financial->amount      = $amount;
                 $financial->balance     = bcadd($this->user->balance, $amount);
                 $financial->created_at  = time();
-                $financial->client_ip   = time();
+                $financial->client_ip   = $clientIp;
                 $financial->created_at  = $clientIp;
                 $financial->bak         = $bak;
                 $financial->op_uid      = $opUid;
@@ -73,11 +76,11 @@ class LogicUser
             return true;
         } catch(\Exception $e) {
             $transaction->rollBack();
-//            throw $e;
+            throw $e;
             return false;
         } catch(\Throwable $e) {
             $transaction->rollBack();
-//            throw $e;
+            throw $e;
             return false;
         }
     }

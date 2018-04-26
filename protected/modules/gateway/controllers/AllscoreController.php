@@ -43,9 +43,19 @@ class AllscoreController extends WebAppController
         $payment = new AllScoreBasePayment();
 
         $noticeResult = $payment->parseReturnRequest($this->allParams);
-        if($noticeResult->status === Macro::SUCCESS){
-
+        Yii::info("parseReturnRequest: ".\GuzzleHttp\json_encode($noticeResult));
+        if(empty($noticeResult->order)){
+            throw new \Exception("无法解析订单信息：".$noticeResult->msg);
         }
 
+        if($noticeResult->status === Macro::SUCCESS){
+            LogicOrder::processChannelNotice($noticeResult);
+        }else{
+            throw new \Exception("支付失败：".$noticeResult->msg);
+        }
+
+        $url = LogicOrder::createReturnUrl($noticeResult->order);
+
+        echo $url;exit;
     }
 }

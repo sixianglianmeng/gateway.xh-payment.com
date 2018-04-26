@@ -62,9 +62,9 @@ class AllScoreBasePayment extends BasePayment
         require_once (Yii::getAlias("@app/lib/payment/channels/allscore/lib/allscore_notify_rsa.class.php"));
 
         $allscoreNotify = new \AllscoreNotify($this->paymentConfig);
-        $verify_result = $allscoreNotify->verifyReturn($request);
-
-        if($verify_result) {//验证成功
+        $verifyResult = $allscoreNotify->verifyReturn($request);
+//http://dev.gateway.payment.com/gateway/allscore/return?outOrderId=P18042621133930266&notifyId=notifyId&notifyTime=notifyTime&sign=sign&merchantId=merchantId&tradeStatus=2&transAmt=1000&localOrderId=1111111
+        if($verifyResult) {//验证成功
             /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
             //请在这里加上商户的业务逻辑程序代码
 

@@ -166,6 +166,8 @@ $config = [
             'test'   => 'e09813f8015339fc445f3a84bb8c4023',
         ],
 
+        'paymentGateWayApiDefaultSignType' => 'md5',//rsa
+
         'user.apiTokenExpire' => 3600,
         'user.passwordResetTokenExpire' => 600,
         'user.rateLimit' => [60, 60],

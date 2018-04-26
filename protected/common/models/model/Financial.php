@@ -33,7 +33,7 @@ class Financial extends ActiveRecord
 
     public static function tableName()
     {
-        return '{{%user_blacklist}}';
+        return '{{%financial}}';
     }
 
     public function behaviors() {

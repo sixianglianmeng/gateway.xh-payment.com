@@ -73,6 +73,7 @@ class Bank extends AllScoreBasePayment
                 "channel" => $channel,
                 "cardAttr" => $cardAttr
             );
+   
             // 构造网银支付接口
             $allscoreService = new \AllscoreService($this->paymentConfig);
             $html_text = $allscoreService->bankPay($parameter);

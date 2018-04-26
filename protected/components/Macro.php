@@ -38,6 +38,7 @@ class Macro{
     const ERR_USER_EXISTS = 10012;
     const ERR_USER_NOT_FOUND = 10013;
     const ERR_USER_BAN = 10014;
+    const ERR_BALANCE_NOT_ENOUGH = 10015;
 
     const ERR_PHONE_FORMAT = 10021;
     const ERR_PHONE_EXISTS = 10022;
