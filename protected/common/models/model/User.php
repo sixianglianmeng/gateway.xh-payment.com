@@ -46,4 +46,9 @@ class User extends ActiveRecord
     public static function findByUsername($username){
         return static::findOne(['username'=>$username,'status'=>self::STATUS_ACTIVE]);
     }
+
+    public function getAllParentAgentId()
+    {
+        return empty($this->all_parent_agent_id)?[]:json_decode($this->all_parent_agent_id,true);
+    }
 }

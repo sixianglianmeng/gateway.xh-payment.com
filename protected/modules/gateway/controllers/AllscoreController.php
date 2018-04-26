@@ -2,6 +2,7 @@
 namespace app\modules\gateway\controllers;
 
 use app\common\models\model\User;
+use app\components\Macro;
 use app\components\Util;
 use app\components\WebAppController;
 use app\lib\payment\ChannelPayment;
@@ -10,6 +11,7 @@ use app\modules\gateway\models\logic\LogicOrder;
 use app\modules\gateway\models\logic\PaymentRequest;
 use Yii;
 use app\modules\gateway\controllers\BaseController;
+use app\lib\payment\ObjectNoticeResult;
 
 /*
  * 微信后台接口
@@ -40,6 +42,10 @@ class AllscoreController extends WebAppController
     {
         $payment = new AllScoreBasePayment();
 
-        $order = $payment->parseReturnRequest($this->allParams);
+        $noticeResult = $payment->parseReturnRequest($this->allParams);
+        if($noticeResult->status === Macro::SUCCESS){
+
+        }
+
     }
 }

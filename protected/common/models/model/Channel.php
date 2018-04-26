@@ -29,7 +29,7 @@ class Channel extends ActiveRecord
 
     public function getPayMethods()
     {
-        $methods = json_decode($this->pay_methods,true);
+        $methods = empty($this->pay_methods)?[]:json_decode($this->pay_methods,true);
 
         return $methods;
     }

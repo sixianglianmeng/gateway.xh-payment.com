@@ -34,6 +34,6 @@ class ChannelAccount extends ActiveRecord
 
     public function getAppSectets()
     {
-        return json_decode($this->app_sectets,true);
+        return empty($this->app_secrets)?[]:json_decode($this->app_secrets,true);
     }
 }

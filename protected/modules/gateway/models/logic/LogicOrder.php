@@ -4,11 +4,15 @@
 namespace app\modules\gateway\models\logic;
 
 use app\common\exceptions\InValidRequestException;
+use app\common\models\logic\LogicUser;
 use app\common\models\model\ChannelAccount;
+use app\common\models\model\Financial;
 use app\common\models\model\UserPaymentInfo;
+use app\lib\payment\ObjectNoticeResult;
 use Yii;
 use app\common\models\model\User;
 use app\common\models\model\Order;
+use app\components\Macro;
 
 class LogicOrder
 {
@@ -31,6 +35,8 @@ class LogicOrder
 
         $orderData['app_id'] = $request['merchant_code'];
         $orderData['status'] = Order::STATUS_NOTPAY;
+        $orderData['financial_status'] = Order::FINANCIAL_STATUS_NONE;
+        $orderData['notify_status'] = Order::NOTICE_STATUS_NONE;
 
         $orderData['merchant_account'] = $merchant->username;
         $channelInfo = $merchantPayment->paymentChannel;
@@ -78,5 +84,87 @@ class LogicOrder
         }
 
         return $channel;
+    }
+
+    static public function processChannelNotice(ObjectNoticeResult $noticeResult){
+        if($noticeResult->status !== Macro::SUCCESS
+            || !$noticeResult->order
+            || !$noticeResult->amount
+        ){
+            throw new InValidRequestException('支付结果对象错误',Macro::ERR_PAYMENT_NOTICE_RESULT_OBJECT);
+        }
+
+        $order = $noticeResult->order;
+        //已经支付
+        if($order->status === Order::STATUS_PAID){
+            //TODO: 订单成功，通知未成功，进行一次通知？
+            if($order->notify_status !== Order::NOTICE_STATUS_SUCCESS){
+                self::finishOrder($order,$noticeResult->amount,$noticeResult->channelOrderNo);
+            }
+
+            throw new InValidRequestException('订单已经处理，请不要重复刷新',Macro::ERR_PAYMENT_ALREADY_DONE);
+        }
+
+
+
+    }
+
+    /*
+     * 订单支付成功
+     *
+     * @param Order $order 订单对象
+     * @param Decimal $paidAmount 实际支付金额
+     * @param String $channelOrderNo 第三方流水号
+     */
+    static public function finishOrder(Order $order,$paidAmount,$channelOrderNo){
+
+        //更改订单状态
+        $order->paid_money = $paidAmount;
+        $order->channel_order_no = $channelOrderNo;
+        $order->status = Order::STATUS_PAID;
+        $order->paid_at = time();
+        $order->save();
+    }
+
+    /*
+     * 订单分红
+     */
+    static public function bonus(Order $order){
+
+        $user = $order->getMerchant();
+        $logicUser = new LogicUser($user);
+        bcscale(6);
+        //商户需扣除手续费
+        $rechargeFee =  0-bcmul(bcsub(1,$user->recharge_rate),$order->paid_money);
+
+        $logicUser->changeUserBalance($order->paid_money, Financial::EVENT_TYPE_RECHARGE, $order->order_no, Yii::$app->request->userIP);
+        $logicUser->changeUserBalance($rechargeFee, Financial::EVENT_TYPE_RECHARGE_FEE, $order->order_no, Yii::$app->request->userIP);
+
+        //逐级返点给上级代理
+        $parentIds = $user->getAllParentAgentId();
+        foreach ($parentIds as $pid){
+            $pUser = User::findActive($pid);
+            if(!empty($pUser)){
+                $logicUser =  new LogicUser($pUser);
+                 $rechargeFee =  bcmul($user->recharge_parent_rebate_rate,$order->paid_money);
+                $logicUser->changeUserBalance($rechargeFee, Financial::EVENT_TYPE_BONUS, $order->order_no, Yii::$app->request->userIP);
+            }
+        }
+
+//recharge_rate
+    }
+
+    /*
+     * 生成订单同步通知跳转连接
+     */
+    static public function createReturnUrl(Order $order){
+
+    }
+
+    /*
+     * 异步通知商户
+     */
+    static public function notify(Order $order){
+
     }
 }

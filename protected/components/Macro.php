@@ -64,6 +64,8 @@ class Macro{
     const ERR_PAYMENT_BANK_CODE = 10102;
     const ERR_PAYMENT_CALLBACK_SIGN = 10103;
     const ERR_PAYMENT_PROCESSING = 10104;
+    const ERR_PAYMENT_NOTICE_RESULT_OBJECT = 10105;
+    const ERR_PAYMENT_ALREADY_DONE = 10106;
 
     const CONST_JSON = 'json';
     const CONST_HTML = 'html';

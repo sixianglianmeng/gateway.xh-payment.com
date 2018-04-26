@@ -9,6 +9,7 @@ use app\lib\helpers\ControllerParameterValidator;
 use app\lib\payment\channels\BasePayment;
 use app\modules\gateway\models\logic\LogicOrder;
 use power\yii2\net\exceptions\SignatureNotMatchException;
+use app\lib\payment\ObjectNoticeResult;
 
 class AllScoreBasePayment extends BasePayment
 {
@@ -22,7 +23,7 @@ class AllScoreBasePayment extends BasePayment
     /*
      * 解析异步通知请求，返回订单
      *
-     * return app\common\models\model\Order
+     * return ObjectNoticeResult
      */
     public function parseNotifyRequest(array $request){
         //check sign
@@ -40,7 +41,7 @@ class AllScoreBasePayment extends BasePayment
      * 返回int表示请求验证成功，订单未支付完成,int为订单在三方的状态
      * 其它表示错误
      *
-     * return app\common\models\model\Order|int
+     * return ObjectNoticeResult
      */
     public function parseReturnRequest(array $request){
         //notifyId, notifyTime, sign, outOrderId, merchantId
@@ -53,6 +54,8 @@ class AllScoreBasePayment extends BasePayment
         $order = LogicOrder::getOrderByOrderNo($orderNo);
         $channelAccount = LogicOrder::getPaymentChannelAccount($order);
         $this->setPaymentConfig($order,$channelAccount);
+
+        $ret = new ObjectNoticeResult();
 
         //check sign
         //计算得出通知验证结果
@@ -74,10 +77,15 @@ class AllScoreBasePayment extends BasePayment
 
             //2表示交易成功，4表示交易失败,其他状态按“处理中”处理
             if(!empty($request['tradeStatus']) && $request['tradeStatus'] == self::TRADE_STATUS_SUCCESS) {
-                return $order;
+                $ret->order = $order;
+                $ret->orderNo = $order->order_no;
+                $ret->amount = $request['transAmt'];
+                $ret->status = Macro::SUCCESS;
+                $ret->channelOrderNo = $request['localOrderId'];
             }else{
-                return Macro::ERR_PAYMENT_PROCESSING;
+                $ret->status =  Macro::ERR_PAYMENT_PROCESSING;
             }
+            return $ret;
         }else{
             throw new SignatureNotMatchException("RSA签名验证失败");
         }
