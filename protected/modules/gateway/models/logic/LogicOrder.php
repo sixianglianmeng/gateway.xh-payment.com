@@ -8,6 +8,7 @@ use app\common\models\logic\LogicUser;
 use app\common\models\model\ChannelAccount;
 use app\common\models\model\Financial;
 use app\common\models\model\UserPaymentInfo;
+use app\jobs\PaymentNotifyJob;
 use app\lib\helpers\SignatureHelper;
 use app\lib\payment\ObjectNoticeResult;
 use Yii;
@@ -17,6 +18,9 @@ use app\components\Macro;
 
 class LogicOrder
 {
+    //通知失败后间隔通知时间
+    const NOTICE_DELAY = 300;
+
     static public function addOrder(array $request, User $merchant, UserPaymentInfo $merchantPayment){
 
         $orderData = [];
@@ -85,33 +89,29 @@ class LogicOrder
     }
 
     static public function processChannelNotice(ObjectNoticeResult $noticeResult){
-        if($noticeResult->status !== Macro::SUCCESS
-            || !$noticeResult->order
+        if(
+//            $noticeResult->status !== Macro::SUCCESS
+            !$noticeResult->order
 //            || !$noticeResult->amount
         ){
             throw new InValidRequestException('支付结果对象错误',Macro::ERR_PAYMENT_NOTICE_RESULT_OBJECT);
         }
 
         $order = $noticeResult->order;
-        //已经支付
-        if($order->status === Order::STATUS_PAID){
-            //TODO: 订单成功，通知未成功，进行一次通知？
-            if($order->notify_status !== Order::NOTICE_STATUS_SUCCESS){
+        //未处理
+        if( $noticeResult->status === Macro::SUCCESS && $order->status !== Order::STATUS_PAID){
+            $order = self::paySuccess($order,$noticeResult->amount,$noticeResult->channelOrderNo);
 
-            }
-
-//            throw new InValidRequestException('订单已经处理，请不要重复刷新',Macro::ERR_PAYMENT_ALREADY_DONE);
-            if($order->status === Order::STATUS_FAIL){
-                self::paySuccess($order, $noticeResult->msg);
-            }else{
-
-                self::paySuccess($order,$noticeResult->amount,$noticeResult->channelOrderNo);
-
-                self::bonus($order);
-
-            }
+            $order = self::bonus($order);
+        }
+        elseif( $noticeResult->status === Macro::FAIL){
+            $order = self::payFail($order,$noticeResult->msg);
+            Yii::info([__FUNCTION__,'order not paid',$noticeResult->orderNo]);
         }
 
+        if($order->notify_status != Order::NOTICE_STATUS_SUCCESS){
+            self::notify($order);
+        }
     }
 
     /*
@@ -129,6 +129,8 @@ class LogicOrder
         $order->status = Order::STATUS_FAIL;
         $order->fail_msg = $failMsg;
         $order->save();
+
+        return $order;
     }
 
     /*
@@ -160,6 +162,7 @@ class LogicOrder
         $rechargeFee =  0-bcmul($order->merchant->recharge_rate,$order->paid_amount);
         $logicUser->changeUserBalance($rechargeFee, Financial::EVENT_TYPE_RECHARGE_FEE, $order->order_no, Yii::$app->request->userIP);
 
+        return $order;
     }
 
     /*
@@ -195,6 +198,8 @@ class LogicOrder
         //更新订单账户处理状态
         $order->financial_status = Order::FINANCIAL_STATUS_SUCCESS;
         $order->save();
+
+        return $order;
     }
 
     static public function createNotifyParameters(Order $order){
@@ -248,9 +253,33 @@ class LogicOrder
     }
 
     /*
+     * 生成订单同步通知跳转连接
+     */
+    static public function updateNotifyResult($orderNo, $retCode, $retContent){
+        $order = self::getOrderByOrderNo($orderNo);
+
+        $order->notify_at = time();
+        $order->notify_status = $retCode;
+        $order->next_notify_time = time()+self::NOTICE_DELAY;
+        $order->save();
+        $order->updateCounters(['notify_times' => 1]);
+
+        return $order;
+    }
+
+
+    /*
      * 异步通知商户
      */
     static public function notify(Order $order){
+        //TODO: add task queue
 
+        $arrParams = self::createNotifyParameters($order);
+        $job = new PaymentNotifyJob([
+            'orderNo'=>$order->order_no,
+            'url' => $order->notify_url,
+            'data' => $arrParams,
+        ]);
+        Yii::$app->paymentNotifyQueue->push($job);//->delay(10)
     }
 }

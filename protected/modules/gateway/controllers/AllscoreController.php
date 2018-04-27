@@ -5,6 +5,7 @@ use app\common\models\model\User;
 use app\components\Macro;
 use app\components\Util;
 use app\components\WebAppController;
+use app\jobs\PaymentNotifyJob;
 use app\lib\payment\ChannelPayment;
 use app\lib\payment\channels\allscore\AllScoreBasePayment;
 use app\modules\gateway\models\logic\LogicOrder;
@@ -32,6 +33,8 @@ class AllscoreController extends WebAppController
      */
     public function actionNotify()
     {
+
+
 
     }
 

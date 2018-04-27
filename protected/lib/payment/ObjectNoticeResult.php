@@ -15,8 +15,8 @@ class ObjectNoticeResult
     public $orderNo = null;
     //订单实际支付金额
     public $amount = null;
-    //订单状态 Macro::SUCCESS为成功，其它为失败
-    public $status = Macro::ERR_UNKNOWN;
+    //订单状态 Macro::SUCCESS为成功，Macro::FAIL失败,其它正在支付
+    public $status = Macro::FAIL;
     //描述
     public $msg = 'fail';
     //三方订单流水号

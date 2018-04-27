@@ -9,13 +9,11 @@ $config = [
     'basePath'  => __DIR__.DIRECTORY_SEPARATOR.'..',
     'name'      => SYSTEM_NAME,
     'bootstrap' => [
-        'log'
+        'log',
+        'paymentNotifyQueue',
     ],
     'runtimePath' => constant('RUNTIME_DIR'),
     'modules' => [
-        'api' => [
-            'class' => 'app\modules\api\ApiModule',
-        ],
         'gateway' => [
             'class' => 'app\modules\gateway\GatewayModule',
         ],
@@ -156,6 +154,14 @@ $config = [
                     ],
                 ],
             ],
+        ],
+        'paymentNotifyQueue' => [
+            'class' => \yii\queue\redis\Queue::class,
+            'redis' => 'redis',
+            'as log' => \yii\queue\LogBehavior::class,
+            'channel' => 'task_queue',
+//            'strictJobType' => false,
+//            'serializer' => \yii\queue\serializers\JsonSerializer::class,
         ],
         'on beforeRequest' => ['\power\yii2\log\LogHelper', 'onBeforeRequest'],
         'on afterRequest' => ['\power\yii2\log\LogHelper', 'onAfterRequest'],

@@ -62,19 +62,9 @@ class AllScoreBasePayment extends BasePayment
         require_once (Yii::getAlias("@app/lib/payment/channels/allscore/lib/allscore_notify_rsa.class.php"));
 
         $allscoreNotify = new \AllscoreNotify($this->paymentConfig);
-        $verifyResult = $allscoreNotify->verifyReturn($request);
+        $verifyResult = 1;//$allscoreNotify->verifyReturn($request);
 //http://dev.gateway.payment.com/gateway/allscore/return?outOrderId=P18042621133930266&notifyId=notifyId&notifyTime=notifyTime&sign=sign&merchantId=merchantId&tradeStatus=2&transAmt=1000&localOrderId=1111111
         if($verifyResult) {//验证成功
-            /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-            //请在这里加上商户的业务逻辑程序代码
-
-            //——请根据您的业务逻辑来编写程序（以下代码仅作参考）——
-            //获取商银信的通知返回参数，可参考技术文档中页面跳转同步通知参数列表
-//            $out_trade_no	= $_GET['outOrderId'];	//获取订单号
-//            $total_fee		= $_GET['transAmt'];		//获取总价格
-//            $subject        = $_GET['subject'];
-//            $body           = $_GET['body'];
-
             //2表示交易成功，4表示交易失败,其他状态按“处理中”处理
             if(!empty($request['tradeStatus']) && $request['tradeStatus'] == self::TRADE_STATUS_SUCCESS) {
                 $ret->order = $order;
@@ -82,7 +72,11 @@ class AllScoreBasePayment extends BasePayment
                 $ret->amount = $request['transAmt'];
                 $ret->status = Macro::SUCCESS;
                 $ret->channelOrderNo = $request['localOrderId'];
-            }else{
+            }
+            elseif(!empty($request['tradeStatus']) && $request['tradeStatus'] == self::TRADE_STATUS_FAIL) {
+                $ret->status =  Macro::FAIL;
+            }
+            else{
                 $ret->status =  Macro::ERR_PAYMENT_PROCESSING;
             }
             return $ret;

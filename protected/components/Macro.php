@@ -4,6 +4,7 @@ namespace app\components;
  * 系统常量定义
  */
 class Macro{
+    const FAIL = -1;
     const SUCCESS = 0;
     const ERR_UNKNOWN = 1;
     //通用消息：操作成功
