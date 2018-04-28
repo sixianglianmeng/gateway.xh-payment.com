@@ -11,6 +11,7 @@ use app\common\models\model\UserPaymentInfo;
 use app\jobs\PaymentNotifyJob;
 use app\lib\helpers\SignatureHelper;
 use app\lib\payment\ObjectNoticeResult;
+use power\yii2\exceptions\ParameterValidationExpandException;
 use Yii;
 use app\common\models\model\User;
 use app\common\models\model\Order;
@@ -31,6 +32,7 @@ class LogicOrder
         $orderData['bank_code'] = $request['bank_code'];
         $orderData['merchant_id'] = $request['merchant_code'];
         $orderData['merchant_order_no'] = $request['order_no'];
+        $orderData['merchant_order_time'] = strtotime($request['order_time']);
         $orderData['amount'] = $request['order_amount'];
         $orderData['client_ip'] = Yii::$app->request->userIP;
         $orderData['return_params'] = $request['return_params'];
@@ -281,5 +283,25 @@ class LogicOrder
             'data' => $arrParams,
         ]);
         Yii::$app->paymentNotifyQueue->push($job);//->delay(10)
+    }
+
+    /**
+     * 获取订单状态
+     *
+     */
+    public static function getStatus($orderNo = '',$merchantOrderNo = '', $merchant)
+    {
+        if($merchantOrderNo && !$orderNo){
+            $order = Order::findOne(['merchant_order_no'=>$merchantOrderNo,'merchant_id'=>$merchant->id]);
+        }
+        elseif($orderNo){
+            $order = Order::findOne(['order_no'=>$merchantOrderNo]);
+        }
+
+        if(!$order){
+            throw new \Exception("订单不存在('platform_order_no:{$orderNo}','merchant_order_no:{$merchantOrderNo}')");
+        }
+
+        return $order;
     }
 }
