@@ -16,7 +16,7 @@ class Macro{
 
     //通用消息：操作失败
     const FAILED_MESSAGE = [
-        'code'=>self::ERR_UNKNOWN,
+        'code'=>self::FAIL,
         'data'=>[],
         'message'=>'操作失败'
     ];
@@ -72,6 +72,7 @@ class Macro{
     const CONST_JSON = 'json';
     const CONST_HTML = 'html';
     const CONST_PARAM_TYPE_STRING = 'string';
+    const CONST_PARAM_TYPE_NUMBERIC_STRING = 'numberic_string';
     const CONST_PARAM_TYPE_ARRAY = 'array';
     const CONST_PARAM_TYPE_EMAIL = 'email';
     const CONST_PARAM_TYPE_USENAME = 'username';
@@ -85,7 +86,6 @@ class Macro{
     const CONST_PARAM_TYPE_MD5 = 'md5';
     const CONST_PARAM_TYPE_DATE = 'date';
     const CONST_PARAM_TYPE_DATETIME = 'datetime';
-    const CONST_PARAM_TYPE_NUMBER = 'number';
     const CONST_PARAM_TYPE_ORDER_NO = 'order_no';
     const CONST_PARAM_TYPE_ALNUM = 'alnum';
     const CONST_PARAM_TYPE_ENUM = 'enum';
@@ -112,6 +112,13 @@ class Macro{
     const TB_ORDERS = self::TB_PREFIX.'orders';
     const TB_FINANCIAL = self::TB_PREFIX.'financial';
     const TB_WITHDRAWAL = self::TB_PREFIX.'withdrawal';
+
+    const FORMAT_RAW = 'raw';
+    const FORMAT_HTML = 'html';
+    const FORMAT_JSON = 'json';
+    const FORMAT_JSONP = 'jsonp';
+    const FORMAT_XML = 'xml';
+    const FORMAT_PAYMENT_GATEWAY_JSON = 'payment_json';
 
     const MSG_LIST = [
         0 => '操作成功',

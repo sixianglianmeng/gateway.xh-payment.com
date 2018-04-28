@@ -31,22 +31,22 @@ class PaymentRequest
     //参数名=>[参数类型，参数校验附加参数,是否为可选参数]
     const REQUEST_PARAM_RULES = [
         'merchant_code'  => [Macro::CONST_PARAM_TYPE_ALNUM_DASH_UNDERLINE, [1, 32]],
-        'order_no'       => [Macro::CONST_PARAM_TYPE_ALNUM_DASH_UNDERLINE, [1, 32]],
-        'pay_type'       => [Macro::CONST_PARAM_TYPE_PAYTYPE, []],
-        'bank_code'      => [Macro::CONST_PARAM_TYPE_BANKCODE, [], true],
-        'order_amount'   => [Macro::CONST_PARAM_TYPE_DECIMAL, [1, 32]],
-        'order_time'     => [Macro::CONST_PARAM_TYPE_DATETIME],
-        'req_referer'    => [Macro::CONST_PARAM_TYPE_STRING, [1, 32]],
-        'customer_ip'    => [Macro::CONST_PARAM_TYPE_IPv4, [], true],
-        'notify_url'     => [Macro::CONST_PARAM_TYPE_STRING, [1, 255]],
-        'return_url'     => [Macro::CONST_PARAM_TYPE_STRING, [1, 255]],
-        'return_params'  => [Macro::CONST_PARAM_TYPE_STRING, [0, 255]],
-        'sign'           => [Macro::CONST_PARAM_TYPE_ALNUM, [32, 32]],
-        'nonce'          => [Macro::CONST_PARAM_TYPE_ALNUM_DASH_UNDERLINE, [1, 64]],
-        'trade_no'       => [Macro::CONST_PARAM_TYPE_ALNUM_DASH_UNDERLINE, [1, 32]],
-        'account_name'   => [Macro::CONST_PARAM_TYPE_ALNUM_DASH_UNDERLINE, [1, 32]],
-        'account_number' => [Macro::CONST_PARAM_TYPE_NUMBER, [1, 32]],
-        'now_date'       => [Macro::CONST_PARAM_TYPE_ALNUM_DASH_UNDERLINE, [1, 32]],
+        'order_no'             => [Macro::CONST_PARAM_TYPE_ALNUM_DASH_UNDERLINE, [1, 32]],
+        'pay_type'             => [Macro::CONST_PARAM_TYPE_PAYTYPE, []],
+        'bank_code'            => [Macro::CONST_PARAM_TYPE_BANKCODE, [], true],
+        'order_amount'         => [Macro::CONST_PARAM_TYPE_DECIMAL, [1, 32]],
+        'order_time'           => [Macro::CONST_PARAM_TYPE_DATETIME],
+        'req_referer'          => [Macro::CONST_PARAM_TYPE_STRING, [1, 255]],
+        'customer_ip'          => [Macro::CONST_PARAM_TYPE_IPv4, [], true],
+        'notify_url'           => [Macro::CONST_PARAM_TYPE_STRING, [1, 255]],
+        'return_url'           => [Macro::CONST_PARAM_TYPE_STRING, [1, 255]],
+        'return_params'        => [Macro::CONST_PARAM_TYPE_STRING, [0, 255]],
+        'sign'                 => [Macro::CONST_PARAM_TYPE_ALNUM, [32, 32]],
+        'nonce'                => [Macro::CONST_PARAM_TYPE_ALNUM_DASH_UNDERLINE, [1, 64]],
+        'trade_no'             => [Macro::CONST_PARAM_TYPE_ALNUM_DASH_UNDERLINE, [1, 32]],
+        'now_date'             => [Macro::CONST_PARAM_TYPE_ALNUM_DASH_UNDERLINE, [1, 32]],
+        'account_name'         => [Macro::CONST_PARAM_TYPE_STRING, [1, 32]],
+        'account_number'       => [Macro::CONST_PARAM_TYPE_NUMBERIC_STRING, [10, 32]],
     ];
 
     public function __construct(User $merchant,UserPaymentInfo $merchantPayment)
@@ -60,25 +60,25 @@ class PaymentRequest
      *
      * @param array $allParams 所有请求参数
      * @param array $needParams 需要校验得出参数名列表
+     * @param array $rules 校验参数，参见PaymentRequest::REQUEST_PARAM_RULES
      * @return boolean|string
      */
-    public function validate(array $allParams, array $needParams)
+    public function validate(array $allParams, array $needParams, $rules = [])
     {
-
         foreach ($needParams as $p) {
             $valid = false;
+            $rule = self::REQUEST_PARAM_RULES[$p]??($rules[$p]??null);
             if (
                 !empty($allParams[$p])
-                && !empty(self::REQUEST_PARAM_RULES[$p])
+                && !empty($rule)
             ) {
                 $valid = Util::validate(
                     $allParams[$p],
-                    self::REQUEST_PARAM_RULES[$p][0], self::REQUEST_PARAM_RULES[$p][1] ?? null
+                    $rule[0], $rule[1] ?? null
                 );
             }
 
-            if (empty(self::REQUEST_PARAM_RULES[$p][2]) && true !== $valid) {
-
+            if ( !empty($allParams[$p]) && empty($rule[2]) && true !== $valid) {
                 $msg = '参数格式校验失败(' . $p . ':' . ($allParams[$p] ?? '') . json_encode($valid) . ')';
                 throw  new ParameterValidationExpandException($msg);
                 return false;

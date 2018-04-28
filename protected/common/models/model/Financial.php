@@ -7,7 +7,7 @@ use yii\db\ActiveRecord;
 /*
  * 帐变表
  */
-class Financial extends ActiveRecord
+class Financial extends BaseModel
 {
     //黑名单类型
     const types = [

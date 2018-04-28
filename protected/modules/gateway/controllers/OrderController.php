@@ -10,7 +10,7 @@ use Yii;
 use app\modules\gateway\controllers\BaseController;
 
 /*
- * 微信后台接口
+ * 充值接口
  */
 class OrderController extends BaseController
 {
@@ -24,7 +24,7 @@ class OrderController extends BaseController
     }
 
     /*
-     * 解析响应微信验证文件
+     * 充值
      */
     public function actionPay()
     {
@@ -41,11 +41,14 @@ class OrderController extends BaseController
 //        $channelAccountInfo = $paymentRequest->getPaymentChannelAccount();
         //跳转
         $payment = new ChannelPayment($order,$this->merchantPayment->paymentChannel);
-        $url = $payment->createPaymentRedirectParams();
-        echo $url;
-echo "<a href='$url' target='_blank'>充值</a>";
+        $redict = $payment->createPaymentRedirectParams();
+//        echo $url;
+//echo "<a href='$url' target='_blank'>充值</a>";
+
 
         //设置客户端唯一id
 //        $paymentRequest->setClientIdCookie();
+
+        return $redict['formHtml'];
     }
 }

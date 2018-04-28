@@ -8,7 +8,7 @@ use yii\db\ActiveRecord;
 /*
  * 商户支付配置信息
  */
-class UserPaymentInfo extends ActiveRecord
+class UserPaymentInfo extends BaseModel
 {
     public static function tableName()
     {

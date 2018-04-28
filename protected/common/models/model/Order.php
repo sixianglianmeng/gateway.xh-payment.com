@@ -4,7 +4,7 @@ namespace app\common\models\model;
 use Yii;
 use yii\db\ActiveRecord;
 
-class Order extends ActiveRecord
+class Order extends BaseModel
 {
     //-10失败 0未付款，10付款中，20已支付
     const STATUS_NOTPAY=0;

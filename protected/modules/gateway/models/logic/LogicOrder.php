@@ -106,7 +106,7 @@ class LogicOrder
         }
         elseif( $noticeResult->status === Macro::FAIL){
             $order = self::payFail($order,$noticeResult->msg);
-            Yii::info([__FUNCTION__,'order not paid',$noticeResult->orderNo]);
+            Yii::debug([__FUNCTION__,'order not paid',$noticeResult->orderNo]);
         }
 
         if($order->notify_status != Order::NOTICE_STATUS_SUCCESS){
@@ -182,7 +182,7 @@ class LogicOrder
             $pUser = User::findActive($pid);
             if(!empty($pUser)){
                 if(empty($pUser->recharge_parent_rebate_rate)){
-                    Yii::info(["order bonus, recharge_parent_rebate_rate empty",$pUser->id,$pUser->username]);
+                    Yii::debug(["order bonus, recharge_parent_rebate_rate empty",$pUser->id,$pUser->username]);
                     continue;
                 }
                 //有上级的才返，余额操作对象是上级代理

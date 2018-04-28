@@ -5,7 +5,7 @@ use Yii;
 use yii\behaviors\TimestampBehavior;
 use yii\db\ActiveRecord;
 
-class User extends ActiveRecord
+class User extends BaseModel
 {
 
     const STATUS_INACTIVE=0;

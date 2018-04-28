@@ -1,6 +1,8 @@
 <?php
 namespace app\lib\payment;
 
+use app\common\models\model\Order;
+use app\common\models\model\Remit;
 use app\components\Macro;
 
 class ChannelPayment
@@ -10,10 +12,13 @@ class ChannelPayment
 
     public function __construct($order=null,$channelAccount=null,...$arguments)
     {
-        if($order && $channelAccount){
+        if($order instanceof Order && $channelAccount){
             $this->setPaymentHandle($order,$channelAccount);
         }
 
+        if($order instanceof Remit && $channelAccount){
+            $this->setRemitHandle($order,$channelAccount);
+        }
     }
 
     public function setPaymentHandle($order,$channelAccount){
@@ -21,13 +26,29 @@ class ChannelPayment
         $channel = $channelAccount->channel;
 
         $payMethods = $channel->getPayMethods();
-        if(empty($payMethods[$order->pay_method_code])){
+        if(empty($payMethods[intval($order->pay_method_code)])){
             throw new \Exception("渠道配置错误",Macro::ERR_PAYMENT_CHANNEL_ID);
         }
 
         $handleClass = "app\\lib\\payment\\channels\\".str_replace('/','\\',$payMethods[$order->pay_method_code]);
         $this->paymentHandle = new $handleClass($order,$channelAccount);
-        $this->paymentHandle->setPaymentConfig($order,$channelAccount);
+        $this->paymentHandle->setPaymentConfig($channelAccount);
+        $this->paymentHandle->setOrder($order);
+    }
+
+    public function setRemitHandle($remit,$channelAccount){
+
+        $channel = $channelAccount->channel;
+
+        $payMethod = $channel->remit_handle_class;
+        if(empty($channel->remit_handle_class)){
+            throw new \Exception("渠道配置错误",Macro::ERR_PAYMENT_CHANNEL_ID);
+        }
+
+        $handleClass = "app\\lib\\payment\\channels\\".str_replace('/','\\',$channel->remit_handle_class);
+        $this->paymentHandle = new $handleClass($remit,$channelAccount);
+        $this->paymentHandle->setPaymentConfig($channelAccount);
+        $this->paymentHandle->setRemit($remit);
     }
 
     /**

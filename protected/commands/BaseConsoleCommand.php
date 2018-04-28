@@ -14,7 +14,7 @@ class BaseConsoleCommand extends \yii\console\Controller
 
     public function beforeAction($event)
     {
-        Yii::info('console process: '.implode(' ',$_SERVER['argv']));
+        Yii::debug('console process: '.implode(' ',$_SERVER['argv']));
         return parent::beforeAction($event);
     }
 }

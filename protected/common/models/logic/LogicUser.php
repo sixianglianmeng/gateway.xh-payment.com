@@ -42,7 +42,7 @@ class LogicUser
         try {
             $financial = Financial::findOne(['event_id'=>$eventId,'event_type'=>$eventType,'uid'=>$this->user->id]);
             if(!$financial){
-                Yii::info("changeUserBalance: uid:{$this->user->id},{$amount},{$eventType},{$eventId}");
+                Yii::debug("changeUserBalance: uid:{$this->user->id},{$amount},{$eventType},{$eventId}");
 //                var_dump("changeUserBalance: uid:{$this->user->id},{$amount},{$eventType},{$eventId}");
 //                throw new \Exception('账户余额已经完成变动，请勿重复修改。');
 

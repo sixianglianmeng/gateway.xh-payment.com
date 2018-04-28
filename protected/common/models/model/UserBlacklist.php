@@ -7,7 +7,7 @@ use yii\db\ActiveRecord;
 /*
  * 黑名单用户
  */
-class UserBlacklist extends ActiveRecord
+class UserBlacklist extends BaseModel
 {
     //黑名单类型
     const types = [

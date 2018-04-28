@@ -2,6 +2,7 @@
 
 namespace app\lib\payment\channels;
 
+use app\common\models\model\Remit;
 use Yii;
 use app\common\models\model\ChannelAccount;
 use app\common\models\model\User;
@@ -14,6 +15,8 @@ class BasePayment
 {
     //订单信息
     protected $order = null;
+    //提款代付信息
+    protected $remit = null;
     //商户信息
     protected $merchant = null;
     //商户支付配置信息
@@ -34,6 +37,10 @@ class BasePayment
         $this->order = $order;
     }
 
+    public function setRemit(Remit $remit){
+        $this->remit = $remit;
+    }
+
     public function setMerchant(User $merchant){
         $this->merchant = $merchant;
     }
@@ -50,9 +57,8 @@ class BasePayment
      * 根据订单和渠道账户配置设置支付配置
      *
      */
-    public function setPaymentConfig($order, $channelAccount)
+    public function setPaymentConfig($channelAccount)
     {
-        $this->setOrder($order);
         $this->setChannelAccount($channelAccount);
 
         $channel = $channelAccount->channel;
@@ -70,7 +76,6 @@ class BasePayment
         $paymentConfig = \yii\helpers\ArrayHelper::merge($baseConfig,$envConfig);
         $paymentConfig = \yii\helpers\ArrayHelper::merge($paymentConfig,$channelAccount->getAppSectets());
         $this->paymentConfig = $paymentConfig;
-
     }
 
     /*
@@ -106,12 +111,21 @@ class BasePayment
     /*
      * 生成支付跳转参数连接
      *
-     * return array ['gatewayUrl'=>'','requestData'=>[],'requestMethod'=>'post']
+     * return array ['url'=>'','htmlForm'=>'']
      */
 //    public function createPaymentRedirectParams()
 //    {
 ////        $this->setPaymentConfig($order, $channelAccount);
 //        //具体不同支付方式生成支付参数业务逻辑
+//    }
+
+    /*
+      * 提款待付
+      *
+      * return array
+      */
+//    public function remit()
+//    {
 //    }
 
 }

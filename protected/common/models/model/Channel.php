@@ -7,7 +7,7 @@ use yii\db\ActiveRecord;
 /*
  * 第三方支付渠道信息
  */
-class Channel extends ActiveRecord
+class Channel extends BaseModel
 {
 
     public static function tableName()

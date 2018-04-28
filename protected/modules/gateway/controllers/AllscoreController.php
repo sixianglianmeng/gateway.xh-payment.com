@@ -46,7 +46,7 @@ class AllscoreController extends WebAppController
         $payment = new AllScoreBasePayment();
 
         $noticeResult = $payment->parseReturnRequest($this->allParams);
-        Yii::info("parseReturnRequest: ".\GuzzleHttp\json_encode($noticeResult));
+        Yii::debug("parseReturnRequest: ".\GuzzleHttp\json_encode($noticeResult));
         if(empty($noticeResult->order)){
             throw new \Exception("无法解析订单信息：".$noticeResult->msg);
         }

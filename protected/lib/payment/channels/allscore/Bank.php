@@ -16,7 +16,7 @@ class Bank extends AllScoreBasePayment
     /*
      * 生成支付跳转参数连接
      *
-     * return array ['gatewayUrl'=>'','requestData'=>[],'requestMethod'=>'post']
+     * return array ['url'=>'','formHtml'=>'']
      */
     public function createPaymentRedirectParams()
     {
@@ -78,7 +78,7 @@ class Bank extends AllScoreBasePayment
             $allscoreService = new \AllscoreService($this->paymentConfig);
             $html_text = $allscoreService->bankPay($parameter);
             $ItemUrl = $allscoreService->createBankUrl($parameter);
-            return $ItemUrl;
+            return ['url'=>$ItemUrl,'formHtml'=>$html_text];
         }
         //快捷支付
         else {
@@ -107,7 +107,7 @@ class Bank extends AllScoreBasePayment
             $allscoreService = new \AllscoreService($this->paymentConfig);
             $html_text = $allscoreService->quickPay($parameter);
             $ItemUrl = $allscoreService->createQuickUrl($parameter);
-            return $ItemUrl;
+            return ['url'=>$ItemUrl,'formHtml'=>$html_text];
         }
 
 

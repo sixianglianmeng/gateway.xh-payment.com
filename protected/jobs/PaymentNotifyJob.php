@@ -29,7 +29,7 @@ class PaymentNotifyJob extends BaseObject implements RetryableJobInterface
             ]);
             $urlInfo['path'] = $urlInfo['path']??'/';
             $cli->post($urlInfo['path'], $this->data, function ($cli) use ($queue) {
-                \Yii::info(['PaymentNotifyJob ret',$this->orderNo,$cli->statusCode]);
+                \Yii::debug(['PaymentNotifyJob ret',$this->orderNo,$cli->statusCode]);
                 $noticeOk = Order::NOTICE_STATUS_NONE;
                 if($cli->statusCode == 200){
                     $noticeOk = Order::NOTICE_STATUS_SUCCESS;
