@@ -1,5 +1,5 @@
 <?php
-namespace app\modules\gateway\controllers;
+namespace app\modules\gateway\controllers\v1\web;
 
 use app\common\models\model\User;
 use app\components\Macro;

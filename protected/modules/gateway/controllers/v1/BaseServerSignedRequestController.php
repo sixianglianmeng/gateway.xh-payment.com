@@ -1,13 +1,14 @@
 <?php
-namespace app\modules\gateway\controllers;
+namespace app\modules\gateway\controllers\v1;
 
 use Yii;
 use app\components\Macro;
+use app\components\RequestSignController;
 
 /*
- * 提现代付接口
+ * 基础的服务器端带参数校验请求,请求响应内容为Macro::FORMAT_PAYMENT_GATEWAY_JSON格式
  */
-class BaseBackendApiController extends BaseController
+class BaseServerSignedRequestController extends RequestSignController
 {
     /**
      * 前置action

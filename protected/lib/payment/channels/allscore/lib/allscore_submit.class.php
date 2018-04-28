@@ -100,7 +100,7 @@ class AllscoreSubmit {
 		//submit按钮控件请不要含有name属性
         $sHtml = $sHtml."<input type='submit' value='".$button_name."' style='display:none;'></form>";
 
-		$sHtml = $sHtml."<script>//document.forms['allscoresubmit'].submit();</script>";
+		$sHtml = $sHtml."<script>document.forms['allscoresubmit'].submit();</script>";
 		logResult("提交的表单数据:".$sHtml);
 		return $sHtml;
 	}

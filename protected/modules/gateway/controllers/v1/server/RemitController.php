@@ -1,23 +1,18 @@
 <?php
-namespace app\modules\gateway\controllers;
+namespace app\modules\gateway\controllers\v1\server;
 
 use app\common\models\model\Remit;
-use app\common\models\model\User;
 use app\components\Macro;
-use app\components\Util;
 use app\lib\helpers\ResponseHelper;
-use app\lib\payment\ChannelPayment;
-use app\modules\gateway\models\logic\LogicOrder;
+use app\modules\gateway\controllers\v1\BaseServerSignedRequestController;
 use app\modules\gateway\models\logic\LogicRemit;
 use app\modules\gateway\models\logic\PaymentRequest;
-use GuzzleHttp\Psr7\Response;
 use Yii;
-use app\modules\gateway\controllers\BaseController;
 
 /*
  * 提现代付接口
  */
-class RemitController extends BaseBackendApiController
+class RemitController extends BaseServerSignedRequestController
 {
     /**
      * 前置action

@@ -1,9 +1,10 @@
 <?php
-namespace app\modules\gateway\controllers;
+namespace app\modules\gateway\controllers\v1\web;
 
 use app\common\models\model\User;
 use app\components\Util;
 use app\lib\payment\ChannelPayment;
+use app\modules\gateway\controllers\v1\BaseWebSignedRequestController;
 use app\modules\gateway\models\logic\LogicOrder;
 use app\modules\gateway\models\logic\PaymentRequest;
 use Yii;
@@ -12,7 +13,7 @@ use app\modules\gateway\controllers\BaseController;
 /*
  * 充值接口
  */
-class OrderController extends BaseController
+class OrderController extends BaseWebSignedRequestController
 {
     /**
      * 前置action
@@ -38,17 +39,12 @@ class OrderController extends BaseController
         $order = LogicOrder::addOrder($this->allParams,$this->merchant,$this->merchantPayment);
 
         //生成跳转连接
-//        $channelAccountInfo = $paymentRequest->getPaymentChannelAccount();
-        //跳转
         $payment = new ChannelPayment($order,$this->merchantPayment->paymentChannel);
-        $redict = $payment->createPaymentRedirectParams();
-//        echo $url;
-//echo "<a href='$url' target='_blank'>充值</a>";
-
+        $redirect = $payment->createPaymentRedirectParams();
 
         //设置客户端唯一id
-//        $paymentRequest->setClientIdCookie();
+        $paymentRequest->setClientIdCookie();
 
-        return $redict['formHtml'];
+        return $redirect['formHtml'];
     }
 }

@@ -1,12 +1,12 @@
 <?php
-namespace app\modules\gateway\controllers;
+namespace app\modules\gateway\controllers\v1;
 
 use Yii;
-use yii\data\ActiveDataProvider;
-use app\lib\helpers\ControllerParameterValidator;
-use app\components\Macro;
-
-class BaseController extends \app\components\RequestSignController
+use app\components\RequestSignController;
+/*
+ * 基础的web页面带参数校验请求，请求响应内容为web页面及跳转
+ */
+class BaseWebSignedRequestController extends RequestSignController
 {
     /**
      * 前置action

@@ -78,7 +78,6 @@ class Bank extends AllScoreBasePayment
             $allscoreService = new \AllscoreService($this->paymentConfig);
             $html_text = $allscoreService->bankPay($parameter);
             $ItemUrl = $allscoreService->createBankUrl($parameter);
-            return ['url'=>$ItemUrl,'formHtml'=>$html_text];
         }
         //快捷支付
         else {
@@ -107,9 +106,9 @@ class Bank extends AllScoreBasePayment
             $allscoreService = new \AllscoreService($this->paymentConfig);
             $html_text = $allscoreService->quickPay($parameter);
             $ItemUrl = $allscoreService->createQuickUrl($parameter);
-            return ['url'=>$ItemUrl,'formHtml'=>$html_text];
         }
 
+        return ['url'=>$ItemUrl,'formHtml'=>$html_text];
 
     }
 
