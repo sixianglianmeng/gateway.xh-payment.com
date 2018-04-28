@@ -21,7 +21,7 @@ class PaymentRequest
     const DEFAULT_JSON_RESPONSE = [
         'is_success' => self::FAIL,
         'sign'       => '',
-        'errror_msg' => '',
+        'error_msg' => '',
     ];
     const CLIENT_ID_IN_COOKIE = 'x_client_id';
 
@@ -44,7 +44,7 @@ class PaymentRequest
         'sign'                 => [Macro::CONST_PARAM_TYPE_ALNUM, [32, 32]],
         'nonce'                => [Macro::CONST_PARAM_TYPE_ALNUM_DASH_UNDERLINE, [1, 64]],
         'trade_no'             => [Macro::CONST_PARAM_TYPE_ALNUM_DASH_UNDERLINE, [1, 32]],
-        'now_date'             => [Macro::CONST_PARAM_TYPE_ALNUM_DASH_UNDERLINE, [1, 32]],
+        'now_date'             => [Macro::CONST_PARAM_TYPE_DATETIME, [1, 32]],
         'account_name'         => [Macro::CONST_PARAM_TYPE_STRING, [1, 32]],
         'account_number'       => [Macro::CONST_PARAM_TYPE_NUMBERIC_STRING, [10, 32]],
     ];

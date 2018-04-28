@@ -13,6 +13,7 @@ use app\lib\helpers\SignatureHelper;
 use app\lib\payment\ChannelPayment;
 use app\lib\payment\ObjectNoticeResult;
 use app\common\models\model\Remit;
+use power\yii2\exceptions\ParameterValidationExpandException;
 use Yii;
 use app\common\models\model\User;
 use app\components\Macro;
@@ -255,11 +256,36 @@ class LogicRemit
     public static function updateToRedis($remit)
     {
         $data = [
-            'transid'=>$remit->merchant_order_no,
-            'order_id'=>$remit->order_no,
+            'merchant_order_no'=>$remit->merchant_order_no,
+            'order_no'=>$remit->order_no,
             'bank_status'=>$remit->bank_status,
         ];
         $json = \GuzzleHttp\json_encode($data);
         Yii::$app->redis->hmset(self::REDIS_CACHE_KEY, $remit->order_no, $json);
+    }
+
+    /**
+     * 获取订单状态
+     *
+     */
+    public static function getStatus($orderNo = '',$merchantOrderNo = '', $merchant)
+    {
+        if($merchantOrderNo && !$orderNo){
+            $remit = Remit::findOne(['merchant_order_no'=>$merchantOrderNo,'merchant_id'=>$merchant->id]);
+            if($remit) $orderNo = $remit->order_no;
+        }
+
+        if(!$orderNo){
+            throw new ParameterValidationExpandException('参数错误');
+        }
+
+        $statusJson = Yii::$app->redis->hmget(self::REDIS_CACHE_KEY, $orderNo);
+
+        $statusArr = [];
+        if(!empty($statusJson[0])){
+            $statusArr = \GuzzleHttp\json_decode($statusJson[0]);
+        }
+
+        return $statusArr;
     }
 }

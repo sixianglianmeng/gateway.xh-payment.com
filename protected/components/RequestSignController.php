@@ -78,7 +78,6 @@ class RequestSignController extends \power\yii2\web\Controller
     
     public function runAction($id, $params = [])
     {
-        \Yii::$app->response->format = \yii\web\Response::FORMAT_HTML;
         try {
             return parent::runAction($id, $params);
         } catch (ParameterValidationExpandException $e) {
@@ -86,7 +85,6 @@ class RequestSignController extends \power\yii2\web\Controller
         } catch (SignatureNotMatchException $e) {
             return ResponseHelper::formatOutput(Macro::ERR_PARAM_SIGN, $e->getMessage());
         } catch (\Exception $e) {
-            ;
             LogHelper::error(
                 sprintf(
                     'unkown exception occurred. %s:%s trace: %s',

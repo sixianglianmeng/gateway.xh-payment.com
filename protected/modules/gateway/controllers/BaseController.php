@@ -15,6 +15,7 @@ class BaseController extends \app\components\RequestSignController
      */
     public function beforeAction($action){
         $this->layout = 'empty';
+        Yii::$app->response->format = yii\web\Response::FORMAT_HTML;
         return parent::beforeAction($action);
     }
 }

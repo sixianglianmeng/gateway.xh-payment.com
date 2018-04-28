@@ -34,7 +34,9 @@ class ResponseHelper extends \power\yii2\helpers\ResponseHelper
         Yii::pushLog('status', $code);
 
         //支付网关后台接口单独处理
-        if(Yii::$app->params['jsonFormatType'] == Macro::FORMAT_PAYMENT_GATEWAY_JSON){
+        if(!empty(Yii::$app->params['jsonFormatType'])
+            && Yii::$app->params['jsonFormatType'] == Macro::FORMAT_PAYMENT_GATEWAY_JSON
+        ){
             $result = [
                 'is_success'        => $code==0?'TRUE':'FALSE',
                 'error_msg'       => $message,

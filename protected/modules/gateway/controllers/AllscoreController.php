@@ -34,8 +34,6 @@ class AllscoreController extends WebAppController
     public function actionNotify()
     {
 
-
-
     }
 
     /*
