@@ -17,6 +17,8 @@ class Financial extends BaseModel
         30=>'提款',
         31=>'提款手续费',
         40=>'管理员调整',
+        51=>'提款退款',
+        52=>'手续费退款',
     ];
     //状态未完成
     const STATUS_UNFINISHED=0;
@@ -26,10 +28,12 @@ class Financial extends BaseModel
     //帐变状态
     const EVENT_TYPE_RECHARGE = 10;
     const EVENT_TYPE_BONUS = 20;
-    const EVENT_TYPE_WITHDRAWAL = 30;
+    const EVENT_TYPE_REMIT = 30;
     const EVENT_TYPE_ADMIN = 40;
     const EVENT_TYPE_RECHARGE_FEE = 11;
-    const EVENT_TYPE_WITHDRAWAL_FEE = 31;
+    const EVENT_TYPE_REMIT_FEE = 31;
+    const EVENT_TYPE_REFUND_REMIT = 51;
+    const EVENT_TYPE_REFUND_REMIT_FEE = 52;
 
     public static function tableName()
     {

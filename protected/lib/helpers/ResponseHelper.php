@@ -1,8 +1,11 @@
 <?php
 namespace app\lib\helpers;
 
+use app\common\models\model\UserPaymentInfo;
+use app\components\Macro;
 use Yii;
 use power\yii2\web\Response;
+use yii\helpers\ArrayHelper;
 
 class ResponseHelper extends \power\yii2\helpers\ResponseHelper
 {
@@ -28,8 +31,21 @@ class ResponseHelper extends \power\yii2\helpers\ResponseHelper
             'message'       => $message,
             'serverTime'    => microtime(true),
         ];
-
         Yii::pushLog('status', $code);
+
+        //支付网关后台接口单独处理
+        if(Yii::$app->params['jsonFormatType'] == Macro::FORMAT_PAYMENT_GATEWAY_JSON){
+            $result = [
+                'is_success'        => $code==0?'TRUE':'FALSE',
+                'error_msg'       => $message,
+            ];
+            $result = ArrayHelper::merge($result,$data);
+            if(Yii::$app->params['merchantPayment'] && Yii::$app->params['merchantPayment'] instanceof UserPaymentInfo){
+                $result['sign'] = SignatureHelper::calcSign($result, Yii::$app->params['merchantPayment']->app_key_md5, Macro::CONST_PAYMENT_GETWAY_SIGN_TYPE);
+            }
+            return $result;
+        }
+
         if ($response->format == Response::FORMAT_HTML) {
 //            $result['return_url'] = Yii::$app->request->referrer;
             $result = Yii::$app->controller->render('@app/modules/gateway/views/default/error',$result);
@@ -39,6 +55,7 @@ class ResponseHelper extends \power\yii2\helpers\ResponseHelper
                 'callback'  => $callback,
             ];
         }
+
 
         return $result;
     }

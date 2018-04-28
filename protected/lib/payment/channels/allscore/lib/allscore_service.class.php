@@ -354,8 +354,8 @@ class AllscoreService {
         //设置按钮名称
         $button_name = "商银信代付支付";
         //生成表单提交HTML文本信息
-//        $allscoreSubmit = new AllscoreSubmit();
-        //$html_text = $allscoreSubmit->buildForm($para_temp, $this->allscore_config['payment_url'], "post", $button_name,$this->allscore_config);
+        $allscoreSubmit = new AllscoreSubmit();
+        $html_text = $allscoreSubmit->buildForm($para_temp, $this->allscore_config['payment_url'], "post", $button_name,$this->allscore_config);
 
         //除去待签名参数数组中的空值和签名参数
         $para_filter = paraFilter($para_temp);

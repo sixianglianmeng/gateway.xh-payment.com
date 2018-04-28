@@ -97,7 +97,7 @@ class AllScoreBasePayment extends BasePayment
         $outOrderId = $remit['order_no'];//商户网站订单（也就是外部订单号，是通过客户网站传给商银信系统，不可以重复）
         $service = "agentpay"; // 代付支付服务（不可以修改）
         $inputCharset = trim($this->paymentConfig['input_charset']); // （不可以修改）
-        $merchantId = $this->order['channel_merchant_id']; // 商户号(商银信公司提供)
+        $merchantId = $remit['channel_merchant_id']; // 商户号(商银信公司提供)
         $cardHolder = $remit['bank_account'];//收款人姓名
         $bankCardNo = $remit['bank_no'];//收款人银行卡号
 $notifyUrl = '';//$remit['notifyUrl']; // 通知接收URL(本地测试时，服务器返回无法测试)
@@ -162,7 +162,7 @@ $notifyUrl = '';//$remit['notifyUrl']; // 通知接收URL(本地测试时，服�
                 $ret['data'] = $res;
             }else{
                 $ret['data'] = $res;
-                $ret['msg'] = $res['retMsg'];
+                $ret['message'] = $res['retMsg'];
             }
         }
 

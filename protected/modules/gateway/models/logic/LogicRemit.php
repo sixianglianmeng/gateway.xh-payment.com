@@ -10,6 +10,7 @@ use app\common\models\model\Financial;
 use app\common\models\model\UserPaymentInfo;
 use app\jobs\PaymentNotifyJob;
 use app\lib\helpers\SignatureHelper;
+use app\lib\payment\ChannelPayment;
 use app\lib\payment\ObjectNoticeResult;
 use app\common\models\model\Remit;
 use Yii;
@@ -20,6 +21,7 @@ class LogicRemit
 {
     //通知失败后间隔通知时间
     const NOTICE_DELAY = 300;
+    const REDIS_CACHE_KEY = 'lt_remit';
 
     static public function addRemit(array $request, User $merchant, UserPaymentInfo $merchantPayment){
 //        ['merchant_code', 'trade_no', 'order_amount', 'order_time', 'bank_code', ' account_name', 'account_number',
@@ -37,6 +39,7 @@ class LogicRemit
 
         $remitData['app_id'] = $request['merchant_code'];
         $remitData['status'] = Remit::STATUS_CHECKED;
+        $remitData['bank_status'] = Remit::BANK_STATUS_NONE;
 
         $remitData['merchant_account'] = $merchant->username;
         $channelInfo = $merchantPayment->paymentChannel;
@@ -60,13 +63,18 @@ class LogicRemit
     }
 
     static public function processRemit($remit, ChannelAccount $paymentChannel){
-        Yii::debug([__CLASS__.':'.__FUNCTION__,$remit->order_no]);
+        Yii::debug([__CLASS__.':'.__FUNCTION__,$remit->order_no,$remit->status]);
         switch ($remit->status){
             case Remit::STATUS_CHECKED:
                 $remit = self::deduct($remit);
+                $remit = self::commitToBank($remit,$paymentChannel);
                 break;
             case Remit::STATUS_DEDUCT:
-                $remit = self::commitToBank($remit);
+                $remit = self::commitToBank($remit,$paymentChannel);
+                break;
+            case Remit::STATUS_BANK_PROCESS_FAIL:
+            case Remit::STATUS_BANK_NET_FAIL:
+                $remit = self::refund($remit);
                 break;
             default:
                 break;
@@ -82,10 +90,10 @@ class LogicRemit
             //账户扣款
             $logicUser = new LogicUser($remit->merchant);
             $amount =  0-$remit->amount;
-            $logicUser->changeUserBalance($amount, Financial::EVENT_TYPE_WITHDRAWAL, $remit->order_no, Yii::$app->request->userIP);
+            $logicUser->changeUserBalance($amount, Financial::EVENT_TYPE_REMIT, $remit->order_no, Yii::$app->request->userIP);
             //手续费
             $amount =  0-$remit->remit_fee;
-            $logicUser->changeUserBalance($amount, Financial::EVENT_TYPE_WITHDRAWAL_FEE, $remit->order_no, Yii::$app->request->userIP);
+            $logicUser->changeUserBalance($amount, Financial::EVENT_TYPE_REMIT_FEE, $remit->order_no, Yii::$app->request->userIP);
 
             $remit->status = Remit::STATUS_DEDUCT;
             $remit->save();
@@ -103,20 +111,22 @@ class LogicRemit
             //银行状态说明：00处理中，04成功，05失败或拒绝
             $payment = new ChannelPayment($remit, $paymentChannel);
             $ret = $payment->remit();
+
             if($ret['code'] === 0 && $ret['data']['status']=='00'){
                 $remit->status = Remit::STATUS_BANK_PROCESSING;
-
-                $remit->status = $ret['order_id'];
+                $remit->bank_status =  Remit::BANK_STATUS_PROCESSING;
+                $remit->channel_order_no = $ret['order_id'];
                 $remit->save();
+
+                self::updateToRedis($remit);
             }
             //失败或者银行拒绝，退款
             else{
                 $remit = self::setFail($remit, $ret['message']);
-
-                $remit = self::refund($remit);
             }
 
             return $remit;
+
         }else{
             Yii::error([__CLASS__.':'.__FUNCTION__,$remit->order_no,"订单状态错误，无法提交到银行:".$remit->status]);
             throw new \Exception('订单状态错误，无法提交到银行');
@@ -132,10 +142,10 @@ class LogicRemit
             //退回账户扣款
             $logicUser = new LogicUser($remit->merchant);
             $amount =  $remit->amount;
-            $logicUser->changeUserBalance($amount, Financial::EVENT_TYPE_WITHDRAWAL, $remit->order_no, Yii::$app->request->userIP);
+            $logicUser->changeUserBalance($amount, Financial::EVENT_TYPE_REFUND_REMIT, $remit->order_no, Yii::$app->request->userIP);
             //退回手续费
             $amount =  $remit->remit_fee;
-            $logicUser->changeUserBalance($amount, Financial::EVENT_TYPE_WITHDRAWAL_FEE, $remit->order_no, Yii::$app->request->userIP);
+            $logicUser->changeUserBalance($amount, Financial::EVENT_TYPE_REFUND_REMIT_FEE, $remit->order_no, Yii::$app->request->userIP);
 
             $remit->status = Remit::STATUS_REFUND;
             $remit->save();
@@ -143,7 +153,7 @@ class LogicRemit
             return $remit;
         }else{
             Yii::error([__CLASS__.':'.__FUNCTION__,$remit->order_no,"订单状态错误，无法退款:".$remit->status]);
-            throw new \Exception('订单状态错误，无法退款');
+            throw new \Exception('订单状态错误，无法退款:'.$remit->status);
         }
     }
 
@@ -177,7 +187,7 @@ class LogicRemit
     static public function processChannelNotice(ObjectNoticeResult $noticeResult){
         if(
 //            $noticeResult->status !== Macro::SUCCESS
-            !$noticeResult->order
+        !$noticeResult->order
 //            || !$noticeResult->amount
         ){
             throw new InValidRequestException('支付结果对象错误',Macro::ERR_PAYMENT_NOTICE_RESULT_OBJECT);
@@ -201,6 +211,22 @@ class LogicRemit
     }
 
     /*
+     * 订单成功
+     *
+     * @param Remit $remit 订单对象
+     */
+    static public function setSuccess(Remit $remit)
+    {
+        $remit->status = Remit::STATUS_SUCCESS;
+        $remit->bank_status =  Remit::BANK_STATUS_SUCCESS;
+        $remit->save();
+
+        self::updateToRedis($remit);
+
+        return $remit;
+    }
+
+    /*
      * 订单失败
      *
      * @param Remit $remit 订单对象
@@ -210,10 +236,30 @@ class LogicRemit
     {
         $remit->fail_msg = $failMsg;
         $remit->status = Remit::STATUS_BANK_PROCESS_FAIL;
+        $remit->bank_status =  Remit::BANK_STATUS_FAIL;
         $remit->save();
+
+        self::updateToRedis($remit);
 
         $remit = self::refund($remit);
 
         return $remit;
+    }
+
+    /**
+     * 更新订单信息到redis
+     *
+     * @param
+     * @return
+     */
+    public static function updateToRedis($remit)
+    {
+        $data = [
+            'transid'=>$remit->merchant_order_no,
+            'order_id'=>$remit->order_no,
+            'bank_status'=>$remit->bank_status,
+        ];
+        $json = \GuzzleHttp\json_encode($data);
+        Yii::$app->redis->hmset(self::REDIS_CACHE_KEY, $remit->order_no, $json);
     }
 }

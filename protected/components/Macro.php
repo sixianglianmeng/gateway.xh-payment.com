@@ -69,6 +69,7 @@ class Macro{
     const ERR_PAYMENT_NOTICE_RESULT_OBJECT = 10105;
     const ERR_PAYMENT_ALREADY_DONE = 10106;
 
+    const CONST_PAYMENT_GETWAY_SIGN_TYPE = 'MD5';
     const CONST_JSON = 'json';
     const CONST_HTML = 'html';
     const CONST_PARAM_TYPE_STRING = 'string';

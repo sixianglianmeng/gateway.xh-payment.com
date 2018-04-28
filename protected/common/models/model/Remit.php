@@ -18,8 +18,9 @@ use Yii;
  * @property int $app_id 商户应用ID
  * @property int $app_name 商户应用名
  * @property string $merchant_account 商户账户
- * @property string $money 订单金额
- * @property string $withdrawal_money 实际提款结算的金额
+ * @property string $amount 订单金额
+ * @property string $remit_fee 交易手续费
+ * @property string $remited_amount 实际提款结算的金额
  * @property string $channel_id 提款结算通道ID
  * @property string $channel_merchant_id 提款结算通道商户号
  * @property string $bank_account 银行帐号
@@ -31,11 +32,13 @@ use Yii;
  * @property int $withdrawal_at 提款结算时间
  * @property int $updated_at 记录更新时间
  * @property string $bak 订单备注
- * @property int $status 0未处理，10 已审核 20已提交到银行 30 已出款
+ * @property string $fail_msg 失败描述
+ * @property string $bank_status 银行状态
+ * @property int $status 0未处理 10 已审核 20账户已扣款 30已提交到银行 40 已出款 50处理失败已退款 -10 提交银行失败 -20 银行处理失败
  */
 class Remit extends BaseModel
 {
-    //0未处理， 10 已审核 20账户已扣款 30已提交到银行 40 已出款 50处理失败已退款 -10 提交银行失败 -20 银行处理失败
+    //0未处理 10 已审核 20账户已扣款 30银行处理中 40 成功已出款 50处理失败已退款 -10 提交银行失败 -20 银行处理失败
     const STATUS_BANK_PROCESS_FAIL=-20;
     const STATUS_BANK_NET_FAIL=-10;
     const STATUS_NONE=0;
@@ -44,6 +47,22 @@ class Remit extends BaseModel
     const STATUS_BANK_PROCESSING=30;
     const STATUS_SUCCESS=40;
     const STATUS_REFUND=50;
+    //银行处理状态 0 未处理 1 银行处理中 2 已打款 3失败
+    const BANK_STATUS_NONE=0;
+    const BANK_STATUS_PROCESSING=1;
+    const BANK_STATUS_SUCCESS=2;
+    const BANK_STATUS_FAIL=3;
+
+    const ARR_STATUS = [
+        self::STATUS_NONE              => '未处理',
+        self::STATUS_CHECKED           => '已审核',
+        self::STATUS_DEDUCT            => '账户已扣款',
+        self::STATUS_BANK_PROCESSING   => '银行处理中',
+        self::STATUS_SUCCESS           => '成功已出款',
+        self::STATUS_REFUND            => '处理失败已退款',
+        self::STATUS_BANK_NET_FAIL     => '提交银行失败',
+        self::STATUS_BANK_PROCESS_FAIL => '银行处理失败',
+    ];
 
     /**
      * @inheritdoc
@@ -58,16 +77,7 @@ class Remit extends BaseModel
      */
     public function rules()
     {
-        return [
-            [['op_uid', 'merchant_id', 'app_id', 'app_name', 'created_at', 'withdrawal_at', 'updated_at', 'status'], 'integer'],
-            [['money', 'withdrawal_money'], 'number'],
-            [['op_username', 'channel_id', 'channel_merchant_id', 'bank_account', 'bank_name', 'bank_no'], 'string', 'max' => 32],
-            [['order_no', 'bat_order_no', 'merchant_order_no', 'channel_order_no', 'merchant_account'], 'string', 'max' => 64],
-            [['bank_code'], 'string', 'max' => 16],
-            [['client_ip'], 'string', 'max' => 24],
-            [['bak'], 'string', 'max' => 255],
-            [['order_no'], 'unique'],
-        ];
+        return [];
     }
 
     /**
