@@ -100,7 +100,7 @@ class AllScoreBasePayment extends BasePayment
         $merchantId = $remit['channel_merchant_id']; // 商户号(商银信公司提供)
         $cardHolder = $remit['bank_account'];//收款人姓名
         $bankCardNo = $remit['bank_no'];//收款人银行卡号
-$notifyUrl = '';//$remit['notifyUrl']; // 通知接收URL(本地测试时，服务器返回无法测试)
+        $notifyUrl = '';//$remit['notifyUrl']; // 通知接收URL(本地测试时，服务器返回无法测试)
         $bankBranchName = $remit['bank_name'];//银行具体名称
         $payAmount = $remit['amount'];//需要代付的金额
         $bankCode = $remit['bank_code'];//银行编码
@@ -154,6 +154,56 @@ $notifyUrl = '';//$remit['notifyUrl']; // 通知接收URL(本地测试时，服�
         // 构造代扣支付接口
         $allscoreService = new \AllscoreService($this->paymentConfig);
         $resTxt = $allscoreService->payment($parameter);
+        $ret = Macro::FAILED_MESSAGE;
+        if(!empty($resTxt)){
+            $res = json_decode($resTxt,true);
+            if(isset($res['retCode']) && $res['retCode']=='0000'){
+                $ret = Macro::SUCCESS_MESSAGE;
+                $ret['data'] = $res;
+            }else{
+                $ret['data'] = $res;
+                $ret['message'] = $res['retMsg'];
+            }
+        }
+
+        return  $ret;
+    }
+
+    public function remitStatus(){
+// 必填参数//
+        $service = "agentpay"; // 代付查询服务（不可以修改）
+        $merchantId = $this->remit['channel_merchant_id']; // 商户号(商银信公司提供)
+        $format = 'json'; //返回格式（json/xml）
+        $signType = $this->remit['signType'];//签名类型
+        $inputCharset = trim($this->paymentConfig['input_charset']); // 参数编码字符集（不可以修改）
+        $outOrderId = $this->remits['outOrderId'];//商户网站订单（也就是外部订单号，是通过客户网站传给商银信系统，不可以重复）
+
+        $key = trim($this->paymentConfig['key']); // 安全密钥(商银信公司提供)
+        //构造要请求的参数数组
+        $parameter = array(
+            "service" => $service,
+            "merchantId" => $merchantId,
+            "format" => $format,
+            "signType" => $signType,
+            "inputCharset" => $inputCharset,
+            "outOrderId" => $outOrderId,
+            //"version" => "1",
+        );
+        /*logResult("parameter1=".print_r($parameter,1));
+        $parameter['bankName'] = urldecode($parameter['bankName']);
+        $parameter['bankProvince'] = urldecode($parameter['bankProvince']);
+        $parameter['cardHolder'] = urldecode($parameter['cardHolder']);
+        $parameter['notifyUrl'] = urldecode($parameter['notifyUrl']);
+        $parameter['remark'] = urldecode($parameter['remark']);
+        $parameter['subject'] = urldecode($parameter['subject']);
+        logResult("parameter2=".print_r($parameter,1));*/
+        // 构造代扣支付接口
+//        $allscoreService = new \AllscoreService($allscore_config);
+//        $html_text = $allscoreService->paymentQuery($parameter);
+//        //logResult("html_text=".$html_text);
+//        echo $html_text;
+
+        $resTxt = \AllscoreService::quickPost($this->allscore_config['payment_query_url'],$parameter,$this->paymentConfig);
         $ret = Macro::FAILED_MESSAGE;
         if(!empty($resTxt)){
             $res = json_decode($resTxt,true);

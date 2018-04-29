@@ -120,13 +120,68 @@ class AllscoreService {
         
         
         
-        //设置按钮名称
-        $button_name = "商银信代付查询";
-        //生成表单提交HTML文本信息serviceDirect.htm
-        $allscoreSubmit = new AllscoreSubmit();
-        $html_text = $allscoreSubmit->buildForm($para_temp, $this->allscore_config['payment_query_url'], "post", $button_name,$this->allscore_config);
-        
-        return $html_text;
+//        //设置按钮名称
+//        $button_name = "商银信代付查询";
+//        //生成表单提交HTML文本信息serviceDirect.htm
+//        $allscoreSubmit = new AllscoreSubmit();
+//        $html_text = $allscoreSubmit->buildForm($para_temp, $this->allscore_config['payment_query_url'], "post", $button_name,$this->allscore_config);
+//
+//        return $html_text;
+
+
+        //除去待签名参数数组中的空值和签名参数
+        $para_filter = paraFilter($para_temp);
+        //对待签名参数数组排序
+        $para_sort = argSort($para_filter);
+        //logResult(print_r($para_sort,1));
+        if ($para_temp['signType'] == 'MD5') {
+            //生成签名结果
+            $mysign = buildMysign($para_sort, trim($this->allscore_config['key']));
+        } else {
+            //生成签名结果
+            $mysign = buildMysignRSA($para_sort, trim($this->allscore_config['MerchantPrivateKey']));
+        }
+
+        //签名结果与签名方式加入请求提交参数组中
+        $para_sort['sign']     = $mysign;
+        $para_sort['signType'] = $para_temp['signType'];
+
+//        $params = $this->buildRequestPara($para_temp,$this->allscore_config);
+        $client = new \GuzzleHttp\Client();
+        $response = $client->request('POST', $this->allscore_config['payment_query_url'], [
+            'form_params' => $para_sort
+        ]);
+        $body = (string)$response->getBody();
+
+        return $body;
+    }
+
+    static public function quickPost($url,$data,$config){
+        //除去待签名参数数组中的空值和签名参数
+        $para_filter = paraFilter($data);
+        //对待签名参数数组排序
+        $para_sort = argSort($para_filter);
+        //logResult(print_r($para_sort,1));
+        if ($data['signType'] == 'MD5') {
+            //生成签名结果
+            $mysign = buildMysign($para_sort, trim($config['key']));
+        } else {
+            //生成签名结果
+            $mysign = buildMysignRSA($para_sort, trim($config['MerchantPrivateKey']));
+        }
+
+        //签名结果与签名方式加入请求提交参数组中
+        $para_sort['sign']     = $mysign;
+        $para_sort['signType'] = $data['signType'];
+
+//        $params = $this->buildRequestPara($para_temp,$config);
+        $client = new \GuzzleHttp\Client();
+        $response = $client->request('POST', $url, [
+            'form_params' => $para_sort
+        ]);
+        $body = (string)$response->getBody();
+
+        return $body;
     }
     
     /**
@@ -352,10 +407,10 @@ class AllscoreService {
         }
         //logResult("para_temp=".print_r($para_temp,1));
         //设置按钮名称
-        $button_name = "商银信代付支付";
-        //生成表单提交HTML文本信息
-        $allscoreSubmit = new AllscoreSubmit();
-        $html_text = $allscoreSubmit->buildForm($para_temp, $this->allscore_config['payment_url'], "post", $button_name,$this->allscore_config);
+//        $button_name = "商银信代付支付";
+//        //生成表单提交HTML文本信息
+//        $allscoreSubmit = new AllscoreSubmit();
+//        $html_text = $allscoreSubmit->buildForm($para_temp, $this->allscore_config['payment_url'], "post", $button_name,$this->allscore_config);
 
         //除去待签名参数数组中的空值和签名参数
         $para_filter = paraFilter($para_temp);

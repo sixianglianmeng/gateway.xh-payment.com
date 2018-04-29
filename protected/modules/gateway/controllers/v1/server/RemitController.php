@@ -1,10 +1,12 @@
 <?php
 namespace app\modules\gateway\controllers\v1\server;
 
+use app\common\models\model\ChannelAccount;
 use app\common\models\model\Remit;
 use app\components\Macro;
 use app\lib\helpers\ResponseHelper;
 use app\modules\gateway\controllers\v1\BaseServerSignedRequestController;
+use app\modules\gateway\models\logic\LogicChannelAccount;
 use app\modules\gateway\models\logic\LogicRemit;
 use app\modules\gateway\models\logic\PaymentRequest;
 use Yii;
@@ -36,12 +38,17 @@ class RemitController extends BaseServerSignedRequestController
         //检测参数合法性，判断用户合法性
         $paymentRequest->validate($this->allParams, $needParams);
 
+        $paymentChannelAccount = LogicChannelAccount::getDefaultRemitChannelAccount();
+        if(!$paymentChannelAccount){
+            throw new InValidRequestException('提款渠道配置错误');
+        }
         //生成订单
-        $remit = LogicRemit::addRemit($this->allParams,$this->merchant,$this->merchantPayment);
+        $remit = LogicRemit::addRemit($this->allParams,$this->merchant,$paymentChannelAccount);
 
 //        $payment = new ChannelPayment($remit,$this->merchantPayment->paymentChannel);
 //        processRemit = $payment->remit();
-        $remit = LogicRemit::processRemit($remit,$this->merchantPayment->paymentChannel);
+
+        $remit = LogicRemit::processRemit($remit,$paymentChannelAccount);
         $msg = '';
         $data = [
             'transid'=>$remit->merchant_order_no,

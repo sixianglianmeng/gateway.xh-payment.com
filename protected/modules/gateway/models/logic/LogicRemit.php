@@ -24,7 +24,7 @@ class LogicRemit
     const NOTICE_DELAY = 300;
     const REDIS_CACHE_KEY = 'lt_remit';
 
-    static public function addRemit(array $request, User $merchant, UserPaymentInfo $merchantPayment){
+    static public function addRemit(array $request, User $merchant, ChannelAccount $paymentChannelAccount){
 //        ['merchant_code', 'trade_no', 'order_amount', 'order_time', 'bank_code', ' account_name', 'account_number',
         $remitData = [];
         $remitData['order_no'] = self::generateRemitNo();
@@ -43,11 +43,10 @@ class LogicRemit
         $remitData['bank_status'] = Remit::BANK_STATUS_NONE;
 
         $remitData['merchant_account'] = $merchant->username;
-        $channelInfo = $merchantPayment->paymentChannel;
 
-        $remitData['channel_id'] = $channelInfo->channel_id;
-        $remitData['channel_merchant_id'] = $channelInfo->merchant_id;
-        $remitData['channel_app_id'] = $channelInfo->app_id;
+        $remitData['channel_id'] = $paymentChannelAccount->channel_id;
+        $remitData['channel_merchant_id'] = $paymentChannelAccount->merchant_id;
+        $remitData['channel_app_id'] = $paymentChannelAccount->app_id;
         $remitData['created_at'] = time();
 
         $hasRemit = Remit::findOne(['app_id'=>$remitData['app_id'],'merchant_order_no'=>$request['trade_no']]);
@@ -63,15 +62,15 @@ class LogicRemit
         return $newRemit;
     }
 
-    static public function processRemit($remit, ChannelAccount $paymentChannel){
+    static public function processRemit($remit, ChannelAccount $paymentChannelAccount){
         Yii::debug([__CLASS__.':'.__FUNCTION__,$remit->order_no,$remit->status]);
         switch ($remit->status){
             case Remit::STATUS_CHECKED:
                 $remit = self::deduct($remit);
-                $remit = self::commitToBank($remit,$paymentChannel);
+                $remit = self::commitToBank($remit,$paymentChannelAccount);
                 break;
             case Remit::STATUS_DEDUCT:
-                $remit = self::commitToBank($remit,$paymentChannel);
+                $remit = self::commitToBank($remit,$paymentChannelAccount);
                 break;
             case Remit::STATUS_BANK_PROCESS_FAIL:
             case Remit::STATUS_BANK_NET_FAIL:
@@ -105,21 +104,32 @@ class LogicRemit
         }
     }
 
-    static public function commitToBank(Remit $remit, ChannelAccount $paymentChannel){
+    static public function commitToBank(Remit $remit, ChannelAccount $paymentChannelAccount){
         Yii::debug([__CLASS__.':'.__FUNCTION__,$remit->order_no]);
         if($remit->status == Remit::STATUS_DEDUCT){
             //提交到银行
             //银行状态说明：00处理中，04成功，05失败或拒绝
-            $payment = new ChannelPayment($remit, $paymentChannel);
+            $payment = new ChannelPayment($remit, $paymentChannelAccount);
             $ret = $payment->remit();
 
-            if($ret['code'] === 0 && $ret['data']['status']=='00'){
-                $remit->status = Remit::STATUS_BANK_PROCESSING;
-                $remit->bank_status =  Remit::BANK_STATUS_PROCESSING;
-                $remit->channel_order_no = $ret['order_id'];
-                $remit->save();
+            if($ret['code'] === 0){
+                switch ($ret['data']['status']){
+                    case '00':
+                        $remit->status = Remit::STATUS_BANK_PROCESSING;
+                        $remit->bank_status =  Remit::BANK_STATUS_PROCESSING;
+                        $remit->channel_order_no = $ret['order_id'];
+                    case '04':
+                        $remit->status = Remit::STATUS_SUCCESS;
+                        $remit->bank_status =  Remit::BANK_STATUS_SUCCESS;
+                    case '05':
+                        $remit->status = Remit::STATUS_BANK_PROCESS_FAIL;
+                        $remit->bank_status =  Remit::BANK_STATUS_FAIL;
+                }
 
-                self::updateToRedis($remit);
+                if(!empty($ret['order_id']) && empty($remit->channel_order_no)){
+                    $remit->channel_order_no = $ret['order_id'];
+                }
+                $remit->save();
             }
             //失败或者银行拒绝，退款
             else{
@@ -132,6 +142,42 @@ class LogicRemit
             Yii::error([__CLASS__.':'.__FUNCTION__,$remit->order_no,"订单状态错误，无法提交到银行:".$remit->status]);
             throw new \Exception('订单状态错误，无法提交到银行');
         }
+    }
+
+    static public function queryChannelRemitStatus(Remit $remit, ChannelAccount $paymentChannelAccount){
+        Yii::debug([__CLASS__.':'.__FUNCTION__,$remit->order_no]);
+        //提交到银行
+        //银行状态说明：00处理中，04成功，05失败或拒绝
+        $payment = new ChannelPayment($remit, $paymentChannelAccount);
+        $ret = $payment->remitStatus();
+        Yii::debug($ret);
+        if($ret['code'] === 0){
+            switch ($ret['data']['status']){
+                case '00':
+                    $remit->status = Remit::STATUS_BANK_PROCESSING;
+                    $remit->bank_status =  Remit::BANK_STATUS_PROCESSING;
+                    $remit->channel_order_no = $ret['order_id'];
+                case '04':
+                    $remit->status = Remit::STATUS_SUCCESS;
+                    $remit->bank_status =  Remit::BANK_STATUS_SUCCESS;
+                case '05':
+                    $remit->status = Remit::STATUS_BANK_PROCESS_FAIL;
+                    $remit->bank_status =  Remit::BANK_STATUS_FAIL;
+            }
+
+            if(!empty($ret['order_id']) && empty($remit->channel_order_no)){
+                $remit->channel_order_no = $ret['order_id'];
+            }
+            $remit->save();
+
+            self::processRemit($remit, $paymentChannelAccount);
+        }
+        //失败或者银行拒绝，退款
+        else{
+            $remit = self::setFail($remit, $ret['message']);
+        }
+
+        return $remit;
     }
 
     static public function refund($remit){
@@ -183,32 +229,6 @@ class LogicRemit
         }
 
         return $channel;
-    }
-
-    static public function processChannelNotice(ObjectNoticeResult $noticeResult){
-        if(
-//            $noticeResult->status !== Macro::SUCCESS
-        !$noticeResult->order
-//            || !$noticeResult->amount
-        ){
-            throw new InValidRequestException('支付结果对象错误',Macro::ERR_PAYMENT_NOTICE_RESULT_OBJECT);
-        }
-
-        $order = $noticeResult->order;
-        //未处理
-        if( $noticeResult->status === Macro::SUCCESS && $order->status !== Remit::STATUS_PAID){
-            $order = self::paySuccess($order,$noticeResult->amount,$noticeResult->channelRemitNo);
-
-            $order = self::bonus($order);
-        }
-        elseif( $noticeResult->status === Macro::FAIL){
-            $order = self::payFail($order,$noticeResult->msg);
-            Yii::debug([__FUNCTION__,'order not paid',$noticeResult->orderNo]);
-        }
-
-        if($order->notify_status != Remit::NOTICE_STATUS_SUCCESS){
-            self::notify($order);
-        }
     }
 
     /*
