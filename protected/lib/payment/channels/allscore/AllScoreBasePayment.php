@@ -170,13 +170,15 @@ class AllScoreBasePayment extends BasePayment
     }
 
     public function remitStatus(){
+        require_once (Yii::getAlias("@app/lib/payment/channels/allscore/lib/allscore_service.class.php"));
+
 // 必填参数//
         $service = "agentpay"; // 代付查询服务（不可以修改）
         $merchantId = $this->remit['channel_merchant_id']; // 商户号(商银信公司提供)
         $format = 'json'; //返回格式（json/xml）
-        $signType = $this->remit['signType'];//签名类型
+        $signType = 'RSA';//签名类型
         $inputCharset = trim($this->paymentConfig['input_charset']); // 参数编码字符集（不可以修改）
-        $outOrderId = $this->remits['outOrderId'];//商户网站订单（也就是外部订单号，是通过客户网站传给商银信系统，不可以重复）
+        $outOrderId = $this->remit['order_no'];//商户网站订单（也就是外部订单号，是通过客户网站传给商银信系统，不可以重复）
 
         $key = trim($this->paymentConfig['key']); // 安全密钥(商银信公司提供)
         //构造要请求的参数数组
@@ -203,11 +205,14 @@ class AllScoreBasePayment extends BasePayment
 //        //logResult("html_text=".$html_text);
 //        echo $html_text;
 
-        $resTxt = \AllscoreService::quickPost($this->allscore_config['payment_query_url'],$parameter,$this->paymentConfig);
+        $resTxt = \AllscoreService::quickPost($this->paymentConfig['payment_query_url'],$parameter,$this->paymentConfig);
         $ret = Macro::FAILED_MESSAGE;
         if(!empty($resTxt)){
             $res = json_decode($resTxt,true);
             if(isset($res['retCode']) && $res['retCode']=='0000'){
+                $ret = Macro::SUCCESS_MESSAGE;
+                $ret['data'] = $res;
+            }elseif(isset($res['retCode']) && $res['retCode']=='0000'){
                 $ret = Macro::SUCCESS_MESSAGE;
                 $ret['data'] = $res;
             }else{

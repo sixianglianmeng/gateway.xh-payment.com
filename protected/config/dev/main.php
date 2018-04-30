@@ -5,20 +5,21 @@ $config = \yii\helpers\ArrayHelper::merge(
         'bootstrap' => [],
         'modules' => [],
         'components' => [
-//            'log' => [
-//                'targets' => [
-//                    'db'=>[
-//                        'class' => '\power\yii2\log\FileTarget',
-//                        'logFile' => '@runtime/log/common.log',
-//                        'logVars' => [],
-//                        'levels' => ['info','profile'],
-//                        'categories' => ['yii\db\Command::query', 'yii\db\Command::execute'],
-//                        'prefix' => function($message) {
-//                            return '';
-//                        }
-//                    ],
-//                ],
-//            ],
+            'log' => [
+                'targets' => [
+                    'db'=>[
+                        'class' => '\power\yii2\log\FileTarget',
+                        'logFile' => '@runtime/log/common.log',
+                        'logVars' => [],
+                        'levels' => ['info','profile'],
+                        'categories' => ['yii\db\Command::query', 'yii\db\Command::execute'],
+                        'prefix' => function($message) {
+                            return '';
+                        },
+                        'enabled' => false,
+                    ],
+                ],
+            ],
         ],
         'params'    => [],
     ]

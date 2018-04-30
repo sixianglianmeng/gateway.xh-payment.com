@@ -113,7 +113,7 @@ $config = [
                 ],
                 'notice' => [
                     'class' => '\power\yii2\log\FileTarget',
-                    'levels' => ['notice', 'trace','info'],//'profile',
+                    'levels' => ['notice', 'trace','info','warning','error'],//'profile',
                     'logFile' => '@runtime/log/common.log',
                     'enableRotation' => true,
                     'maxFileSize' => 1024 * 100,

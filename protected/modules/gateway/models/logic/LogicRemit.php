@@ -111,7 +111,7 @@ class LogicRemit
             //银行状态说明：00处理中，04成功，05失败或拒绝
             $payment = new ChannelPayment($remit, $paymentChannelAccount);
             $ret = $payment->remit();
-
+            Yii::info('remit commitToBank: '.json_encode($ret,JSON_UNESCAPED_UNICODE));
             if($ret['code'] === 0){
                 switch ($ret['data']['status']){
                     case '00':
@@ -150,7 +150,7 @@ class LogicRemit
         //银行状态说明：00处理中，04成功，05失败或拒绝
         $payment = new ChannelPayment($remit, $paymentChannelAccount);
         $ret = $payment->remitStatus();
-        Yii::debug($ret);
+        Yii::info('remit status check: '.json_encode($ret,JSON_UNESCAPED_UNICODE));
         if($ret['code'] === 0){
             switch ($ret['data']['status']){
                 case '00':
@@ -172,9 +172,9 @@ class LogicRemit
 
             self::processRemit($remit, $paymentChannelAccount);
         }
-        //失败或者银行拒绝，退款
+        //失败
         else{
-            $remit = self::setFail($remit, $ret['message']);
+
         }
 
         return $remit;
@@ -189,10 +189,12 @@ class LogicRemit
             //退回账户扣款
             $logicUser = new LogicUser($remit->merchant);
             $amount =  $remit->amount;
-            $logicUser->changeUserBalance($amount, Financial::EVENT_TYPE_REFUND_REMIT, $remit->order_no, Yii::$app->request->userIP);
+            $ip = Yii::$app->request->userIP??'';
+            $logicUser->changeUserBalance($amount, Financial::EVENT_TYPE_REFUND_REMIT, $remit->order_no, $ip);
             //退回手续费
             $amount =  $remit->remit_fee;
-            $logicUser->changeUserBalance($amount, Financial::EVENT_TYPE_REFUND_REMIT_FEE, $remit->order_no, Yii::$app->request->userIP);
+
+            $logicUser->changeUserBalance($amount, Financial::EVENT_TYPE_REFUND_REMIT_FEE, $remit->order_no, $ip);
 
             $remit->status = Remit::STATUS_REFUND;
             $remit->save();

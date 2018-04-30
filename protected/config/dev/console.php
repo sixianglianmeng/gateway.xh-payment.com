@@ -2,7 +2,8 @@
 $config = \yii\helpers\ArrayHelper::merge(
     require __DIR__ . '/main.php',
     [
-        'enableCoreCommands' => true,
+        'enableCoreCommands' => false,
+        'controllerNamespace' => 'app\commands',
         'components' => [
             'log' => [
                 'flushInterval' => 1,
