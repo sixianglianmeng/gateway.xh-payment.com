@@ -33,6 +33,8 @@ class PaymentNotifyJob extends BaseObject implements RetryableJobInterface
                 $noticeOk = Order::NOTICE_STATUS_NONE;
                 if($cli->statusCode == 200){
                     $noticeOk = Order::NOTICE_STATUS_SUCCESS;
+                }else{
+                    $noticeOk = Order::NOTICE_STATUS_FAIL;
                 }
                 LogicOrder::updateNotifyResult($this->orderNo,$noticeOk,$cli->body);
             });

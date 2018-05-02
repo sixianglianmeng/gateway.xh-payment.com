@@ -11,9 +11,21 @@ class Order extends BaseModel
     const STATUS_PAYING=10;
     const STATUS_PAID=20;
     const STATUS_FAIL=-10;
+    const ARR_STATUS = [
+        self::STATUS_NOTPAY=>'失败',
+        self::STATUS_PAYING=>'未付款',
+        self::STATUS_PAID=>'付款中',
+        self::STATUS_FAIL=>'已支付',
+    ];
 
     const NOTICE_STATUS_NONE = 0;
     const NOTICE_STATUS_SUCCESS = 10;
+    const NOTICE_STATUS_FAIL = -1;
+    const ARR_NOTICE_STATUS = [
+        self::NOTICE_STATUS_NONE=>'未通知',
+        self::NOTICE_STATUS_SUCCESS=>'已通知',
+        self::NOTICE_STATUS_FAIL=>'通知失败',
+    ];
 
     const FINANCIAL_STATUS_NONE = 0;
     const FINANCIAL_STATUS_SUCCESS = 10;
@@ -38,4 +50,25 @@ class Order extends BaseModel
         return $this->hasOne(User::className(), ['id'=>'merchant_id']);
     }
 
+    /**
+     * 获取订单状态描述
+     *
+     * @return string
+     * @author chengtian.hu@gmail.com
+     */
+    public function getStatusStr()
+    {
+        return self::ARR_STATUS[$this->status]??'-';
+    }
+
+    /**
+     * 获取通知状态描述
+     *
+     * @return string
+     * @author chengtian.hu@gmail.com
+     */
+    public function getNotifyStatusStr()
+    {
+        return self::ARR_NOTICE_STATUS[$this->notify_status]??'-';
+    }
 }
