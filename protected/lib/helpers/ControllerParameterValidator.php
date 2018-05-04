@@ -444,7 +444,7 @@ class ControllerParameterValidator
      * @param string $param  request参数名
      * @param mixed $default  参数不存在情况下返回的默认值
      * @param string $paramType 参数类型，在Macro类中定义了所有的类型值，为CONST_PARAM_TYPE_开始的常量
-     * @param string $errMsg 验证失败的错误消息，在指定了错误消息且验证失败的情况下，会直接抛出ParameterValidationExpandException异常
+     * @param string $errMsg 验证失败的错误消息，在有错误消息和默认值不为null且验证失败的情况下，会直接抛出ParameterValidationExpandException异常
      * @param array $extParamRule 验证扩展规则。见validate方法定义
      * @return mixed
      * @author booter.ui@gmail.com
@@ -458,7 +458,7 @@ class ControllerParameterValidator
         if($paramType){
             $validateRet = Util::validate($val,$paramType,$extParamRule);
 
-            if($errMsg && false === $validateRet){
+            if(!empty($errMsg) && $default===null && false === $validateRet){
                 throw new ParameterValidationExpandException("{$errMsg}: {$param}");
             }elseif(false === $validateRet){
                 $val = null;

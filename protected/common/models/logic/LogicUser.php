@@ -30,10 +30,12 @@ class LogicUser
      *
      */
     public function changeUserBalance($amount, $eventType, $eventId, $clientIp='', $bak='', $opUid=0, $opUsername=''){
+        Yii::debug([__FUNCTION__.' '.$this->user->id.','.$amount.','.$eventType.','.$eventId]);
         if(empty($this->user) || $amount==0){
             return false;
         }
         if($amount<0 && $this->user->balance<abs($amount)){
+            Yii::warning("changeUserBalance balance not enough: uid:{$this->user->id},{$amount},{$eventType},{$eventId}");
             throw new \Exception("余额不足",Macro::ERR_BALANCE_NOT_ENOUGH);
         }
 
@@ -42,7 +44,7 @@ class LogicUser
         try {
             $financial = Financial::findOne(['event_id'=>$eventId,'event_type'=>$eventType,'uid'=>$this->user->id]);
             if(!$financial){
-                Yii::debug("changeUserBalance: uid:{$this->user->id},{$amount},{$eventType},{$eventId}");
+                Yii::info("changeUserBalance: uid:{$this->user->id},{$amount},{$eventType},{$eventId}");
 //                var_dump("changeUserBalance: uid:{$this->user->id},{$amount},{$eventType},{$eventId}");
 //                throw new \Exception('账户余额已经完成变动，请勿重复修改。');
 

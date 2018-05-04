@@ -9,12 +9,14 @@ class Order extends BaseModel
     //-10失败 0未付款，10付款中，20已支付
     const STATUS_NOTPAY=0;
     const STATUS_PAYING=10;
+    const STATUS_BLOCKED=11;
     const STATUS_PAID=20;
     const STATUS_FAIL=-10;
     const ARR_STATUS = [
         self::STATUS_NOTPAY=>'失败',
         self::STATUS_PAYING=>'未付款',
         self::STATUS_PAID=>'付款中',
+        self::STATUS_BLOCKED=>'已冻结',
         self::STATUS_FAIL=>'已支付',
     ];
 

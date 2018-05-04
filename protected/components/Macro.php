@@ -21,6 +21,14 @@ class Macro{
         'message'=>'操作失败'
     ];
 
+
+    const USER_LOGIN_REQUIRED           = 401;      // 需要登录
+    const PARAMETER_VALIDATION_FAILED   = 400;
+    const PRIVILIEGE_NOTPASS            = 403;      //权限不足
+    const ERROR_NOT_FOUND               = 404;      //找不到
+    const INTERNAL_SERVER_ERROR         = 500;      // 内部错误
+    const SIGN_ERROR                    = 11002;    // 签名错误
+    const ERROR_LOGIN_INFO              = 11003;    //登录错误
     const ERR_PAGE_NOT_FOUND= 404;
 
     const ERR_NEED_LOGIN = 401;
@@ -97,6 +105,10 @@ class Macro{
     const CONST_PARAM_TYPE_PAYTYPE = 'paytype';
     const CONST_PARAM_TYPE_ALNUM_DASH_UNDERLINE = 'alnum_dash_underline';
     const CONST_PARAM_TYPE_DEV_PLATFORM = 'mobile_platform';
+    //分页参数类型，数字字母
+    const CONST_PARAM_TYPE_SORT = 'sort';
+    const CONST_PARAM_TYPE_CHINESE = 'chinese';
+    const CONST_PARAM_TYPE_BANK_NO = 'bank_no';
 
     const CONST_DEV_OS_ALL = ['android','ios','win','wp','linux'];
     const CONST_DEV_OS_ANDROID = 'android';

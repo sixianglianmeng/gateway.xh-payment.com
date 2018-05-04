@@ -54,7 +54,8 @@ class AllScoreBasePayment extends BasePayment
 
         $order = LogicOrder::getOrderByOrderNo($orderNo);
         $channelAccount = LogicOrder::getPaymentChannelAccount($order);
-        $this->setPaymentConfig($order,$channelAccount);
+        $this->setPaymentConfig($channelAccount);
+        $this->setOrder($order);
 
         $ret = new ObjectNoticeResult();
 

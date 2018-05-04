@@ -41,4 +41,44 @@ class UserPaymentInfo extends BaseModel
 
         return $info;
     }
+
+    /*
+     * 充值渠道是否支持某个支付方式
+     */
+    public function hasPaymentMethod($methodId)
+    {
+        $has = strpos($this->methods,'"id":'.$methodId.',')!==false;
+        return $has;
+    }
+
+    public function getPayMethodsArr()
+    {
+        $raWmethods = empty($this->pay_methods)?[]:json_decode($this->pay_methods,true);
+        $methods = [];
+        foreach ($raWmethods as $m){
+            $methods[] = [
+                'id'=>$m['id'],
+                'rate'=>$m['rate'],
+                'name'=>Channel::ARR_METHOD[$m['id']]??'支付方式：'.$m['id'],
+            ];
+        }
+
+        return $methods;
+    }
+
+    public function getPayMethodById($id)
+    {
+        $raWmethods = empty($this->pay_methods)?[]:json_decode($this->pay_methods,true);
+        $method = [];
+        var_dump($this->user_id);
+        foreach ($raWmethods as $m){
+            if($id == $m['id']){
+                $m['name'] = Channel::ARR_METHOD[$m['id']]??'支付方式：'.$m['id'];
+                $method =  $m;
+                break;
+            }
+        }
+
+        return $method;
+    }
 }

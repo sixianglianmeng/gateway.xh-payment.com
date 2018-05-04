@@ -44,10 +44,14 @@ class LogicOrder
 
         $orderData['merchant_account'] = $merchant->username;
         $channelInfo = $merchantPayment->paymentChannel;
+        $payMethods = $merchantPayment->getPayMethodById($orderData['pay_method_code']);
 
         $orderData['channel_id'] = $channelInfo->channel_id;
         $orderData['channel_merchant_id'] = $channelInfo->merchant_id;
         $orderData['channel_app_id'] = $channelInfo->app_id;
+        $orderData['fee_rate'] = $payMethods['rate'];
+
+        $orderData['fee_amount'] = bcmul($payMethods['rate'],$orderData['amount'],9);
         $orderData['created_at'] = time();
 
         $hasOrder = Order::findOne(['app_id'=>$orderData['app_id'],'merchant_order_no'=>$request['order_no']]);
@@ -125,7 +129,7 @@ class LogicOrder
     static public function payFail(Order $order, $failMsg='')
     {
         if ($order->status === Order::STATUS_FAIL) {
-            return true;
+            return $order;
         }
 
         $order->status = Order::STATUS_FAIL;
@@ -143,13 +147,16 @@ class LogicOrder
      * @param String $channelOrderNo 第三方流水号
      */
     static public function paySuccess(Order $order,$paidAmount,$channelOrderNo){
-
+        Yii::debug([__FUNCTION__.' '.$order->order_no.','.$paidAmount.','.$channelOrderNo]);
         if($order->status === Order::STATUS_PAID){
-            return true;
+            return $order;
         }
 
         //更改订单状态
         $order->paid_amount = $paidAmount;
+        if($order->amount>$order->paid_amount){
+            $order->amount = $order->paid_amount;
+        }
         $order->channel_order_no = $channelOrderNo;
         $order->status = Order::STATUS_PAID;
         $order->paid_at = time();
@@ -157,12 +164,11 @@ class LogicOrder
 
         $logicUser = new LogicUser($order->merchant);
         //更新充值金额
-        bcscale(6);
+        bcscale(9);
         $logicUser->changeUserBalance($order->paid_amount, Financial::EVENT_TYPE_RECHARGE, $order->order_no, Yii::$app->request->userIP);
 
         //需扣除充值手续费
-        $rechargeFee =  0-bcmul($order->merchant->recharge_rate,$order->paid_amount);
-        $logicUser->changeUserBalance($rechargeFee, Financial::EVENT_TYPE_RECHARGE_FEE, $order->order_no, Yii::$app->request->userIP);
+        $logicUser->changeUserBalance(0-$order->fee_amount, Financial::EVENT_TYPE_RECHARGE_FEE, $order->order_no, Yii::$app->request->userIP);
 
         return $order;
     }
@@ -171,8 +177,10 @@ class LogicOrder
      * 订单分红
      */
     static public function bonus(Order $order){
+        Yii::debug([__CLASS__.':'.__FUNCTION__.' '.$order->order_no]);
         if($order->financial_status === Order::FINANCIAL_STATUS_SUCCESS){
-            return true;
+            Yii::warning([__FUNCTION__.' has been bonus,will return, '.$order->order_no]);
+            return $order;
         }
 
         //所有上级代理UID
@@ -180,18 +188,31 @@ class LogicOrder
         //从自己开始算
         $parentIds[] = $order->merchant->id;
 
-        foreach ($parentIds as $pid){
-            $pUser = User::findActive($pid);
-            if(!empty($pUser)){
-                if(empty($pUser->recharge_parent_rebate_rate)){
+        bcscale(9);
+        $parentIdLen = count($parentIds)-1;
+        for($i=$parentIdLen;$i>=0;$i--){
+            $pUser = User::findActive($parentIds[$i]);
+            $payMethods = $pUser->paymentInfo->getPayMethodById($order->pay_method_code);
+
+            if(!empty($payMethods)){
+                //parent_recharge_rebate_rate
+                if(empty($payMethods['parent_recharge_rebate_rate'])){
                     Yii::debug(["order bonus, recharge_parent_rebate_rate empty",$pUser->id,$pUser->username]);
                     continue;
                 }
+                Yii::debug(["order bonus, find config",\GuzzleHttp\json_encode($payMethods)]);
+
+                if(!$pUser->parentAgent){
+                    Yii::debug(["order bonus, has no parent",$pUser->id,$pUser->username]);
+                }
                 //有上级的才返，余额操作对象是上级代理
                 if($pUser->parentAgent){
+                    Yii::debug(["order bonus parent",$pUser->id,$pUser->username,$pUser->parentAgent->id,$pUser->parentAgent->username]);
                     $logicUser =  new LogicUser($pUser->parentAgent);
-                    $rechargeFee =  bcmul($pUser->recharge_parent_rebate_rate,$order->paid_amount);
+                    $rechargeFee =  bcmul($payMethods['parent_recharge_rebate_rate'],$order->paid_amount);
                     $logicUser->changeUserBalance($rechargeFee, Financial::EVENT_TYPE_BONUS, $order->order_no, Yii::$app->request->userIP);
+                }else{
+
                 }
 
             }

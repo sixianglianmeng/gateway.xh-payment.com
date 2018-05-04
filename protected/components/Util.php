@@ -117,7 +117,7 @@ class Util
                 $exp = $exp !== false;
                 break;
             case Macro::CONST_PARAM_TYPE_ORDER_NO:
-                $exp = "/^\d{10,24}$/i";
+                $exp = "/^[0-9a-z_-]{10,24}$/i";
                 break;
             case Macro::CONST_PARAM_TYPE_EMAIL:
                 $exp = filter_input(INPUT_POST, 'email', FILTER_VALIDATE_EMAIL);
@@ -153,10 +153,26 @@ class Util
             case Macro::CONST_PARAM_TYPE_MD5:
                 $exp =  "/^[0-9a-z]{32}$/i";
                 break;
+            case Macro::CONST_PARAM_TYPE_BANK_NO:
+                $exp =  "/^\d{6,24}$/i";
+                break;
             case Macro::CONST_PARAM_TYPE_DATE:
                 $ts = strtotime($val.' 0:0');
 
                 $exp = checkdate(date('m',$ts), date('d',$ts), date('Y',$ts));
+                break;
+            case Macro::CONST_PARAM_TYPE_SORT:
+                $exp =  "/^(\+|-)?[0-9a-zA-Z_-]{1,32}$/i";
+                break;
+            case Macro::CONST_PARAM_TYPE_CHINESE:
+                $exp =  "/^[\x{4e00}-\x{9fa5}]+$/";
+                if(is_array($extRule)){
+                    if(count($extRule)==2){
+                        $exp =  "/^[\x{4e00}-\x{9fa5}]{".$extRule[0].",".$extRule[1]."}$/";
+                    }elseif(count($extRule)==1){
+                        $exp =  "/^[\x{4e00}-\x{9fa5}]{".$extRule[0].",}$/";
+                    }
+                }
                 break;
             case Macro::CONST_PARAM_TYPE_DATETIME:
                 $ts = strtotime($val);
@@ -324,34 +340,6 @@ class Util
             return iconv('gbk', 'utf-8', $word);
         }
     }
-
-    /**
-     * JSON返回
-     *
-     * param err_code 返回的错误编码
-     * param err_msg  返回的错误信息
-     * param err_dom  返回的DOM标识
-     * param $justReturn  直接返回数组
-     */
-    public static function json_return($err_code, $err_msg = '', $err_dom = '', $justReturn=false)
-    {
-        // app 请求时，需要返回平台二维码
-        if (defined('FROM_APP') && FROM_APP == true && is_array($err_msg) && !isset($err_msg['platform_qrcode'])) {
-            // $err_msg['platform_wechat_qrcode'] = option('config.wechat_qrcode');
-        }
-        if($err_msg==='' && !empty(Macro::MSG_LIST[$err_code])){
-            $err_msg = Macro::MSG_LIST[$err_code];
-        }
-        $json_arr['err_code'] = $err_code;
-        $json_arr['err_msg'] = $err_msg;
-
-        if ($err_dom) {
-            $json_arr['err_dom'] = $err_dom;
-        }
-
-        json_encode($json_arr, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES);
-    }
-
     /**
      * 获取客户端IP地址
      * @param integer $type 返回类型 0 返回IP地址 1 返回IPV4地址数字
@@ -388,7 +376,7 @@ class Util
      * param url 抓取的URL
      * param data post的数组
      */
-    public static function curl_post($url, $data)
+    public static function curlPost($url, $data, $headers=[])
     {
         $ch        = curl_init();
         $headers[] = "Accept-Charset: utf-8";
@@ -435,7 +423,7 @@ class Util
     }
 
 //时间处理
-    public static function time_tran($the_time)
+    public static function timeTrans($the_time)
     {
         $now_time = time();
         $show_time = is_numeric($the_time)?$the_time:strtotime($the_time);
@@ -517,7 +505,7 @@ class Util
         }
     }
 
-    public static function header_nocache()
+    public static function headerNocache()
     {
         header("Cache-control:no-cache,no-store,must-revalidate");
         header("Pragma:no-cache");
@@ -525,7 +513,7 @@ class Util
     }
 
 
-    public static function header_cross()
+    public static function headerCross()
     {
 // 指定允许其他域名访问
         header('Access-Control-Allow-Origin:*');
@@ -540,7 +528,7 @@ class Util
      * @param $string
      * @return int|string
      */
-    public static function strtonumber($string)
+    public static function strToNumber($string)
     {
         $len = strlen($string);
         $sum = '';

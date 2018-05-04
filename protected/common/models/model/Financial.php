@@ -9,17 +9,6 @@ use yii\db\ActiveRecord;
  */
 class Financial extends BaseModel
 {
-    //黑名单类型
-    const types = [
-        10=>'充值',
-        11=>'充值手续费',
-        20=>'分润',
-        30=>'提款',
-        31=>'提款手续费',
-        40=>'管理员调整',
-        51=>'提款退款',
-        52=>'手续费退款',
-    ];
     //状态未完成
     const STATUS_UNFINISHED=0;
     //状态已完成
@@ -34,6 +23,19 @@ class Financial extends BaseModel
     const EVENT_TYPE_REMIT_FEE = 31;
     const EVENT_TYPE_REFUND_REMIT = 51;
     const EVENT_TYPE_REFUND_REMIT_FEE = 52;
+
+    //类型
+    //收款记录,结算记录,分润记录,系统加款,系统减款,账户间转账手续费,收款手续费,结算手续费,结算失败金额返还,结算失败手续费返还,账户间转出,账户间转入,结算分润,结算失败分润退还记录
+    const ARR_EVENT_TYPES = [
+        self::EVENT_TYPE_RECHARGE=>'收款',
+        self::EVENT_TYPE_RECHARGE_FEE=>'收款手续费',
+        self::EVENT_TYPE_BONUS=>'分润',
+        self::EVENT_TYPE_REMIT=>'提款',
+        self::EVENT_TYPE_REMIT_FEE=>'提款手续费',
+        self::EVENT_TYPE_ADMIN=>'系统调整',
+        self::EVENT_TYPE_REFUND_REMIT=>'结算失败退款',
+        self::EVENT_TYPE_REFUND_REMIT_FEE=>'结算失败手续费退款',
+    ];
 
     public static function tableName()
     {
@@ -51,4 +53,16 @@ class Financial extends BaseModel
     {
         return [];
     }
+
+    /**
+     * 获取订单状态描述
+     *
+     * @return string
+     * @author chengtian.hu@gmail.com
+     */
+    public static function getEventTypeStr($eventType)
+    {
+        return self::ARR_EVENT_TYPES[$eventType]??'-';
+    }
+
 }

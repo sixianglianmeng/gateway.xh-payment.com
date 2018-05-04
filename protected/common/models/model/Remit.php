@@ -122,4 +122,16 @@ class Remit extends BaseModel
     public function getMerchant(){
         return $this->hasOne(User::className(), ['id'=>'merchant_id']);
     }
+
+    /**
+     * 获取订单状态描述
+     *
+     * @return string
+     * @author chengtian.hu@gmail.com
+     */
+    public function getStatusStr()
+    {
+        return self::ARR_STATUS[$this->status]??'-';
+    }
+
 }

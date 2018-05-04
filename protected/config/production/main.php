@@ -1,59 +1,24 @@
 <?php
-$GLOBALS['db.mysql'] = [
-];
 $config = \yii\helpers\ArrayHelper::merge(
     require __DIR__ . '/../base.php',
     [
+        'bootstrap' => [],
+        'modules' => [],
         'components' => [
             'db' => [
                 'class' => 'yii\db\Connection',
-
-                // 主库的配置
-                'dsn' => 'mysql:host=rm-8vbsw047921fwb8e8.mysql.zhangbei.rds.aliyuncs.com;dbname=cloud_accessory',
-                'username' => 'cloud_accessory',
-                'password' => '33f-92-6efFc98a5e6',
+                'dsn' => 'mysql:host=127.0.0.1;dbname=payment_com',
+                'username' => 'payment_com',
+                'password' => '3MLNH3tatiXSKzr8',
                 'charset' => 'utf8',
-                'tablePrefix' => 'acc_',
-
-                // 从库的通用配置
-                'slaveConfig' => [
-                    'username' => 'cloud_accessory',
-                    'password' => '33f-92-6efFc98a5e6',
-                    'attributes' => [
-                        // 使用一个更小的连接超时
-                        //PDO::ATTR_TIMEOUT => 10,
-                    ],
-                ],
-
-                // 从库的配置列表
-                'slaves' => [
-                    ['dsn' => 'mysql:host=rm-8vbsw047921fwb8e8.mysql.zhangbei.rds.aliyuncs.com;dbname=cloud_accessory'],
-                ],
-            ],
-            'db_sale' => [
-                'class' => 'yii\db\Connection',
-                'dsn' => 'mysql:host=rm-8vbsw047921fwb8e8.mysql.zhangbei.rds.aliyuncs.com;dbname=cloud_accessory',
-                'username' => 'cloud_accessory',
-                'password' => '33f-92-6efFc98a5e6',
-                'charset' => 'utf8',
-            ],
-            'db_financial_report' => [
-                'class' => 'yii\db\Connection',
-                'dsn' => 'mysql:host=rm-8vbsw047921fwb8e8.mysql.zhangbei.rds.aliyuncs.com;dbname=financial_report',
-                'username' => 'dts',
-                'password' => '33f-92-6efFc98a5e6',
-                'charset' => 'utf8',
-                'tablePrefix' => 'acc_',
+                'tablePrefix' => 'p_',
 //            'enableLogging'=>true,
             ],
-            'db_mall' => [
-                'class' => 'yii\db\Connection',
-                'dsn' => 'mysql:host=rm-8vbsw047921fwb8e8.mysql.zhangbei.rds.aliyuncs.com;dbname=mall_payment_com',
-                'username' => 'dts',
-                'password' => '33f-92-6efFc98a5e6',
-                'charset' => 'utf8',
-                'tablePrefix' => 'pigcms_',
-//            'enableLogging'=>true,
+            'redis' => [
+                'class' => 'yii\redis\Connection',
+                'hostname' => '127.0.0.1',
+                'port' => 63780,
+                'database' => 0,
             ],
         ],
         'params'    => [
