@@ -27,7 +27,7 @@ class UserPaymentInfo extends BaseModel
         return [];
     }
 
-    public function getPaymentChannel()
+    public function getChannelAccount()
     {
         return $this->hasOne(ChannelAccount::className(), ['id'=>'channel_account_id']);
     }

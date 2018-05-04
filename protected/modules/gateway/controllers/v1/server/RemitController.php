@@ -45,7 +45,7 @@ class RemitController extends BaseServerSignedRequestController
         //生成订单
         $remit = LogicRemit::addRemit($this->allParams,$this->merchant,$paymentChannelAccount);
 
-//        $payment = new ChannelPayment($remit,$this->merchantPayment->paymentChannel);
+//        $payment = new ChannelPayment($remit,$this->merchantPayment->channelAccount);
 //        processRemit = $payment->remit();
 
         $remit = LogicRemit::processRemit($remit,$paymentChannelAccount);

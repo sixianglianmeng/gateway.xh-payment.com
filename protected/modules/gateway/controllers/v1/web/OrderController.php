@@ -39,7 +39,7 @@ class OrderController extends BaseWebSignedRequestController
         $order = LogicOrder::addOrder($this->allParams,$this->merchant,$this->merchantPayment);
 
         //生成跳转连接
-        $payment = new ChannelPayment($order,$this->merchantPayment->paymentChannel);
+        $payment = new ChannelPayment($order,$this->merchantPayment->channelAccount);
         $redirect = $payment->createPaymentRedirectParams();
 
         //设置客户端唯一id

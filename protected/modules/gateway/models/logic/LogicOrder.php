@@ -44,12 +44,13 @@ class LogicOrder
         $orderData['notify_status'] = Order::NOTICE_STATUS_NONE;
 
         $orderData['merchant_account'] = $merchant->username;
-        $channelInfo = $merchantPayment->paymentChannel;
+        $channelAccount = $merchantPayment->channelAccount;
         $payMethods = $merchantPayment->getPayMethodById($orderData['pay_method_code']);
 
-        $orderData['channel_id'] = $channelInfo->channel_id;
-        $orderData['channel_merchant_id'] = $channelInfo->merchant_id;
-        $orderData['channel_app_id'] = $channelInfo->app_id;
+        $orderData['channel_id'] = $channelAccount->channel_id;
+        $orderData['channel_account_id'] = $channelAccount->id;
+        $orderData['channel_merchant_id'] = $channelAccount->merchant_id;
+        $orderData['channel_app_id'] = $channelAccount->app_id;
         $orderData['fee_rate'] = $payMethods['rate'];
 
         $orderData['fee_amount'] = bcmul($payMethods['rate'],$orderData['amount'],9);

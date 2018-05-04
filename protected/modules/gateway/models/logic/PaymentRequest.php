@@ -156,6 +156,6 @@ class PaymentRequest
             throw new \Exception('订单信息错误',Macro::ERR_PAYMENT_CHANNEL_ACCOUNT);
         }
 
-        return $this->merchantPayment->paymentChannel;
+        return $this->merchantPayment->channelAccount;
     }
 }
