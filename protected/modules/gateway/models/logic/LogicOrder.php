@@ -31,6 +31,7 @@ class LogicOrder
         $orderData['return_url'] = $request['return_url'];
         $orderData['bank_code'] = $request['bank_code'];
         $orderData['merchant_id'] = $request['merchant_code'];
+        $orderData['merchant_user_id'] = $merchant->id;
         $orderData['merchant_order_no'] = $request['order_no'];
         $orderData['merchant_order_time'] = strtotime($request['order_time']);
         $orderData['amount'] = $request['order_amount'];
