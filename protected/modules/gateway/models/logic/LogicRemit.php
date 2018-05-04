@@ -44,6 +44,7 @@ class LogicRemit
 
         $remitData['merchant_account'] = $merchant->username;
 
+        $remitData['channel_account_id'] = $paymentChannelAccount->id;
         $remitData['channel_id'] = $paymentChannelAccount->channel_id;
         $remitData['channel_merchant_id'] = $paymentChannelAccount->merchant_id;
         $remitData['channel_app_id'] = $paymentChannelAccount->app_id;
