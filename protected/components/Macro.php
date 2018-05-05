@@ -89,6 +89,7 @@ class Macro
     const CONST_PARAM_TYPE_STRING = 'string';
     const CONST_PARAM_TYPE_NUMBERIC_STRING = 'numberic_string';
     const CONST_PARAM_TYPE_ARRAY = 'array';
+    const CONST_PARAM_TYPE_ARRAY_HAS_KEY = 'array_has_key';
     const CONST_PARAM_TYPE_EMAIL = 'email';
     const CONST_PARAM_TYPE_USENAME = 'username';
     const CONST_PARAM_TYPE_MOBILE = 'mobile';
@@ -138,6 +139,8 @@ class Macro
     const FORMAT_JSONP = 'jsonp';
     const FORMAT_XML = 'xml';
     const FORMAT_PAYMENT_GATEWAY_JSON = 'payment_json';
+
+    const SELECT_OPTION_ALL = '__ALL__';
 
     const MSG_LIST = [
         self::USER_LOGIN_REQUIRED => '系统需要登录',

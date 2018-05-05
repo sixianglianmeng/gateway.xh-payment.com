@@ -58,24 +58,22 @@ class Order extends BaseModel
     const STATUS_PAID = 20;
     const STATUS_FREEZE = 30;
     const STATUS_FAIL = 40;
-    const STATUS_ALL = 0;
+
 //    充值订单状态
     const ARR_STATUS = [
-        self::STATUS_ALL => '全部',
         self::STATUS_NOTPAY=>'待支付',
 //        self::STATUS_PAYING=>'',
         self::STATUS_PAID=>'已支付',
         self::STATUS_FREEZE=>'冻结',
         self::STATUS_FAIL=>'支付失败',
     ];
+
 //    订单通知状态
     const NOTICE_STATUS_NONE = 10;
     const NOTICE_STATUS_SUCCESS = 20;
     const NOTICE_STATUS_FAIL = 30;
-    const NOTICE_STATUS_ALL = 0;
 //    订单状态 id=>描述
     const ARR_NOTICE_STATUS = [
-        self::NOTICE_STATUS_ALL => '全部',
         self::NOTICE_STATUS_NONE=>'未通知',
         self::NOTICE_STATUS_SUCCESS=>'通知成功',
         self::NOTICE_STATUS_FAIL=>'通知失败',

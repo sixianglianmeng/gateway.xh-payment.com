@@ -35,10 +35,18 @@ class InnerController extends \power\yii2\web\Controller
             return parent::runAction($id, $params);
         } catch (\Exception $e) {
             LogHelper::error($e->getMessage() . ' with code ' . $e->getCode());
+            $errCode = $e->getCode();
+            if($errCode === Macro::SUCCESS) $errCode = Macro::FAIL;
             if (YII_DEBUG) {
                 throw $e;
+//                return ResponseHelper::formatOutput($errCode, $e->getMessage());
             } else {
-                return ResponseHelper::outputJson([], $e->getMessage(), $e->getCode());
+                $code = Macro::INTERNAL_SERVER_ERROR;
+                if(property_exists($e,'statusCode')){
+                    $code = $e->statusCode;
+                    Yii::$app->response->statusCode=$code;
+                }
+                return ResponseHelper::formatOutput($errCode, $e->getMessage());
             }
         }
     }

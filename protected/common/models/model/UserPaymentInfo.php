@@ -38,10 +38,16 @@ class UserPaymentInfo extends BaseModel
         return [];
     }
 
-    public function getChannelAccount()
+    public function getPaymentChannel()
     {
         return $this->hasOne(ChannelAccount::className(), ['id'=>'channel_account_id']);
     }
+
+    public function getRemitChannel()
+    {
+        return $this->hasOne(ChannelAccount::className(), ['id'=>'remit_channel_account_id']);
+    }
+
 
     /*
      * 根据appid获取支付配置信息

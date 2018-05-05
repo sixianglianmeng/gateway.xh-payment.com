@@ -8,7 +8,7 @@ class SiteController extends \yii\web\Controller
 {
     public function actionIndex()
     {
-        return $this->redirect('/web/supply/index.html');
+        exit('nginx 2.1.17');
     }
 
     /**

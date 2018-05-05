@@ -34,11 +34,11 @@ use Yii;
  * @property string $bak 订单备注
  * @property string $fail_msg 失败描述
  * @property string $bank_status 银行状态
- * @property int $status 0未处理 10 已审核 20账户已扣款 30已提交到银行 40 已出款 50处理失败已退款 -10 提交银行失败 -20 银行处理失败
+ * @property int $status 0未处理 10 已审核 20账户已扣款 30已提交到银行 40 已出款 50处理失败已退款 60处理失败未退款 -10 提交银行失败 -20 银行处理失败
  */
 class Remit extends BaseModel
 {
-    //0未处理 10 已审核 20账户已扣款 30银行处理中 40 成功已出款 50处理失败已退款 -10 提交银行失败 -20 银行处理失败
+    //0未处理 10 已审核 20账户已扣款 30银行处理中 40 成功已出款 50处理失败已退款 60处理失败未退款 -10 提交银行失败 -20 银行处理失败
     const STATUS_BANK_PROCESS_FAIL=-20;
     const STATUS_BANK_NET_FAIL=-10;
     const STATUS_NONE=0;
@@ -47,6 +47,7 @@ class Remit extends BaseModel
     const STATUS_BANK_PROCESSING=30;
     const STATUS_SUCCESS=40;
     const STATUS_REFUND=50;
+    const STATUS_NON_REFUND=60;
     //银行处理状态 0 未处理 1 银行处理中 2 已打款 3失败
     const BANK_STATUS_NONE=0;
     const BANK_STATUS_PROCESSING=1;
@@ -59,7 +60,8 @@ class Remit extends BaseModel
         self::STATUS_DEDUCT            => '账户已扣款',
         self::STATUS_BANK_PROCESSING   => '银行处理中',
         self::STATUS_SUCCESS           => '成功已出款',
-        self::STATUS_REFUND            => '处理失败已退款',
+        self::STATUS_REFUND            => '失败已退款',
+        self::STATUS_NON_REFUND        => '失败未退款',
         self::STATUS_BANK_NET_FAIL     => '提交银行失败',
         self::STATUS_BANK_PROCESS_FAIL => '银行处理失败',
     ];
@@ -123,11 +125,15 @@ class Remit extends BaseModel
         return $this->hasOne(User::className(), ['id'=>'merchant_id']);
     }
 
+    public function getChannelAccount(){
+        return $this->hasOne(ChannelAccount::className(), ['id'=>'channel_account_id']);
+    }
+
     /**
      * 获取订单状态描述
      *
      * @return string
-     * @author chengtian.hu@gmail.com
+     * @author bootmall@gmail.com
      */
     public function getStatusStr()
     {

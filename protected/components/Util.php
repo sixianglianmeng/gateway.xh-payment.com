@@ -37,7 +37,7 @@ class Util
      * @return mixed
      * @author bootmall
      */
-    public static function getRequstParam($param, $default = null, $paramType = '', $errMsg = null, $extParamRule=[])
+    public static function getRequestParam($param, $default = null, $paramType = '', $errMsg = null, $extParamRule=[])
     {
         $val = isset($_REQUEST[$param]) ? $_REQUEST[$param] : null;
         if(is_string($val) || is_numeric($val)) $val = trim($val);
@@ -130,7 +130,7 @@ class Util
                 $exp =  "/^1[3|5|7|8|9]{1}[0-9]{9}$/i";
                 break;
             case Macro::CONST_PARAM_TYPE_USENAME:
-                $exp =  "/^[1-9a-zA-Z-]{1}[[0-9a-zA-Z-]]{5,32}$/i";
+                $exp =  "/^[1-9a-zA-Z]{1}[0-9a-zA-Z\-_]{5,32}$/i";
                 break;
             case Macro::CONST_PARAM_TYPE_PASSWORD:
                 $exp =  "/^.{5,32}$/i";
@@ -167,12 +167,15 @@ class Util
                 $exp =  "/^(\+|-)?[0-9a-zA-Z_-]{1,32}$/i";
                 break;
             case Macro::CONST_PARAM_TYPE_CHINESE:
-                $exp =  "/^[\x{4e00}-\x{9fa5}]+$/";
-                if(is_array($extRule)){
+                preg_match("/^[\x{4e00}-\x{9fa5}]+$/u",$val,$matched);
+                $exp = !empty($matched);
+                $extRule[0] = 1;
+                $strLen = mb_strlen($val);
+                if($extRule){
                     if(count($extRule)==2){
-                        $exp =  "/^[\x{4e00}-\x{9fa5}]{".$extRule[0].",".$extRule[1]."}$/";
+                        $exp = $exp && $strLen >= $extRule[0] && $strLen<=$extRule[1];
                     }elseif(count($extRule)==1){
-                        $exp =  "/^[\x{4e00}-\x{9fa5}]{".$extRule[0].",}$/";
+                        $exp = $exp && $strLen >= $extRule[0];
                     }
                 }
                 break;
@@ -221,6 +224,9 @@ class Util
                     $exp && count($val)>=$extRule[0];
                 }
                 break;
+            case Macro::CONST_PARAM_TYPE_ARRAY_HAS_KEY:
+                $exp =  is_array($extRule) && isset($extRule[$val]);
+                break;
             case Macro::CONST_PARAM_TYPE_BANKCODE:
 //                $codes = Macro::getAllBankCode();
                 $exp = (!empty($val) && !empty(Macro::BANK_LIST[$val]));
@@ -228,8 +234,6 @@ class Util
             case Macro::CONST_PARAM_TYPE_PAYTYPE:
 //                $codes = Macro::getAllBankCode();
                 $val = intval($val);
-//                var_dump($val);
-//                var_dump(Macro::PAY_TYPE[$val]);
                 $exp = (!empty($val) && !empty(Channel::ARR_METHOD[$val]));
                 break;
             default:
@@ -715,5 +719,21 @@ class Util
                 break;
         }
         return $chars;
+    }
+
+    /**
+     * 将[k->v]形式数组变换成[[k,v]]形式数组
+     *
+     * @param
+     * @return
+     */
+    public static function ArrayKeyValToDimetric($array,$kName=0,$vName=1)
+    {
+        $newArr = [];
+        foreach ($array as $k=>$v){
+            $newArr[] = [$kName=>$k,$vName=>$v];
+        }
+
+        return $newArr;
     }
 }

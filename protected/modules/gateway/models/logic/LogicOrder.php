@@ -53,7 +53,7 @@ class LogicOrder
         $orderData['merchant_account'] = $merchant->username;
         $orderData['created_at'] = time();
 
-        $channelAccount = $userPaymentInfo->channelAccount;
+        $channelAccount = $userPaymentInfo->paymentChannels;
         $orderData['channel_id'] = $channelAccount->channel_id;
         $orderData['channel_account_id'] = $channelAccount->id;
         $orderData['channel_merchant_id'] = $channelAccount->merchant_id;

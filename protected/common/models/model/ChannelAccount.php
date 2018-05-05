@@ -71,4 +71,8 @@ class ChannelAccount extends BaseModel
 
         return $methods;
     }
+    public static function getALLChannelAccount()
+    {
+        return self::find()->select('id,channel_name')->asArray()->all();
+    }
 }
