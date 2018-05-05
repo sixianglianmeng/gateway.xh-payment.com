@@ -10,6 +10,17 @@ use yii\db\ActiveRecord;
  */
 class UserPaymentInfo extends BaseModel
 {
+    const ALLOW_API_RECHARGE_NO=0;
+    const ALLOW_API_RECHARGE_YES=1;
+    const ALLOW_API_REMIT_NO=0;
+    const ALLOW_API_REMIT_YES=1;
+    const ALLOW_MANUAL_RECHARGE_NO=0;
+    const ALLOW_MANUAL_RECHARGE_YES=1;
+    const ALLOW_MANUAL_REMIT_NO=0;
+    const ALLOW_MANUAL_REMIT_YES=1;
+    const ALLOW_API_FAST_REMIT_YES=1;
+    const ALLOW_API_FAST_REMIT_NO=1;
+
     public static function tableName()
     {
         return '{{%user_payment_info}}';

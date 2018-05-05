@@ -30,7 +30,7 @@ class LogicOrder
      * @param User $merchant 充值账户
      * @param ChannelAccount $paymentChannelAccount 充值的三方渠道账户
      */
-    static public function addOrder(array $request, User $merchant, UserPaymentInfo $paymentChannelAccount){
+    static public function addOrder(array $request, User $merchant, UserPaymentInfo $userPaymentInfo){
 
         $orderData = [];
         $orderData['order_no'] = self::generateOrderNo();
@@ -50,19 +50,23 @@ class LogicOrder
         $orderData['status'] = Order::STATUS_NOTPAY;
         $orderData['financial_status'] = Order::FINANCIAL_STATUS_NONE;
         $orderData['notify_status'] = Order::NOTICE_STATUS_NONE;
-
         $orderData['merchant_account'] = $merchant->username;
-        $channelAccount = $paymentChannelAccount->channelAccount;
-        $payMethods = $paymentChannelAccount->getPayMethodById($orderData['pay_method_code']);
+        $orderData['created_at'] = time();
 
+        $channelAccount = $userPaymentInfo->channelAccount;
         $orderData['channel_id'] = $channelAccount->channel_id;
         $orderData['channel_account_id'] = $channelAccount->id;
         $orderData['channel_merchant_id'] = $channelAccount->merchant_id;
         $orderData['channel_app_id'] = $channelAccount->app_id;
-        $orderData['fee_rate'] = $payMethods['rate'];
 
+        $orderData['op_uid'] = $request['op_uid']??0;
+        $orderData['op_username'] = $request['op_username']??'';
+        $orderData['description'] = '';
+        $orderData['notify_ret'] = '';
+
+        $payMethods = $userPaymentInfo->getPayMethodById($orderData['pay_method_code']);
+        $orderData['fee_rate'] = $payMethods['rate'];
         $orderData['fee_amount'] = bcmul($payMethods['rate'],$orderData['amount'],9);
-        $orderData['created_at'] = time();
 
         $hasOrder = Order::findOne(['app_id'=>$orderData['app_id'],'merchant_order_no'=>$request['order_no']]);
         if($hasOrder){
@@ -71,7 +75,7 @@ class LogicOrder
         }
 
         $newOrder = new Order();
-        self::beforeAddRemit($request,$merchant,$paymentChannelAccount);
+        self::beforeAddOrder($newOrder, $merchant, $channelAccount);
 
         $newOrder->setAttributes($orderData,false);
         $newOrder->save();
@@ -89,6 +93,7 @@ class LogicOrder
      */
     static public function beforeAddOrder(Order $order, User $merchant, ChannelAccount $paymentChannelAccount){
         $userPaymentConfig = $merchant->paymentInfo;
+
         //检测账户单笔限额
         if($userPaymentConfig->recharge_quota_pertime && $order->amount > $userPaymentConfig->recharge_quota_pertime){
             throw new Exception(null,Macro::ERR_PAYMENT_REACH_ACCOUNT_QUOTA_PER_TIME);
@@ -106,7 +111,14 @@ class LogicOrder
         if($paymentChannelAccount->recharge_quota_perday && $paymentChannelAccount->recharge_today > $paymentChannelAccount->recharge_quota_perday){
             throw new Exception(null,Macro::ERR_PAYMENT_REACH_CHANNEL_QUOTA_PER_DAY);
         }
-
+        //检测是否支持api充值
+        if(empty($order->op_uid) && $paymentChannelAccount->allow_api_recharge==UserPaymentInfo::ALLOW_API_RECHARGE_NO){
+            throw new Exception(null,Macro::ERR_PAYMENT_API_NOT_ALLOWED);
+        }
+        //检测是否支持手工充值
+        elseif(!empty($order->op_uid) && $paymentChannelAccount->allow_manual_recharge==UserPaymentInfo::ALLOW_MANUAL_RECHARGE_NO){
+            throw new Exception(null,Macro::ERR_PAYMENT_MANUAL_NOT_ALLOWED);
+        }
     }
 
     static public function generateOrderNo(){

@@ -47,7 +47,10 @@ class LogicRemit
         $remitData['client_ip'] = $request['client_ip']??'';
 
         $remitData['app_id'] = $request['merchant_code'];
-        $remitData['status'] = Remit::STATUS_CHECKED;
+        $remitData['status'] = Remit::STATUS_NONE;
+        if($merchant->paymentInfo->allow_fast_api_remit == UserPaymentInfo::ALLOW_API_FAST_REMIT_YES){
+            $remitData['status'] = Remit::STATUS_CHECKED;
+        }
         $remitData['bank_status'] = Remit::BANK_STATUS_NONE;
 
         $remitData['merchant_account'] = $merchant->username;
@@ -57,6 +60,8 @@ class LogicRemit
         $remitData['channel_merchant_id'] = $paymentChannelAccount->merchant_id;
         $remitData['channel_app_id'] = $paymentChannelAccount->app_id;
         $remitData['created_at'] = time();
+        $remitData['op_uid'] = $request['op_uid']??0;
+        $remitData['op_username'] = $request['op_username']??'';
 
         $hasRemit = Remit::findOne(['app_id'=>$remitData['app_id'],'merchant_order_no'=>$request['trade_no']]);
         if($hasRemit){
@@ -65,7 +70,7 @@ class LogicRemit
         }
 
         $newRemit = new Remit();
-        self::beforeAddRemit($request,$merchant,$paymentChannelAccount);
+        self::beforeAddRemit($newRemit, $merchant, $paymentChannelAccount);
 
         $newRemit->setAttributes($remitData,false);
         $newRemit->save();
@@ -100,7 +105,14 @@ class LogicRemit
         if($paymentChannelAccount->remit_quota_perday && $paymentChannelAccount->remit_today > $paymentChannelAccount->remit_quota_perday){
             throw new Exception(null,Macro::ERR_REMIT_REACH_CHANNEL_QUOTA_PER_DAY);
         }
-
+        //检测是否支持api出款
+        if(empty($remit->op_uid) && $paymentChannelAccount->allow_api_remit==UserPaymentInfo::ALLOW_API_REMIT_NO){
+            throw new Exception(null,Macro::ERR_PAYMENT_API_NOT_ALLOWED);
+        }
+        //检测是否支持手工出款
+        elseif(!empty($remit->op_uid) && $paymentChannelAccount->allow_manual_remit==UserPaymentInfo::ALLOW_MANUAL_REMIT_NO){
+            throw new Exception(null,Macro::ERR_PAYMENT_MANUAL_NOT_ALLOWED);
+        }
     }
 
     static public function processRemit($remit, ChannelAccount $paymentChannelAccount){

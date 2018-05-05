@@ -77,4 +77,25 @@ class User extends BaseModel
     {
         return $this->hasOne(User::className(), ['id'=>'parent_agent_id']);
     }
+    /*
+    * 获取状态描述
+    *
+    * @return string
+    * @author bootmall@gmail.com
+    */
+    public function getStatusStr()
+    {
+        return self::ARR_STATUS[$this->status]??'-';
+    }
+
+    /*
+    * 获取分组描述
+    *
+    * @return string
+    * @author bootmall@gmail.com
+    */
+    public function getGroupStr()
+    {
+        return self::ARR_GROUP[$this->group_id]??'-';
+    }
 }

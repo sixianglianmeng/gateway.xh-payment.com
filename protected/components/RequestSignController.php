@@ -93,12 +93,18 @@ class RequestSignController extends \power\yii2\web\Controller
                     str_replace("\n", " ", $e->getTraceAsString())
                 )
             );
+            $errCode = $e->getCode();
+            if($errCode === Macro::SUCCESS) $errCode = Macro::FAIL;
             if (YII_DEBUG) {
-//                throw $e;
-
-                return ResponseHelper::formatOutput($e->getCode(), $e->getMessage());
+                throw $e;
+//                return ResponseHelper::formatOutput($errCode, $e->getMessage());
             } else {
-                return ResponseHelper::formatOutput($e->getCode(), $e->getMessage());
+                $code = Macro::INTERNAL_SERVER_ERROR;
+                if(property_exists($e,'statusCode')){
+                    $code = $e->statusCode;
+                    Yii::$app->response->statusCode=$code;
+                }
+                return ResponseHelper::formatOutput($errCode, $e->getMessage());
             }
         }
     }

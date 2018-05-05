@@ -32,6 +32,7 @@ class Macro
     const SIGN_ERROR = 10002;    // 签名错误
     const ERROR_LOGIN_INFO = 10003;    //登录错误
     const ERR_REFERRER = 10004;
+    const ERR_API_IP_DENIED = 10005;
     const ERR_PAGE_NOT_FOUND = 404;
 
     const ERR_NEED_LOGIN = 401;
@@ -72,11 +73,15 @@ class Macro
     const ERR_PAYMENT_REACH_ACCOUNT_QUOTA_PER_TIME = 10112;
     const ERR_PAYMENT_REACH_CHANNEL_QUOTA_PER_DAY = 10113;
     const ERR_PAYMENT_REACH_CHANNEL_QUOTA_PER_TIME = 10114;
+    const ERR_PAYMENT_API_NOT_ALLOWED = 10115;
+    const ERR_PAYMENT_MANUAL_NOT_ALLOWED  = 10116;
 
     const ERR_REMIT_REACH_ACCOUNT_QUOTA_PER_DAY = 10201;
     const ERR_REMIT_REACH_ACCOUNT_QUOTA_PER_TIME = 10202;
     const ERR_REMIT_REACH_CHANNEL_QUOTA_PER_DAY = 10203;
     const ERR_REMIT_REACH_CHANNEL_QUOTA_PER_TIME = 10204;
+    const ERR_REMIT_API_NOT_ALLOWED = 10205;
+    const ERR_REMIT_MANUAL_NOT_ALLOWED = 10206;
 
     const CONST_PAYMENT_GETWAY_SIGN_TYPE = 'MD5';
     const CONST_JSON = 'json';
@@ -144,6 +149,7 @@ class Macro
         self::ERROR_LOGIN_INFO => '登录信息错误',
         self::ERR_REFERRER => '访问来源错误',
         self::ERR_PAGE_NOT_FOUND => '访问的内容不存在',
+        self::ERR_API_IP_DENIED => '接口请求不在允许的IP范围',
 
         self::ERR_NEED_LOGIN => '系统需要登录',
         self::ERR_LOGIN_FAIL => '登录失败',
@@ -183,11 +189,15 @@ class Macro
         self::ERR_PAYMENT_REACH_ACCOUNT_QUOTA_PER_TIME => '已达到账户单次充值最大额度',
         self::ERR_PAYMENT_REACH_CHANNEL_QUOTA_PER_DAY => '已达到渠道单日充值最大额度',
         self::ERR_PAYMENT_REACH_CHANNEL_QUOTA_PER_TIME => '已达到渠道单日充值最大额度',
+        self::ERR_PAYMENT_API_NOT_ALLOWED => '商户帐号不支持API充值',
+        self::ERR_PAYMENT_MANUAL_NOT_ALLOWED => '商户帐号不支持手工充值',
 
         self::ERR_REMIT_REACH_ACCOUNT_QUOTA_PER_DAY => '已达到账户单日提款最大额度',
         self::ERR_REMIT_REACH_ACCOUNT_QUOTA_PER_TIME => '已达到账户单次提款最大额度',
         self::ERR_REMIT_REACH_CHANNEL_QUOTA_PER_DAY => '已达到渠道单日提款最大额度',
         self::ERR_REMIT_REACH_CHANNEL_QUOTA_PER_TIME => '已达到渠道单次提款最大额度',
+        self::ERR_REMIT_API_NOT_ALLOWED => '商户帐号不支持API出款',
+        self::ERR_REMIT_MANUAL_NOT_ALLOWED => '商户帐号不支持手工出款',
     ];
 
     const BANK_LIST = [

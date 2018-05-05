@@ -19,6 +19,16 @@ class BaseServerSignedRequestController extends RequestSignController
         $ret = parent::beforeAction($action);
         Yii::$app->response->format = Macro::FORMAT_JSON;
         Yii::$app->params['jsonFormatType'] = Macro::FORMAT_PAYMENT_GATEWAY_JSON;
+
+        //检测IP白名单
+        $ips = Yii::$app->controller->merchantPayment->app_server_ips;
+        if($ips){
+            $ips = json_decode($ips,true);
+            $currIp = Yii::$app->request->getUserIP();
+            if(!empty($ips) && !in_array($currIp, $ips)){
+                throw new \Exception(Macro::ERR_API_IP_DENIED);
+            }
+        }
         return $ret;
     }
 }

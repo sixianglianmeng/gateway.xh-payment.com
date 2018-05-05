@@ -4,28 +4,80 @@ namespace app\common\models\model;
 use Yii;
 use yii\db\ActiveRecord;
 
+/*
+ * 订单model
+ *
+ * @property int $id 自增ID
+ * @property int $op_uid 用户UID
+ * @property string $op_username 用户名
+ * @property string $order_no 平台支付流水号
+ * @property string $merchant_order_no 商户支付流水号
+ * @property string $channel_order_no 上级支付渠道流水号
+ * @property int $merchant_id 商户ID
+ * @property string $merchant_user_id 商户用户UID
+ * @property int $app_id 商户应用ID
+ * @property int $app_name 商户应用名
+ * @property string $merchant_account 商户账户
+ * @property string $amount 订单金额
+ * @property string $paid_amount 实际支付的金额
+ * @property string $channel_id 支付通道ID
+ * @property string $channel_merchant_id 支付通道商户号
+ * @property string $channel_app_id 支付通道app id
+ * @property string $pay_method_code 支付方式代码
+ * @property string $sub_pay_method_code 子支付方式代码
+ * @property string $bank_code 银行直连支付时的银行代码
+ * @property string $title 订单描述
+ * @property string $description 订单详情
+ * @property int $notify_status 订单后台通知状态 0未通知 10已通知
+ * @property string $notify_url 订单后台通知URL
+ * @property string $reutrn_url 订单前台回跳URL
+ * @property string $client_ip 订单终端用户IP
+ * @property string $client_id 客户端ID
+ * @property int $created_at 记录生成时间
+ * @property int $paid_at 支付时间
+ * @property int $updated_at 记录更新时间
+ * @property string $bak 订单备注
+ * @property int $notify_at 上次通知时间
+ * @property int $notify_times 已通知次数
+ * @property int $next_notify_time 下次通知时间
+ * @property int $status -10交易失败, 0未付款，10付款中，20已支付
+ * @property string $return_params 订单完成后回传给商户的参数
+ * @property int $financial_status 订单账务处理状态 0未处理10已处理
+ * @property string $fail_msg 订单失败描述
+ * @property string $notify_ret 通知结果
+ * @property int $merchant_order_time 商户订单时间
+ * @property string $fee_amount 手续费
+ * @property string $fee_rate 手续费比例
+ * @property int $channel_account_id 支付通道账户表ID
+ */
 class Order extends BaseModel
 {
-    //-10失败 0未付款，10付款中，20已支付
-    const STATUS_NOTPAY=0;
-    const STATUS_PAYING=10;
-    const STATUS_BLOCKED=11;
-    const STATUS_PAID=20;
-    const STATUS_FAIL=-10;
+    //充值订单状态
+    const STATUS_NOTPAY= 10;
+//    const STATUS_PAYING=10;
+    const STATUS_PAID = 20;
+    const STATUS_FREEZE = 30;
+    const STATUS_FAIL = 40;
+    const STATUS_ALL = 0;
+//    充值订单状态
     const ARR_STATUS = [
-        self::STATUS_NOTPAY=>'失败',
-        self::STATUS_PAYING=>'未付款',
-        self::STATUS_PAID=>'付款中',
-        self::STATUS_BLOCKED=>'已冻结',
-        self::STATUS_FAIL=>'已支付',
+        self::STATUS_ALL => '全部',
+        self::STATUS_NOTPAY=>'待支付',
+//        self::STATUS_PAYING=>'',
+        self::STATUS_PAID=>'已支付',
+        self::STATUS_FREEZE=>'冻结',
+        self::STATUS_FAIL=>'支付失败',
     ];
-
-    const NOTICE_STATUS_NONE = 0;
-    const NOTICE_STATUS_SUCCESS = 10;
-    const NOTICE_STATUS_FAIL = -1;
+//    订单通知状态
+    const NOTICE_STATUS_NONE = 10;
+    const NOTICE_STATUS_SUCCESS = 20;
+    const NOTICE_STATUS_FAIL = 30;
+    const NOTICE_STATUS_ALL = 0;
+//    订单状态 id=>描述
     const ARR_NOTICE_STATUS = [
+        self::NOTICE_STATUS_ALL => '全部',
         self::NOTICE_STATUS_NONE=>'未通知',
-        self::NOTICE_STATUS_SUCCESS=>'已通知',
+        self::NOTICE_STATUS_SUCCESS=>'通知成功',
         self::NOTICE_STATUS_FAIL=>'通知失败',
     ];
 
@@ -42,6 +94,26 @@ class Order extends BaseModel
         return '{{%orders}}';
     }
 
+    /**
+     * @inheritdoc
+     */
+    public function rules()
+    {
+        return [
+            [['op_uid', 'description', 'notify_ret', 'merchant_order_time', 'fee_amount', 'fee_rate', 'channel_account_id'], 'required'],
+            [['op_uid', 'merchant_id', 'app_id', 'app_name', 'created_at', 'paid_at', 'updated_at', 'notify_at', 'notify_times', 'next_notify_time', 'status', 'financial_status', 'merchant_order_time', 'channel_account_id'], 'integer'],
+            [['amount', 'paid_amount', 'fee_amount', 'fee_rate'], 'number'],
+            [['description', 'notify_ret'], 'string'],
+            [['op_username', 'merchant_user_id', 'channel_id', 'channel_merchant_id', 'channel_app_id', 'pay_method_code', 'sub_pay_method_code', 'bank_code', 'title'], 'string', 'max' => 32],
+            [['order_no', 'merchant_order_no', 'channel_order_no', 'merchant_account', 'client_id'], 'string', 'max' => 64],
+            [['notify_status'], 'string', 'max' => 4],
+            [['notify_url', 'reutrn_url'], 'string', 'max' => 254],
+            [['client_ip'], 'string', 'max' => 24],
+            [['bak'], 'string', 'max' => 255],
+            [['return_params', 'fail_msg'], 'string', 'max' => 128],
+            [['order_no'], 'unique'],
+        ];
+    }
 
     public static function getOrderByOrderNo(string $orderNo){
         $order = Order::findOne(['order_no'=>$orderNo]);
@@ -52,11 +124,15 @@ class Order extends BaseModel
         return $this->hasOne(User::className(), ['id'=>'merchant_id']);
     }
 
+    public function getChannelAccount(){
+        return $this->hasOne(ChannelAccount::className(), ['id'=>'channel_account_id']);
+    }
+
     /**
      * 获取订单状态描述
      *
      * @return string
-     * @author chengtian.hu@gmail.com
+     * @author bootmall@gmail.com
      */
     public function getStatusStr()
     {
@@ -67,7 +143,7 @@ class Order extends BaseModel
      * 获取通知状态描述
      *
      * @return string
-     * @author chengtian.hu@gmail.com
+     * @author bootmall@gmail.com
      */
     public function getNotifyStatusStr()
     {
