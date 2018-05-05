@@ -1,6 +1,8 @@
 <?php
 namespace app\components;
 
+use app\common\models\model\Channel;
+use app\common\models\model\Order;
 use app\components\Macro;
 
 class Util
@@ -228,7 +230,7 @@ class Util
                 $val = intval($val);
 //                var_dump($val);
 //                var_dump(Macro::PAY_TYPE[$val]);
-                $exp = (!empty($val) && !empty(Macro::PAY_TYPE[$val]));
+                $exp = (!empty($val) && !empty(Channel::ARR_METHOD[$val]));
                 break;
             default:
                 $exp = '';

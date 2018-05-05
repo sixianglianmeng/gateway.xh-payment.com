@@ -70,7 +70,6 @@ class UserPaymentInfo extends BaseModel
     {
         $raWmethods = empty($this->pay_methods)?[]:json_decode($this->pay_methods,true);
         $method = [];
-        var_dump($this->user_id);
         foreach ($raWmethods as $m){
             if($id == $m['id']){
                 $m['name'] = Channel::ARR_METHOD[$m['id']]??'支付方式：'.$m['id'];

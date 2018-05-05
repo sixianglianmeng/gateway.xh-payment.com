@@ -17,6 +17,7 @@ use power\yii2\exceptions\ParameterValidationExpandException;
 use Yii;
 use app\common\models\model\User;
 use app\components\Macro;
+use Exception;
 
 class LogicRemit
 {
@@ -24,6 +25,13 @@ class LogicRemit
     const NOTICE_DELAY = 300;
     const REDIS_CACHE_KEY = 'lt_remit';
 
+    /*
+     * 添加提款记录
+     *
+     * @param array $request 请求数组
+     * @param User $merchant 提款账户
+     * @param ChannelAccount $paymentChannelAccount 提款的三方渠道账户
+     */
     static public function addRemit(array $request, User $merchant, ChannelAccount $paymentChannelAccount){
 //        ['merchant_code', 'trade_no', 'order_amount', 'order_time', 'bank_code', ' account_name', 'account_number',
         $remitData = [];
@@ -57,10 +65,42 @@ class LogicRemit
         }
 
         $newRemit = new Remit();
+        self::beforeAddRemit($request,$merchant,$paymentChannelAccount);
+
         $newRemit->setAttributes($remitData,false);
         $newRemit->save();
 
         return $newRemit;
+    }
+
+    /*
+     * 提款前置操作
+     * 可进行额度校验的等操作
+     *
+     * @param array $request 请求数组
+     * @param User $merchant 提款账户
+     * @param ChannelAccount $paymentChannelAccount 提款的三方渠道账户
+     */
+    static public function beforeAddRemit(Remit $remit, User $merchant, ChannelAccount $paymentChannelAccount){
+        $userPaymentConfig = $merchant->paymentInfo;
+        //检测账户单笔限额
+        if($userPaymentConfig->remit_quota_pertime && $remit->amount > $userPaymentConfig->remit_quota_pertime){
+            throw new Exception(null,Macro::ERR_REMIT_REACH_ACCOUNT_QUOTA_PER_TIME);
+        }
+        //检测账户日限额
+        if($userPaymentConfig->remit_quota_perday && $remit->remit_today > $userPaymentConfig->remit_quota_perday){
+            throw new Exception(null,Macro::ERR_REMIT_REACH_ACCOUNT_QUOTA_PER_DAY);
+        }
+
+        //检测渠道单笔限额
+        if($paymentChannelAccount->remit_quota_pertime && $remit->amount > $paymentChannelAccount->remit_quota_pertime){
+            throw new Exception(null,Macro::ERR_REMIT_REACH_CHANNEL_QUOTA_PER_TIME);
+        }
+        //检测渠道日限额
+        if($paymentChannelAccount->remit_quota_perday && $paymentChannelAccount->remit_today > $paymentChannelAccount->remit_quota_perday){
+            throw new Exception(null,Macro::ERR_REMIT_REACH_CHANNEL_QUOTA_PER_DAY);
+        }
+
     }
 
     static public function processRemit($remit, ChannelAccount $paymentChannelAccount){

@@ -16,13 +16,21 @@ use Yii;
 use app\common\models\model\User;
 use app\common\models\model\Order;
 use app\components\Macro;
+use Exception;
 
 class LogicOrder
 {
     //通知失败后间隔通知时间
     const NOTICE_DELAY = 300;
 
-    static public function addOrder(array $request, User $merchant, UserPaymentInfo $merchantPayment){
+    /*
+     * 添加充值记录
+     *
+     * @param array $request 请求数组
+     * @param User $merchant 充值账户
+     * @param ChannelAccount $paymentChannelAccount 充值的三方渠道账户
+     */
+    static public function addOrder(array $request, User $merchant, UserPaymentInfo $paymentChannelAccount){
 
         $orderData = [];
         $orderData['order_no'] = self::generateOrderNo();
@@ -44,8 +52,8 @@ class LogicOrder
         $orderData['notify_status'] = Order::NOTICE_STATUS_NONE;
 
         $orderData['merchant_account'] = $merchant->username;
-        $channelAccount = $merchantPayment->channelAccount;
-        $payMethods = $merchantPayment->getPayMethodById($orderData['pay_method_code']);
+        $channelAccount = $paymentChannelAccount->channelAccount;
+        $payMethods = $paymentChannelAccount->getPayMethodById($orderData['pay_method_code']);
 
         $orderData['channel_id'] = $channelAccount->channel_id;
         $orderData['channel_account_id'] = $channelAccount->id;
@@ -63,10 +71,42 @@ class LogicOrder
         }
 
         $newOrder = new Order();
+        self::beforeAddRemit($request,$merchant,$paymentChannelAccount);
+
         $newOrder->setAttributes($orderData,false);
         $newOrder->save();
 
         return $newOrder;
+    }
+
+    /*
+     * 充值前置操作
+     * 可进行额度校验的等操作
+     *
+     * @param array $request 请求数组
+     * @param User $merchant 提款账户
+     * @param ChannelAccount $paymentChannelAccount 提款的三方渠道账户
+     */
+    static public function beforeAddOrder(Order $order, User $merchant, ChannelAccount $paymentChannelAccount){
+        $userPaymentConfig = $merchant->paymentInfo;
+        //检测账户单笔限额
+        if($userPaymentConfig->recharge_quota_pertime && $order->amount > $userPaymentConfig->recharge_quota_pertime){
+            throw new Exception(null,Macro::ERR_PAYMENT_REACH_ACCOUNT_QUOTA_PER_TIME);
+        }
+        //检测账户日限额
+        if($userPaymentConfig->recharge_quota_perday && $order->recharge_today > $userPaymentConfig->recharge_quota_perday){
+            throw new Exception(null,Macro::ERR_PAYMENT_REACH_ACCOUNT_QUOTA_PER_DAY);
+        }
+
+        //检测渠道单笔限额
+        if($paymentChannelAccount->recharge_quota_pertime && $order->amount > $paymentChannelAccount->recharge_quota_pertime){
+            throw new Exception(null,Macro::ERR_PAYMENT_REACH_CHANNEL_QUOTA_PER_TIME);
+        }
+        //检测渠道日限额
+        if($paymentChannelAccount->recharge_quota_perday && $paymentChannelAccount->recharge_today > $paymentChannelAccount->recharge_quota_perday){
+            throw new Exception(null,Macro::ERR_PAYMENT_REACH_CHANNEL_QUOTA_PER_DAY);
+        }
+
     }
 
     static public function generateOrderNo(){
