@@ -45,12 +45,12 @@ class LogicRemit
         $remitData['merchant_id'] = $request['merchant_code'];
         $remitData['merchant_order_no'] = $request['trade_no'];
         $remitData['amount'] = $request['order_amount'];
-        $remitData['remit_fee'] = $merchant->remit_fee;
+        $remitData['remit_fee'] = $merchant->paymentInfo->remit_fee;
         $remitData['client_ip'] = $request['client_ip']??'';
 
         $remitData['app_id'] = $request['merchant_code'];
         $remitData['status'] = Remit::STATUS_NONE;
-        if($merchant->paymentInfo->allow_fast_api_remit == UserPaymentInfo::ALLOW_API_FAST_REMIT_YES){
+        if($merchant->paymentInfo->allow_api_fast_remit == UserPaymentInfo::ALLOW_API_FAST_REMIT_YES){
             $remitData['status'] = Remit::STATUS_CHECKED;
         }
         $remitData['bank_status'] = Remit::BANK_STATUS_NONE;
@@ -177,6 +177,7 @@ class LogicRemit
             //银行状态说明：00处理中，04成功，05失败或拒绝
             $payment = new ChannelPayment($remit, $paymentChannelAccount);
             $ret = $payment->remit();
+
             Yii::info('remit commitToBank: '.json_encode($ret,JSON_UNESCAPED_UNICODE));
             if($ret['code'] === 0){
                 switch ($ret['data']['status']){

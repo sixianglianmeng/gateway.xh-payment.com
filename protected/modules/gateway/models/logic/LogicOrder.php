@@ -9,6 +9,7 @@ use app\common\models\model\ChannelAccount;
 use app\common\models\model\Financial;
 use app\common\models\model\LogApiRequest;
 use app\common\models\model\UserPaymentInfo;
+use app\components\Util;
 use app\jobs\PaymentNotifyJob;
 use app\lib\helpers\SignatureHelper;
 use app\lib\payment\ObjectNoticeResult;
@@ -66,6 +67,9 @@ class LogicOrder
         $orderData['notify_ret'] = '';
 
         $payMethods = $userPaymentInfo->getPayMethodById($orderData['pay_method_code']);
+        if(empty($payMethods)){
+            Util::throwException(Macro::ERR_PAYMENT_TYPE_NOT_ALLOWED);
+        }
         $orderData['fee_rate'] = $payMethods['rate'];
         $orderData['fee_amount'] = bcmul($payMethods['rate'],$orderData['amount'],9);
 
@@ -178,8 +182,8 @@ class LogicOrder
             'event_type'=>$eventType,
             'merchant_id'=>$order->merchant_id,
             'merchant_name'=>$order->merchant_account,
-            'channel_account_id'=>$order->id,
-            'channel_name'=>$order->channel_name,
+            'channel_account_id'=>$order->channel_merchant_id,
+            'channel_name'=>$order->channelAccount->channel_name,
         ];
 
         //未处理

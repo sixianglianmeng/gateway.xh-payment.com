@@ -22,7 +22,7 @@ class LogicApiRequestLog
         //设置了请求日志，写入日志表
         if(!empty(Yii::$app->params['apiRequestLog'])){
             $logData = Yii::$app->params['apiRequestLog'];
-            $logData['request_url'] = Yii::app()->request->hostInfo.Yii::$app->request->getUrl();
+            $logData['request_url'] = Yii::$app->request->hostInfo.Yii::$app->request->getUrl();
             $logData['request_method'] = Yii::$app->request->method=='GET'?1:2;
             $logData['post_data'] = json_encode(Yii::$app->getRequest()->getBodyParams(),JSON_UNESCAPED_UNICODE);
             $logData['response_data'] = json_encode($logResponse,JSON_UNESCAPED_UNICODE);
