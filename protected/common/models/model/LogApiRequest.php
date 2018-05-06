@@ -40,6 +40,7 @@ class LogApiRequest extends BaseModel
     const EVENT_TYPE_OUT_RECHARGE_ADD = 201;
     const EVENT_TYPE_OUT_RECHARGE_BATCH_ADD = 202;
     const EVENT_TYPE_OUT_RECHARGE_QUERY = 203;
+    const EVENT_TYPE_OUT_RECHARGE_NOTIFY = 204;
     const EVENT_TYPE_OUT_REMIT_ADD = 220;
     const EVENT_TYPE_OUT_REMIT_QUERY = 221;
     const EVENT_TYPE_OUT_BALANCE_QUERY = 230;
@@ -56,6 +57,7 @@ class LogApiRequest extends BaseModel
         self::EVENT_TYPE_OUT_RECHARGE_ADD => '请求到三方充值',
         self::EVENT_TYPE_OUT_RECHARGE_BATCH_ADD => '请求到三方批量充值',
         self::EVENT_TYPE_OUT_RECHARGE_QUERY => '请求到三方余额查询',
+        self::EVENT_TYPE_OUT_RECHARGE_NOTIFY => '订单通知商户',
         self::EVENT_TYPE_OUT_REMIT_ADD => '请求到三方提款',
         self::EVENT_TYPE_OUT_REMIT_QUERY => '请求到三方提款查询',
         self::EVENT_TYPE_OUT_BALANCE_QUERY => '请求到三方余额查询',

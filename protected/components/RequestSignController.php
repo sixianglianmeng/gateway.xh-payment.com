@@ -102,8 +102,8 @@ class RequestSignController extends \power\yii2\web\Controller
 
             if($errCode === Macro::SUCCESS) $errCode = Macro::FAIL;
             if (YII_DEBUG) {
-                throw $e;
-//                return ResponseHelper::formatOutput($errCode, $msg);
+//                throw $e;
+                return ResponseHelper::formatOutput($errCode, $msg);
             } else {
                 $code = Macro::INTERNAL_SERVER_ERROR;
                 if(property_exists($e,'statusCode')){

@@ -51,8 +51,11 @@ class AllscoreController extends WebAppController
         LogicOrder::processChannelNotice($noticeResult);
 
         //获取商户回跳连接
-        $url = LogicOrder::createReturnUrl($noticeResult->order);
-        Yii::$app->response->redirect($url);
+//        $url = LogicOrder::createReturnUrl($noticeResult->order);
+//        Yii::$app->response->redirect($url);
+
+        $responseStr = AllScoreBasePayment::createdResponse(true);
+        return $responseStr;
     }
 
     /*
@@ -60,7 +63,7 @@ class AllscoreController extends WebAppController
      */
     public function actionReturn()
     {
-        \Yii::$app->response->format = \yii\web\Response::FORMAT_RAW;
+//        \Yii::$app->response->format = \yii\web\Response::FORMAT_RAW;
 
         //解析订单回调，获取统一的订单id，金额等信息
         $payment = new AllScoreBasePayment();
@@ -71,19 +74,22 @@ class AllscoreController extends WebAppController
             throw new \Exception("无法解析订单信息：".$noticeResult->msg);
         }
 
-//        if($noticeResult->status === Macro::SUCCESS){
-//            LogicOrder::processChannelNotice($noticeResult);
-//        }else{
-//            throw new \Exception("支付失败：".$noticeResult->msg);
-//        }
+
         //处理订单
         LogicOrder::processChannelNotice($noticeResult);
 
         //获取商户回跳连接
         $url = LogicOrder::createReturnUrl($noticeResult->order);
-        Yii::$app->response->redirect($url);
 
-        $responseStr = AllScoreBasePayment::createdResponse(true);
-        return $responseStr;
+        if ($url) {
+            Yii::$app->response->redirect($url);
+        } else {
+            if ($noticeResult->status === Macro::SUCCESS) {
+                throw new \Exception("支付成功");
+            } else {
+                throw new \Exception("支付失败：" . $noticeResult->msg);
+            }
+        }
+
     }
 }

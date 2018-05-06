@@ -750,6 +750,6 @@ class Util
             $msg = Macro::MSG_LIST[$code];
         }
 
-        throw new \Exception($msg, $code);
+        throw new Exception($msg);
     }
 }

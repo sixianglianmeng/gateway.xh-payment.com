@@ -92,27 +92,6 @@ class Order extends BaseModel
         return '{{%orders}}';
     }
 
-    /**
-     * @inheritdoc
-     */
-    public function rules()
-    {
-        return [
-            [['op_uid', 'description', 'notify_ret', 'merchant_order_time', 'fee_amount', 'fee_rate', 'channel_account_id'], 'required'],
-            [['op_uid', 'merchant_id', 'app_id', 'app_name', 'created_at', 'paid_at', 'updated_at', 'notify_at', 'notify_times', 'next_notify_time', 'status', 'financial_status', 'merchant_order_time', 'channel_account_id'], 'integer'],
-            [['amount', 'paid_amount', 'fee_amount', 'fee_rate'], 'number'],
-            [['description', 'notify_ret'], 'string'],
-            [['op_username', 'merchant_user_id', 'channel_id', 'channel_merchant_id', 'channel_app_id', 'pay_method_code', 'sub_pay_method_code', 'bank_code', 'title'], 'string', 'max' => 32],
-            [['order_no', 'merchant_order_no', 'channel_order_no', 'merchant_account', 'client_id'], 'string', 'max' => 64],
-            [['notify_status'], 'string', 'max' => 4],
-            [['notify_url', 'reutrn_url'], 'string', 'max' => 254],
-            [['client_ip'], 'string', 'max' => 24],
-            [['bak'], 'string', 'max' => 255],
-            [['return_params', 'fail_msg'], 'string', 'max' => 128],
-            [['order_no'], 'unique'],
-        ];
-    }
-
     public static function getOrderByOrderNo(string $orderNo){
         $order = Order::findOne(['order_no'=>$orderNo]);
         return $order;

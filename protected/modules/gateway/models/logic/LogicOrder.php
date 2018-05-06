@@ -351,6 +351,9 @@ class LogicOrder
      * 生成订单同步通知跳转连接
      */
     static public function createReturnUrl(Order $order){
+        if(empty($order->reutrn_url)){
+            return '';
+        }
 
         $arrParams = self::createNotifyParameters($order);
         $url = $order->reutrn_url.'?'.http_build_query($arrParams);
@@ -403,12 +406,12 @@ class LogicOrder
 
         //接口日志埋点
         Yii::$app->params['apiRequestLog'] = [
-            'event_id'=>$order->order_no,
+            'event_id'=>$orderNo,
             'event_type'=>LogApiRequest::EVENT_TYPE_IN_RECHARGE_QUERY,
-            'merchant_id'=>$order->merchant_id??$merchant->id,
-            'merchant_name'=>$order->merchant_account??$merchant->username,
-            'channel_account_id'=>$order->channelAccount->id,
-            'channel_name'=>$order->channelAccount->channel_name,
+            'merchant_id'=>$merchant->id,
+            'merchant_name'=>$merchant->username,
+            'channel_account_id'=>Yii::$app->params['merchantPayment']->remitChannel->id,
+            'channel_name'=>Yii::$app->params['merchantPayment']->remitChannel->channel_name,
         ];
 
         if(!$order){
