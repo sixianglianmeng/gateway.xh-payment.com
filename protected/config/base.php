@@ -40,8 +40,10 @@ $config = [
             ]
         ],
         'cache' => [
-            'class'     => 'yii\caching\FileCache',
-            'cachePath' => '@runtime/cache.dat',
+//            'class'     => 'yii\caching\FileCache',
+//            'cachePath' => '@runtime/cache.dat',
+            'class' => 'yii\redis\Cache',
+            'redis' => 'redis'
         ],
         'db' => [
             'class' => 'yii\db\Connection',

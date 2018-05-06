@@ -36,16 +36,16 @@ class PaymentNotifyJob extends BaseObject implements RetryableJobInterface
             $cli->post($urlInfo['path'], $this->data, function ($cli) use ($queue,$orderNo,$ts) {
                 \Yii::debug(['PaymentNotifyJob ret',$this->orderNo,$cli->statusCode]);
                 $costTime = bcsub(microtime(true),$ts,4);
-                LogicApiRequestLog::outLog($this->url, 'POST', $cli->body, $cli->statusCode, $costTime, $this->data);
+
                 //接口日志埋点
                 Yii::$app->params['apiRequestLog'] = [];
-
-                    Yii::$app->params['apiRequestLog']['event_id']=$orderNo;
-                    Yii::$app->params['apiRequestLog']['event_type']=LogApiRequest::EVENT_TYPE_OUT_RECHARGE_NOTIFY;
+                Yii::$app->params['apiRequestLog']['event_id']=$orderNo;
+                Yii::$app->params['apiRequestLog']['event_type']=LogApiRequest::EVENT_TYPE_OUT_RECHARGE_NOTIFY;
 //                    Yii::$app->params['apiRequestLog']['merchant_id']=$order->merchant_id??$merchant->id;
 //                    Yii::$app->params['apiRequestLog']['merchant_name']=$order->merchant_account??$merchant->username;
 //                    Yii::$app->params['apiRequestLog']['channel_account_id']=$order->channelAccount->id;
 //                    Yii::$app->params['apiRequestLog']['channel_name']=$order->channelAccount->channel_name;
+                LogicApiRequestLog::outLog($this->url, 'POST', $cli->body, $cli->statusCode, $costTime, $this->data);
 
                 $noticeOk = Order::NOTICE_STATUS_NONE;
                 if($cli->statusCode == 200){
