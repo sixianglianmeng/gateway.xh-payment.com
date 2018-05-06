@@ -33,7 +33,26 @@ class AllscoreController extends WebAppController
      */
     public function actionNotify()
     {
+        //解析订单回调，获取统一的订单id，金额等信息
+        $payment = new AllScoreBasePayment();
+        $noticeResult = $payment->parseReturnRequest($this->allParams);
+        Yii::debug("parseReturnRequest: ".\GuzzleHttp\json_encode($noticeResult));
 
+        if(empty($noticeResult->order)){
+            throw new \Exception("无法解析订单信息：".$noticeResult->msg);
+        }
+
+//        if($noticeResult->status === Macro::SUCCESS){
+//            LogicOrder::processChannelNotice($noticeResult);
+//        }else{
+//            throw new \Exception("支付失败：".$noticeResult->msg);
+//        }
+        //处理订单
+        LogicOrder::processChannelNotice($noticeResult);
+
+        //获取商户回跳连接
+        $url = LogicOrder::createReturnUrl($noticeResult->order);
+        Yii::$app->response->redirect($url);
     }
 
     /*
@@ -41,23 +60,30 @@ class AllscoreController extends WebAppController
      */
     public function actionReturn()
     {
+        \Yii::$app->response->format = \yii\web\Response::FORMAT_RAW;
+
+        //解析订单回调，获取统一的订单id，金额等信息
         $payment = new AllScoreBasePayment();
-
         $noticeResult = $payment->parseReturnRequest($this->allParams);
-
         Yii::debug("parseReturnRequest: ".\GuzzleHttp\json_encode($noticeResult));
+
         if(empty($noticeResult->order)){
             throw new \Exception("无法解析订单信息：".$noticeResult->msg);
         }
 
-        if($noticeResult->status === Macro::SUCCESS){
-            LogicOrder::processChannelNotice($noticeResult);
-        }else{
-            throw new \Exception("支付失败：".$noticeResult->msg);
-        }
+//        if($noticeResult->status === Macro::SUCCESS){
+//            LogicOrder::processChannelNotice($noticeResult);
+//        }else{
+//            throw new \Exception("支付失败：".$noticeResult->msg);
+//        }
+        //处理订单
+        LogicOrder::processChannelNotice($noticeResult);
 
+        //获取商户回跳连接
         $url = LogicOrder::createReturnUrl($noticeResult->order);
+        Yii::$app->response->redirect($url);
 
-        echo $url;exit;
+        $responseStr = AllScoreBasePayment::createdResponse(true);
+        return $responseStr;
     }
 }

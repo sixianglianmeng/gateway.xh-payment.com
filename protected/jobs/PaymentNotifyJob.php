@@ -1,6 +1,7 @@
 <?php
 namespace app\jobs;
 
+use app\common\models\model\LogApiRequest;
 use app\components\Macro;
 use app\modules\gateway\models\logic\LogicOrder;
 use yii\base\BaseObject;
@@ -18,7 +19,8 @@ class PaymentNotifyJob extends BaseObject implements RetryableJobInterface
     {
         $urlInfo = parse_url($this->url);
 
-        \Swoole\Async::dnsLookup($urlInfo['host'], function ($domainName, $ip) use($urlInfo,$queue) {
+        $ts = microtime(true);
+        \Swoole\Async::dnsLookup($urlInfo['host'], function ($domainName, $ip) use($urlInfo,$queue,$ts) {
             $cli = new \swoole_http_client($ip, 80);
             $cli->set([ 'timeout' => 10]);
             $cli->setHeaders([
@@ -28,8 +30,20 @@ class PaymentNotifyJob extends BaseObject implements RetryableJobInterface
                 'Accept-Encoding' => 'gzip',
             ]);
             $urlInfo['path'] = $urlInfo['path']??'/';
-            $cli->post($urlInfo['path'], $this->data, function ($cli) use ($queue) {
+            $cli->post($urlInfo['path'], $this->data, function ($cli) use ($queue,$ts) {
                 \Yii::debug(['PaymentNotifyJob ret',$this->orderNo,$cli->statusCode]);
+                $costTime = bcsub(microtime(true),$ts,4);
+                LogApiRequest::outLog($this->url, 'POST', $cli->body, $cli->statusCode, $costTime, $this->data);
+                //接口日志埋点
+                Yii::$app->params['apiRequestLog'] = [];
+
+                    Yii::$app->params['apiRequestLog']['event_id']=$order->order_no;
+                    Yii::$app->params['apiRequestLog']['event_type']=LogApiRequest::EVENT_TYPE_IN_RECHARGE_QUER;
+                    Yii::$app->params['apiRequestLog']['merchant_id']=$order->merchant_id??$merchant->id;
+                    Yii::$app->params['apiRequestLog']['merchant_name']=$order->merchant_account??$merchant->username;
+                    Yii::$app->params['apiRequestLog']['channel_account_id']=$order->channelAccount->id;
+                    Yii::$app->params['apiRequestLog']['channel_name']=$order->channelAccount->channel_name;
+
                 $noticeOk = Order::NOTICE_STATUS_NONE;
                 if($cli->statusCode == 200){
                     $noticeOk = Order::NOTICE_STATUS_SUCCESS;

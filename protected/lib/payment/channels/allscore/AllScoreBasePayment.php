@@ -88,7 +88,6 @@ class AllScoreBasePayment extends BasePayment
     }
 
     public function remit(){
-//var_dump($this->remit);
         require_once (Yii::getAlias("@app/lib/payment/channels/allscore/lib/allscore_service.class.php"));
 
         $remit = $this->remit;
@@ -144,14 +143,7 @@ class AllScoreBasePayment extends BasePayment
             "cardAccountType" => $cardAccountType,
             "remark" => $remark
         );
-        /*logResult("parameter1=".print_r($parameter,1));
-        $parameter['bankName'] = urldecode($parameter['bankName']);
-        $parameter['bankProvince'] = urldecode($parameter['bankProvince']);
-        $parameter['cardHolder'] = urldecode($parameter['cardHolder']);
-        $parameter['notifyUrl'] = urldecode($parameter['notifyUrl']);
-        $parameter['remark'] = urldecode($parameter['remark']);
-        $parameter['subject'] = urldecode($parameter['subject']);
-        logResult("parameter2=".print_r($parameter,1));*/
+
         // 构造代扣支付接口
         $allscoreService = new \AllscoreService($this->paymentConfig);
         $resTxt = $allscoreService->payment($parameter);
@@ -173,7 +165,7 @@ class AllScoreBasePayment extends BasePayment
     public function remitStatus(){
         require_once (Yii::getAlias("@app/lib/payment/channels/allscore/lib/allscore_service.class.php"));
 
-// 必填参数//
+        //必填参数//
         $service = "agentpay"; // 代付查询服务（不可以修改）
         $merchantId = $this->remit['channel_merchant_id']; // 商户号(商银信公司提供)
         $format = 'json'; //返回格式（json/xml）
@@ -192,19 +184,6 @@ class AllScoreBasePayment extends BasePayment
             "outOrderId" => $outOrderId,
             //"version" => "1",
         );
-        /*logResult("parameter1=".print_r($parameter,1));
-        $parameter['bankName'] = urldecode($parameter['bankName']);
-        $parameter['bankProvince'] = urldecode($parameter['bankProvince']);
-        $parameter['cardHolder'] = urldecode($parameter['cardHolder']);
-        $parameter['notifyUrl'] = urldecode($parameter['notifyUrl']);
-        $parameter['remark'] = urldecode($parameter['remark']);
-        $parameter['subject'] = urldecode($parameter['subject']);
-        logResult("parameter2=".print_r($parameter,1));*/
-        // 构造代扣支付接口
-//        $allscoreService = new \AllscoreService($allscore_config);
-//        $html_text = $allscoreService->paymentQuery($parameter);
-//        //logResult("html_text=".$html_text);
-//        echo $html_text;
 
         $resTxt = \AllscoreService::quickPost($this->paymentConfig['payment_query_url'],$parameter,$this->paymentConfig);
         $ret = Macro::FAILED_MESSAGE;
@@ -223,5 +202,20 @@ class AllScoreBasePayment extends BasePayment
         }
 
         return  $ret;
+    }
+
+    /**
+     * 生成通知响应内容
+     *
+     * @param boolean $isSuccess
+     * @return string
+     */
+    public static function createdResponse($isSuccess)
+    {
+        $str = 'fail';
+        if($isSuccess){
+            $str = 'success';
+        }
+        return $str;
     }
 }

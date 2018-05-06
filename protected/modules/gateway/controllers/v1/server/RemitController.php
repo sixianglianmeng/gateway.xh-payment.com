@@ -2,6 +2,7 @@
 namespace app\modules\gateway\controllers\v1\server;
 
 use app\common\models\model\ChannelAccount;
+use app\common\models\model\LogApiRequest;
 use app\common\models\model\Remit;
 use app\components\Macro;
 use app\lib\helpers\ResponseHelper;
@@ -45,9 +46,6 @@ class RemitController extends BaseServerSignedRequestController
         //生成订单
         $remit = LogicRemit::addRemit($this->allParams,$this->merchant,$paymentChannelAccount);
 
-//        $payment = new ChannelPayment($remit,$this->merchantPayment->channelAccount);
-//        processRemit = $payment->remit();
-
         $remit = LogicRemit::processRemit($remit,$paymentChannelAccount);
         $msg = '';
         $data = [
@@ -88,6 +86,7 @@ class RemitController extends BaseServerSignedRequestController
 
         //状态查询
         $remit = LogicRemit::getStatus($orderNo, $merchantOrderNo, $this->merchant);
+
         if($remit){
             $data = [
                 'transid'=>$remit->merchant_order_no,

@@ -7,6 +7,7 @@ use app\common\exceptions\InValidRequestException;
 use app\common\models\logic\LogicUser;
 use app\common\models\model\ChannelAccount;
 use app\common\models\model\Financial;
+use app\common\models\model\LogApiRequest;
 use app\common\models\model\UserPaymentInfo;
 use app\jobs\PaymentNotifyJob;
 use app\lib\helpers\SignatureHelper;
@@ -53,7 +54,7 @@ class LogicOrder
         $orderData['merchant_account'] = $merchant->username;
         $orderData['created_at'] = time();
 
-        $channelAccount = $userPaymentInfo->paymentChannels;
+        $channelAccount = $userPaymentInfo->paymentChannel;
         $orderData['channel_id'] = $channelAccount->channel_id;
         $orderData['channel_account_id'] = $channelAccount->id;
         $orderData['channel_merchant_id'] = $channelAccount->merchant_id;
@@ -75,9 +76,9 @@ class LogicOrder
         }
 
         $newOrder = new Order();
+        $newOrder->setAttributes($orderData,false);
         self::beforeAddOrder($newOrder, $merchant, $channelAccount);
 
-        $newOrder->setAttributes($orderData,false);
         $newOrder->save();
 
         return $newOrder;
@@ -94,6 +95,16 @@ class LogicOrder
     static public function beforeAddOrder(Order $order, User $merchant, ChannelAccount $paymentChannelAccount){
         $userPaymentConfig = $merchant->paymentInfo;
 
+        //接口日志埋点
+        Yii::$app->params['apiRequestLog'] = [
+            'event_id'=>$order->order_no,
+            'event_type'=>LogApiRequest::EVENT_TYPE_IN_RECHARGE_ADD,
+            'merchant_id'=>$order->merchant_id??$merchant->id,
+            'merchant_name'=>$order->merchant_account??$merchant->username,
+            'channel_account_id'=>$paymentChannelAccount->id,
+            'channel_name'=>$paymentChannelAccount->channel_name,
+        ];
+
         //检测账户单笔限额
         if($userPaymentConfig->recharge_quota_pertime && $order->amount > $userPaymentConfig->recharge_quota_pertime){
             throw new Exception(null,Macro::ERR_PAYMENT_REACH_ACCOUNT_QUOTA_PER_TIME);
@@ -101,6 +112,14 @@ class LogicOrder
         //检测账户日限额
         if($userPaymentConfig->recharge_quota_perday && $order->recharge_today > $userPaymentConfig->recharge_quota_perday){
             throw new Exception(null,Macro::ERR_PAYMENT_REACH_ACCOUNT_QUOTA_PER_DAY);
+        }
+        //检测是否支持api充值
+        if(empty($order->op_uid) && $userPaymentConfig->allow_api_recharge==UserPaymentInfo::ALLOW_API_RECHARGE_NO){
+            throw new Exception(null,Macro::ERR_PAYMENT_API_NOT_ALLOWED);
+        }
+        //检测是否支持手工充值
+        elseif(!empty($order->op_uid) && $userPaymentConfig->allow_manual_recharge==UserPaymentInfo::ALLOW_MANUAL_RECHARGE_NO){
+            throw new Exception(null,Macro::ERR_PAYMENT_MANUAL_NOT_ALLOWED);
         }
 
         //检测渠道单笔限额
@@ -110,14 +129,6 @@ class LogicOrder
         //检测渠道日限额
         if($paymentChannelAccount->recharge_quota_perday && $paymentChannelAccount->recharge_today > $paymentChannelAccount->recharge_quota_perday){
             throw new Exception(null,Macro::ERR_PAYMENT_REACH_CHANNEL_QUOTA_PER_DAY);
-        }
-        //检测是否支持api充值
-        if(empty($order->op_uid) && $paymentChannelAccount->allow_api_recharge==UserPaymentInfo::ALLOW_API_RECHARGE_NO){
-            throw new Exception(null,Macro::ERR_PAYMENT_API_NOT_ALLOWED);
-        }
-        //检测是否支持手工充值
-        elseif(!empty($order->op_uid) && $paymentChannelAccount->allow_manual_recharge==UserPaymentInfo::ALLOW_MANUAL_RECHARGE_NO){
-            throw new Exception(null,Macro::ERR_PAYMENT_MANUAL_NOT_ALLOWED);
         }
     }
 
@@ -150,14 +161,27 @@ class LogicOrder
 
     static public function processChannelNotice(ObjectNoticeResult $noticeResult){
         if(
-//            $noticeResult->status !== Macro::SUCCESS
             !$noticeResult->order
-//            || !$noticeResult->amount
         ){
             throw new InValidRequestException('支付结果对象错误',Macro::ERR_PAYMENT_NOTICE_RESULT_OBJECT);
         }
 
         $order = $noticeResult->order;
+
+        //接口日志埋点
+        $eventType = LogApiRequest::EVENT_TYPE_IN_RECHARGE_RETURN;
+        if( Yii::$app->request->method=='POST'){
+            $eventType = LogApiRequest::EVENT_TYPE_IN_RECHARGE_NOTIFY;
+        }
+        Yii::$app->params['apiRequestLog'] = [
+            'event_id'=>$order->order_no,
+            'event_type'=>$eventType,
+            'merchant_id'=>$order->merchant_id,
+            'merchant_name'=>$order->merchant_account,
+            'channel_account_id'=>$order->id,
+            'channel_name'=>$order->channel_name,
+        ];
+
         //未处理
         if( $noticeResult->status === Macro::SUCCESS && $order->status !== Order::STATUS_PAID){
             $order = self::paySuccess($order,$noticeResult->amount,$noticeResult->channelOrderNo);
@@ -372,6 +396,16 @@ class LogicOrder
         elseif($orderNo){
             $order = Order::findOne(['order_no'=>$merchantOrderNo]);
         }
+
+        //接口日志埋点
+        Yii::$app->params['apiRequestLog'] = [
+            'event_id'=>$order->order_no,
+            'event_type'=>LogApiRequest::EVENT_TYPE_IN_RECHARGE_QUERY,
+            'merchant_id'=>$order->merchant_id??$merchant->id,
+            'merchant_name'=>$order->merchant_account??$merchant->username,
+            'channel_account_id'=>$order->channelAccount->id,
+            'channel_name'=>$order->channelAccount->channel_name,
+        ];
 
         if(!$order){
             throw new \Exception("订单不存在('platform_order_no:{$orderNo}','merchant_order_no:{$merchantOrderNo}')");

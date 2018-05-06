@@ -31,10 +31,9 @@ class VerifySign extends ActionFilter
         Yii::$app->controller->merchant = $merchant;
 
         //第一期每个商户只有一个appid，app_id与user_id一样
-        $merchantPayment = UserPaymentInfo::getByUserIdAndAppId($merchant->id,$merchantId);
-        $strSecret = $merchantPayment->app_key_md5;
-        Yii::$app->params['merchantPayment'] = $merchantPayment;
-        Yii::$app->controller->merchantPayment = $merchantPayment;
+        $strSecret = $merchant->paymentInfo->app_key_md5;
+        Yii::$app->params['merchantPayment'] = $merchant->paymentInfo;
+        Yii::$app->controller->merchantPayment = $merchant->paymentInfo;
 
         // qa、test环境万能签名.
         if (defined('APPLICATION_ENV') && 

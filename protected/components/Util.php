@@ -736,4 +736,20 @@ class Util
 
         return $newArr;
     }
+
+    /**
+     * 抛出异常
+     *
+     * @param int $code 错误代码
+     * @param string $msg 错误消息，若为空，则会自动根据错误代码从消息列表查询描述
+     * @return
+     */
+    public static function throwException($code, $msg='')
+    {
+        if(empty($msg) && !empty(Macro::MSG_LIST[$code])){
+            $msg = Macro::MSG_LIST[$code];
+        }
+
+        throw new \Exception($msg, $code);
+    }
 }

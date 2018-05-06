@@ -1,6 +1,7 @@
 <?php
 namespace app\lib\helpers;
 
+use app\common\models\logic\LogicApiRequestLog;
 use app\common\models\model\UserPaymentInfo;
 use app\components\Macro;
 use Yii;
@@ -31,6 +32,7 @@ class ResponseHelper extends \power\yii2\helpers\ResponseHelper
             'message'       => $message,
             'serverTime'    => microtime(true),
         ];
+        $logResponse = $result;
         Yii::pushLog('status', $code);
 
         //支付网关后台接口单独处理
@@ -42,13 +44,11 @@ class ResponseHelper extends \power\yii2\helpers\ResponseHelper
                 'error_msg'       => $message,
             ];
             $result = ArrayHelper::merge($result,$data);
+            $logResponse = $result;
             if(Yii::$app->params['merchantPayment'] && Yii::$app->params['merchantPayment'] instanceof UserPaymentInfo){
                 $result['sign'] = SignatureHelper::calcSign($result, Yii::$app->params['merchantPayment']->app_key_md5, Macro::CONST_PAYMENT_GETWAY_SIGN_TYPE);
             }
-            return $result;
-        }
-
-        if ($response->format == Response::FORMAT_HTML) {
+        }elseif($response->format == Response::FORMAT_HTML) {
 //            $result['return_url'] = Yii::$app->request->referrer;
             $result = Yii::$app->controller->render('@app/modules/gateway/views/default/error',$result);
         }elseif ($response->format == Response::FORMAT_JSONP) {
@@ -56,8 +56,11 @@ class ResponseHelper extends \power\yii2\helpers\ResponseHelper
                 'data'      => $result,
                 'callback'  => $callback,
             ];
+            $logResponse = $result;
         }
 
+        //设置了请求日志，写入日志表
+        LogicApiRequestLog::inLog($logResponse);
 
         return $result;
     }

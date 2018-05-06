@@ -85,6 +85,12 @@ class RequestSignController extends \power\yii2\web\Controller
         } catch (SignatureNotMatchException $e) {
             return ResponseHelper::formatOutput(Macro::ERR_PARAM_SIGN, $e->getMessage());
         } catch (\Exception $e) {
+            $errCode = $e->getCode();
+            $msg = $e->getMessage();
+            if(empty($msg) && !empty(Macro::MSG_LIST[$errCode])){
+                $msg = Macro::MSG_LIST[$errCode];
+            }
+
             LogHelper::error(
                 sprintf(
                     'unkown exception occurred. %s:%s trace: %s',
@@ -93,18 +99,18 @@ class RequestSignController extends \power\yii2\web\Controller
                     str_replace("\n", " ", $e->getTraceAsString())
                 )
             );
-            $errCode = $e->getCode();
+
             if($errCode === Macro::SUCCESS) $errCode = Macro::FAIL;
             if (YII_DEBUG) {
-                throw $e;
-//                return ResponseHelper::formatOutput($errCode, $e->getMessage());
+//                throw $e;
+                return ResponseHelper::formatOutput($errCode, $msg);
             } else {
                 $code = Macro::INTERNAL_SERVER_ERROR;
                 if(property_exists($e,'statusCode')){
                     $code = $e->statusCode;
                     Yii::$app->response->statusCode=$code;
                 }
-                return ResponseHelper::formatOutput($errCode, $e->getMessage());
+                return ResponseHelper::formatOutput($errCode, $msg);
             }
         }
     }

@@ -25,9 +25,9 @@ use Yii;
  * @property int $created_at 记录生成时间
  * @property int $updated_at 记录更新时间
  * @property int $deleted_at 记录软删除时间
- * @property string $desc 操作描述
+ * @property string $bak 备注
  */
-class LogApiRequest extends \yii\db\ActiveRecord
+class LogApiRequest extends BaseModel
 {
     const EVENT_TYPE_IN_RECHARGE_ADD = 101;
     const EVENT_TYPE_IN_RECHARGE_RETURN = 102;
@@ -67,48 +67,5 @@ class LogApiRequest extends \yii\db\ActiveRecord
     public static function tableName()
     {
         return 'p_log_api_request';
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function rules()
-    {
-        return [
-            [['merchant_id', 'channel_account_id', 'request_method', 'created_at', 'updated_at', 'deleted_at'], 'integer'],
-            [['request_url', 'post_data', 'response_data', 'referer', 'useragent', 'created_at', 'updated_at', 'deleted_at'], 'required'],
-            [['request_url', 'post_data', 'response_data', 'referer', 'useragent'], 'string'],
-            [['merchant_name', 'channel_name', 'event_id', 'remote_ip', 'device_id'], 'string', 'max' => 32],
-            [['event_type'], 'string', 'max' => 64],
-            [['desc'], 'string', 'max' => 512],
-        ];
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function attributeLabels()
-    {
-        return [
-            'id' => 'ID',
-            'merchant_id' => 'Merchant ID',
-            'merchant_name' => 'Merchant Name',
-            'channel_account_id' => 'Channel Account ID',
-            'channel_name' => 'Channel Name',
-            'event_type' => 'Event Type',
-            'event_id' => 'Event ID',
-            'request_url' => 'Request Url',
-            'request_method' => 'Request Method',
-            'post_data' => 'Post Data',
-            'response_data' => 'Response Data',
-            'remote_ip' => 'Remote Ip',
-            'referer' => 'Referer',
-            'useragent' => 'Useragent',
-            'device_id' => 'Device ID',
-            'created_at' => 'Created At',
-            'updated_at' => 'Updated At',
-            'deleted_at' => 'Deleted At',
-            'desc' => 'Desc',
-        ];
     }
 }

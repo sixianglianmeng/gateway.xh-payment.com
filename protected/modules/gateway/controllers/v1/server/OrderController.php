@@ -1,6 +1,7 @@
 <?php
 namespace app\modules\gateway\controllers\v1\server;
 
+use app\common\models\model\LogApiRequest;
 use app\common\models\model\Order;
 use app\components\Macro;
 use app\lib\helpers\ResponseHelper;

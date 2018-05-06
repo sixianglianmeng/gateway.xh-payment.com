@@ -4,9 +4,11 @@
 namespace app\modules\gateway\models\logic;
 
 use app\common\exceptions\InValidRequestException;
+use app\common\models\logic\LogicApiRequestLog;
 use app\common\models\logic\LogicUser;
 use app\common\models\model\ChannelAccount;
 use app\common\models\model\Financial;
+use app\common\models\model\LogApiRequest;
 use app\common\models\model\UserPaymentInfo;
 use app\jobs\PaymentNotifyJob;
 use app\lib\helpers\SignatureHelper;
@@ -70,9 +72,9 @@ class LogicRemit
         }
 
         $newRemit = new Remit();
+        $newRemit->setAttributes($remitData,false);
         self::beforeAddRemit($newRemit, $merchant, $paymentChannelAccount);
 
-        $newRemit->setAttributes($remitData,false);
         $newRemit->save();
 
         return $newRemit;
@@ -88,6 +90,17 @@ class LogicRemit
      */
     static public function beforeAddRemit(Remit $remit, User $merchant, ChannelAccount $paymentChannelAccount){
         $userPaymentConfig = $merchant->paymentInfo;
+
+        //接口日志埋点
+        Yii::$app->params['apiRequestLog'] = [
+            'event_id'=>$remit->order_no,
+            'event_type'=> LogApiRequest::EVENT_TYPE_IN_REMIT_ADD,
+            'merchant_id'=>$remit->merchant_id??$merchant->id,
+            'merchant_name'=>$remit->merchant_account??$merchant->username,
+            'channel_account_id'=>$paymentChannelAccount->id,
+            'channel_name'=>$paymentChannelAccount->channel_name,
+        ];
+
         //检测账户单笔限额
         if($userPaymentConfig->remit_quota_pertime && $remit->amount > $userPaymentConfig->remit_quota_pertime){
             throw new Exception(null,Macro::ERR_REMIT_REACH_ACCOUNT_QUOTA_PER_TIME);
@@ -95,6 +108,14 @@ class LogicRemit
         //检测账户日限额
         if($userPaymentConfig->remit_quota_perday && $remit->remit_today > $userPaymentConfig->remit_quota_perday){
             throw new Exception(null,Macro::ERR_REMIT_REACH_ACCOUNT_QUOTA_PER_DAY);
+        }
+        //检测是否支持api出款
+        if(empty($remit->op_uid) && $userPaymentConfig->allow_api_remit==UserPaymentInfo::ALLOW_API_REMIT_NO){
+            throw new Exception(null,Macro::ERR_PAYMENT_API_NOT_ALLOWED);
+        }
+        //检测是否支持手工出款
+        elseif(!empty($remit->op_uid) && $userPaymentConfig->allow_manual_remit==UserPaymentInfo::ALLOW_MANUAL_REMIT_NO){
+            throw new Exception(null,Macro::ERR_PAYMENT_MANUAL_NOT_ALLOWED);
         }
 
         //检测渠道单笔限额
@@ -104,14 +125,6 @@ class LogicRemit
         //检测渠道日限额
         if($paymentChannelAccount->remit_quota_perday && $paymentChannelAccount->remit_today > $paymentChannelAccount->remit_quota_perday){
             throw new Exception(null,Macro::ERR_REMIT_REACH_CHANNEL_QUOTA_PER_DAY);
-        }
-        //检测是否支持api出款
-        if(empty($remit->op_uid) && $paymentChannelAccount->allow_api_remit==UserPaymentInfo::ALLOW_API_REMIT_NO){
-            throw new Exception(null,Macro::ERR_PAYMENT_API_NOT_ALLOWED);
-        }
-        //检测是否支持手工出款
-        elseif(!empty($remit->op_uid) && $paymentChannelAccount->allow_manual_remit==UserPaymentInfo::ALLOW_MANUAL_REMIT_NO){
-            throw new Exception(null,Macro::ERR_PAYMENT_MANUAL_NOT_ALLOWED);
         }
     }
 
@@ -343,12 +356,22 @@ class LogicRemit
      * 获取订单状态
      *
      */
-    public static function getStatus($orderNo = '',$merchantOrderNo = '', $merchant)
+    public static function getStatus($orderNo = '',$merchantOrderNo = '', User $merchant)
     {
         if($merchantOrderNo && !$orderNo){
             $remit = Remit::findOne(['merchant_order_no'=>$merchantOrderNo,'merchant_id'=>$merchant->id]);
             if($remit) $orderNo = $remit->order_no;
         }
+
+        //接口日志埋点
+        Yii::$app->params['apiRequestLog'] = [
+            'event_id'=>$remit->order_no,
+            'event_type'=> LogApiRequest::EVENT_TYPE_IN_REMIT_QUREY,
+            'merchant_id'=>$remit->merchant_id??$merchant->id,
+            'merchant_name'=>$remit->merchant_account??$merchant->username,
+            'channel_account_id'=>$remit->channelAccount->id,
+            'channel_name'=>$remit->channelAccount->channel_name,
+        ];
 
         if(!$orderNo){
             throw new ParameterValidationExpandException('参数错误');
