@@ -28,8 +28,8 @@ class LogicApiRequestLog
             $logData['response_data'] = json_encode($logResponse,JSON_UNESCAPED_UNICODE);
             $logData['http_status'] = Yii::$app->response->statusCode;
             $logData['remote_ip'] = Yii::$app->request->getUserIP();
-            $logData['referer'] = Yii::$app->request->referrer;
-            $logData['useragent'] = Yii::$app->request->userAgent;
+            $logData['referer'] = Yii::$app->request->referrer??'';
+            $logData['useragent'] = Yii::$app->request->userAgent??'';
             $cookies = Yii::$app->request->cookies;
             $uuid = empty($cookies[PaymentRequest::CLIENT_ID_IN_COOKIE])?'':$cookies[PaymentRequest::CLIENT_ID_IN_COOKIE]->value;
             $logData['device_id'] = $uuid;

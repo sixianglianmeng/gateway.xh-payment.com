@@ -10,6 +10,7 @@ use app\common\models\model\ChannelAccount;
 use app\common\models\model\Financial;
 use app\common\models\model\LogApiRequest;
 use app\common\models\model\UserPaymentInfo;
+use app\components\Util;
 use app\jobs\PaymentNotifyJob;
 use app\lib\helpers\SignatureHelper;
 use app\lib\payment\ChannelPayment;
@@ -76,6 +77,8 @@ class LogicRemit
         self::beforeAddRemit($newRemit, $merchant, $paymentChannelAccount);
 
         $newRemit->save();
+
+        self::updateToRedis($newRemit);
 
         return $newRemit;
     }
@@ -366,16 +369,16 @@ class LogicRemit
 
         //接口日志埋点
         Yii::$app->params['apiRequestLog'] = [
-            'event_id'=>$remit->order_no,
+            'event_id'=>$orderNo,
             'event_type'=> LogApiRequest::EVENT_TYPE_IN_REMIT_QUREY,
-            'merchant_id'=>$remit->merchant_id??$merchant->id,
-            'merchant_name'=>$remit->merchant_account??$merchant->username,
-            'channel_account_id'=>$remit->channelAccount->id,
-            'channel_name'=>$remit->channelAccount->channel_name,
+            'merchant_id'=>$merchant->id,
+            'merchant_name'=>$merchant->username,
+            'channel_account_id'=>Yii::$app->params['merchantPayment']->remitChannel->id,
+            'channel_name'=>Yii::$app->params['merchantPayment']->remitChannel->channel_name,
         ];
 
         if(!$orderNo){
-            throw new ParameterValidationExpandException('参数错误');
+            Util::throwException(Macro::ERR_REMIT_NOT_FOUND);
         }
 
         $statusJson = Yii::$app->redis->hmget(self::REDIS_CACHE_KEY, $orderNo);

@@ -83,6 +83,7 @@ class Macro
     const ERR_REMIT_REACH_CHANNEL_QUOTA_PER_TIME = 10204;
     const ERR_REMIT_API_NOT_ALLOWED = 10205;
     const ERR_REMIT_MANUAL_NOT_ALLOWED = 10206;
+    const ERR_REMIT_NOT_FOUND = 10207;
 
     const CONST_PAYMENT_GETWAY_SIGN_TYPE = 'MD5';
     const CONST_JSON = 'json';
@@ -203,6 +204,7 @@ class Macro
         self::ERR_REMIT_REACH_CHANNEL_QUOTA_PER_TIME => '已达到渠道单次提款最大额度',
         self::ERR_REMIT_API_NOT_ALLOWED => '商户帐号不支持API出款',
         self::ERR_REMIT_MANUAL_NOT_ALLOWED => '商户帐号不支持手工出款',
+        self::ERR_REMIT_NOT_FOUND => '提款记录不存在',
     ];
 
     const BANK_LIST = [
