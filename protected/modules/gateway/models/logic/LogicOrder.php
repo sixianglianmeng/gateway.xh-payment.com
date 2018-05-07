@@ -72,6 +72,8 @@ class LogicOrder
         }
         $orderData['fee_rate'] = $payMethods['rate'];
         $orderData['fee_amount'] = bcmul($payMethods['rate'],$orderData['amount'],9);
+        $orderData['plat_fee_rate'] = $channelAccount->recharge_rate;
+        $orderData['plat_fee_amount'] = bcmul($channelAccount->recharge_rate,$orderData['amount'],9);
 
         $hasOrder = Order::findOne(['app_id'=>$orderData['app_id'],'merchant_order_no'=>$request['order_no']]);
         if($hasOrder){
@@ -251,6 +253,53 @@ class LogicOrder
 
         //需扣除充值手续费
         $logicUser->changeUserBalance(0-$order->fee_amount, Financial::EVENT_TYPE_RECHARGE_FEE, $order->order_no, Yii::$app->request->userIP);
+
+        return $order;
+    }
+
+    /*
+     * 冻结订单
+     *
+     * @param Order $order 订单对象
+     * @param String $bak 备注
+     */
+    static public function frozen(Order $order, $bak='', $opUid, $opUsername){
+        Yii::debug(__FUNCTION__.' '.$order->order_no.' '.$bak);
+        if($order->status === Order::STATUS_PAID){
+            return $order;
+        }
+
+        $logicUser = new LogicUser($order->merchant);
+        //冻结余额
+        $logicUser->changeUserFrozenBalance($order->amount, Financial::EVENT_TYPE_RECHARGE_FROZEN, $order->order_no,
+            Yii::$app->request->userIP, $bak, $opUid, $opUsername);
+
+        //更改订单状态
+        $order->status = Order::STATUS_FREEZE;
+        $order->save();
+
+        return $order;
+    }
+
+    /*
+     * 解冻订单
+     *
+     * @param Order $order 订单对象
+     */
+    static public function unfrozen(Order $order, $bak='', $opUid, $opUsername){
+        Yii::debug(__FUNCTION__.' '.$order->order_no.' '.$bak);
+        if($order->status === Order::STATUS_PAID){
+            return $order;
+        }
+
+        $logicUser = new LogicUser($order->merchant);
+        //冻结余额
+        $logicUser->changeUserFrozenBalance($order->amount, Financial::EVENT_TYPE_RECHARGE_FROZEN,
+            $order->order_no, Yii::$app->request->userIP, $bak, $opUid, $opUsername);
+
+        //更改订单状态
+        $order->status = Order::STATUS_FREEZE;
+        $order->save();
 
         return $order;
     }

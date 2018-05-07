@@ -26,6 +26,8 @@ class Financial extends BaseModel
     const EVENT_TYPE_REFUND_REMIT_BONUS = 25; # 代付失败分润
     const EVENT_TYPE_SYSTEM_PLUS = 30; # 系统加款
     const EVENT_TYPE_SYSTEM_MINUS = 31; # 系统扣款
+    const EVENT_TYPE_RECHARGE_FROZEN = 32; # 冻结订单
+    const EVENT_TYPE_RECHARGE_UNFROZEN = 33; # 解冻订单
 
     //账变类型 编号=>描述
     const ARR_EVENT_TYPES = [
@@ -40,6 +42,8 @@ class Financial extends BaseModel
         self::EVENT_TYPE_REFUND_REMIT_BONUS=>'代付失败-分润返还',
         self::EVENT_TYPE_SYSTEM_PLUS=>'系统加款',
         self::EVENT_TYPE_SYSTEM_MINUS=>'系统扣款',
+        self::EVENT_TYPE_RECHARGE_FROZEN=>'订单冻结',
+        self::EVENT_TYPE_RECHARGE_UNFROZEN=>'订单解冻',
     ];
     //收款记录,结算记录,分润记录,系统加款,系统减款,账户间转账手续费,收款手续费,结算手续费,结算失败金额返还,结算失败手续费返还,账户间转出,账户间转入,结算分润,结算失败分润退还记录
 

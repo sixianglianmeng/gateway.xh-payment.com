@@ -65,6 +65,7 @@ class LogicRemit
         $remitData['created_at'] = time();
         $remitData['op_uid'] = $request['op_uid']??0;
         $remitData['op_username'] = $request['op_username']??'';
+        $orderData['plat_fee_amount'] = $paymentChannelAccount->remit_fee;
 
         $hasRemit = Remit::findOne(['app_id'=>$remitData['app_id'],'merchant_order_no'=>$request['trade_no']]);
         if($hasRemit){
