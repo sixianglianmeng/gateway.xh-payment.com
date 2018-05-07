@@ -26,16 +26,6 @@ $config = [
     'components' => [
         'response' => [
             'format'    => yii\web\Response::FORMAT_JSON,
-            //统一返回数据格式可迁移至模块中Module::init()
-//            'on beforeSend' => function ($event) {
-//                $response = $event->sender;
-//                $response->data = [
-//                    'code' => $response->getStatusCode(),
-//                    'data' => $response->data,
-//                    'message' => $response->statusText
-//                ];
-//                $response->format = yii\web\Response::FORMAT_JSON;
-//            },
         ],
         'request'=>[
             'enableCookieValidation' => false,
@@ -138,17 +128,15 @@ $config = [
             'transport' => [
                 'class' => 'Swift_SmtpTransport',
                 'encryption' => 'tls',
-                'host' => 'smtp.google.com',
+                'host' => 'ssl://smtp.gmail.com:465',//ssl://smtp.gmail.com:465
                 //阿里云连接必须使用80端口
-                'port' => '80',
-                'username' => 'webmaster@payment.com',
-                'password' => '',
-//                'fromName' => '',
-//                'fromMail' => 'webmaster@payment.com',
+                'port' => '465',
+                'username' => 'mail.booter.ui@gmail.com',
+                'password' => 'htXb7wyFhDDEu74Y',
             ],
             'messageConfig'=>[
                 'charset'=>'UTF-8',
-                'from'=>['webmaster@payment.com'=>'支付网关']
+                'from'=>['mail.booter.ui@gmail.com'=>'支付网关']
             ],
         ],
         'i18n' => [

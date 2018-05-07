@@ -48,15 +48,17 @@ class RemitController extends BaseConsoleCommand
     public function actionBankCommitQueueProducer(){
         $doCheck = true;
         while ($doCheck) {
-            $remits = Remit::find(['status'=>Remit::STATUS_DEDUCT])->limit(100)->all();
-            Yii::info('find remit to commit bank: '.count($remits));
-            foreach ($remits as $remit){
-                Yii::info('BankCommitQueueProducer: '.$remit->order_no);
+            if(LogicRemit::canCommitToBank()){
+                $remits = Remit::find(['status'=>Remit::STATUS_DEDUCT])->limit(100)->all();
+                Yii::info('find remit to commit bank: '.count($remits));
+                foreach ($remits as $remit){
+                    Yii::info('BankCommitQueueProducer: '.$remit->order_no);
 
-                $job = new RemitCommitJob([
-                    'orderNo'=>$remit->order_no,
-                ]);
-                Yii::$app->remitBankCommitQueue->push($job);//->delay(10)
+                    $job = new RemitCommitJob([
+                        'orderNo'=>$remit->order_no,
+                    ]);
+                    Yii::$app->remitBankCommitQueue->push($job);//->delay(10)
+                }
             }
 
             sleep(mt_rand(5,10));

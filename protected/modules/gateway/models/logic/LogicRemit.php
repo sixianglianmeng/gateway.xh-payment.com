@@ -459,4 +459,16 @@ class LogicRemit
 
         return $statusArr;
     }
+
+    /**
+     * 当前是否可以提交到银行
+     *
+     * @param $remit
+     * @return boolean
+     * @author bootmall@gmail.com
+     */
+    public static function canCommitToBank($remit = null)
+    {
+        return TRUE;
+    }
 }
