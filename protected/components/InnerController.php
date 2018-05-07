@@ -1,8 +1,11 @@
 <?php
 namespace app\components;
 
+use Yii;
 use power\yii2\log\LogHelper;
-use power\yii2\helpers\ResponseHelper;
+use app\lib\helpers\ResponseHelper;
+use power\yii2\exceptions\ParameterValidationExpandException;
+use power\yii2\net\exceptions\SignatureNotMatchException;
 
 /**
  * Controller is the customized base controller class.
@@ -10,6 +13,8 @@ use power\yii2\helpers\ResponseHelper;
  */
 class InnerController extends \power\yii2\web\Controller
 {
+    public $allParams = [];
+
     public function init()
     {
         parent::init();
@@ -23,10 +28,48 @@ class InnerController extends \power\yii2\web\Controller
         // 打印请求参数
         LogHelper::pushLog('params', $_REQUEST);
     }
-    
+
+    public function beforeAction($action){
+        $this->getAllParams();
+        return parent::beforeAction($action);
+    }
+
     public function behaviors()
     {
-        return [];
+        $arrBehaviors = [
+            //设置响应格式
+            'contentNegotiate'  => [
+                'class'     => \yii\filters\ContentNegotiator::className(),
+                'formats'   => [
+                    'application/json'        => \power\yii2\web\Response::FORMAT_JSON,
+                    'text/html'               => \power\yii2\web\Response::FORMAT_HTML,
+                    'application/x-protobuf'  => \power\yii2\web\Response::FORMAT_PROTOBUF,
+                ],
+            ]
+        ];
+
+        $arrBehaviors = array_merge(
+            $arrBehaviors,
+            [
+                'verifySign' => [
+                    'class'     => \app\components\filters\InnerRequestVerifySign::className(),
+                    'godSig'    => '56610f9fce1cdAcs07098cd80d',
+                ],
+            ]
+        );
+
+        return $arrBehaviors;
+    }
+
+    public function accessRules()
+    {
+        return \yii\helpers\ArrayHelper::merge(
+            [
+                'allow' => true,
+                'roles' => ['?']
+            ],
+            parent::accessRules()
+        );
     }
     
     public function runAction($id, $params = [])
@@ -34,20 +77,41 @@ class InnerController extends \power\yii2\web\Controller
         try {
             return parent::runAction($id, $params);
         } catch (\Exception $e) {
-            LogHelper::error($e->getMessage() . ' with code ' . $e->getCode());
             $errCode = $e->getCode();
+            $msg = $e->getMessage();
+            if(empty($msg) && !empty(Macro::MSG_LIST[$errCode])){
+                $msg = Macro::MSG_LIST[$errCode];
+            }
+
+            LogHelper::error(
+                sprintf(
+                    'unkown exception occurred. %s:%s trace: %s',
+                    get_class($e),
+                    $e->getMessage(),
+                    str_replace("\n", " ", $e->getTraceAsString())
+                )
+            );
+
             if($errCode === Macro::SUCCESS) $errCode = Macro::FAIL;
             if (YII_DEBUG) {
-                throw $e;
-//                return ResponseHelper::formatOutput($errCode, $e->getMessage());
+//                throw $e;
+                return ResponseHelper::formatOutput($errCode, $msg);
             } else {
                 $code = Macro::INTERNAL_SERVER_ERROR;
                 if(property_exists($e,'statusCode')){
                     $code = $e->statusCode;
                     Yii::$app->response->statusCode=$code;
                 }
-                return ResponseHelper::formatOutput($errCode, $e->getMessage());
+                return ResponseHelper::formatOutput($errCode, $msg);
             }
         }
+    }
+
+    protected function getAllParams(){
+        $arrQueryParams = Yii::$app->getRequest()->getQueryParams();
+        $arrBodyParams  = Yii::$app->getRequest()->getBodyParams();
+        $this->allParams   = $arrQueryParams + $arrBodyParams;
+
+        return $this->allParams;
     }
 }

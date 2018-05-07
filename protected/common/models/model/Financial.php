@@ -60,6 +60,10 @@ class Financial extends BaseModel
         return [];
     }
 
+    public function getMerchant(){
+        return $this->hasOne(User::className(), ['id'=>'merchant_id']);
+    }
+
     /**
      * 获取订单状态描述
      *
@@ -70,5 +74,4 @@ class Financial extends BaseModel
     {
         return self::ARR_EVENT_TYPES[$eventType]??'-';
     }
-
 }

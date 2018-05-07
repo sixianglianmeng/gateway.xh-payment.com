@@ -261,7 +261,7 @@ class LogicOrder
     static public function bonus(Order $order){
         Yii::debug([__CLASS__.':'.__FUNCTION__.' '.$order->order_no]);
         if($order->financial_status === Order::FINANCIAL_STATUS_SUCCESS){
-            Yii::warning([__FUNCTION__.' has been bonus,will return, '.$order->order_no]);
+            Yii::warning([__FUNCTION__.' order has been bonus,will return, '.$order->order_no]);
             return $order;
         }
 
@@ -284,19 +284,16 @@ class LogicOrder
                 }
                 Yii::debug(["order bonus, find config",\GuzzleHttp\json_encode($payMethods)]);
 
+                //没有上级可以直接中断了
                 if(!$pUser->parentAgent){
                     Yii::debug(["order bonus, has no parent",$pUser->id,$pUser->username]);
+                    break;
                 }
                 //有上级的才返，余额操作对象是上级代理
-                if($pUser->parentAgent){
-                    Yii::debug(["order bonus parent",$pUser->id,$pUser->username,$pUser->parentAgent->id,$pUser->parentAgent->username]);
-                    $logicUser =  new LogicUser($pUser->parentAgent);
-                    $rechargeFee =  bcmul($payMethods['parent_recharge_rebate_rate'],$order->paid_amount);
-                    $logicUser->changeUserBalance($rechargeFee, Financial::EVENT_TYPE_BONUS, $order->order_no, Yii::$app->request->userIP);
-                }else{
-
-                }
-
+                Yii::debug(["order bonus parent",$pUser->id,$pUser->username,$pUser->parentAgent->id,$pUser->parentAgent->username]);
+                $logicUser =  new LogicUser($pUser->parentAgent);
+                $rechargeFee =  bcmul($payMethods['parent_recharge_rebate_rate'],$order->paid_amount);
+                $logicUser->changeUserBalance($rechargeFee, Financial::EVENT_TYPE_BONUS, $order->order_no, Yii::$app->request->userIP);
             }
         }
 
@@ -307,6 +304,9 @@ class LogicOrder
         return $order;
     }
 
+    /*
+     * 生成通知参数
+     */
     static public function createNotifyParameters(Order $order){
 
         switch ($order->status){
@@ -374,7 +374,6 @@ class LogicOrder
 
         return $order;
     }
-
 
     /*
      * 异步通知商户

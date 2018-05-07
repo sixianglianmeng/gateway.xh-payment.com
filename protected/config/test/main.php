@@ -12,7 +12,7 @@ $config = \yii\helpers\ArrayHelper::merge(
                 'password' => '3MLNH3tatiXSKzr8',
                 'charset' => 'utf8',
                 'tablePrefix' => 'p_',
-//            'enableLogging'=>true,
+                'enableLogging'=>true,
             ],
             'redis' => [
                 'class' => 'yii\redis\Connection',

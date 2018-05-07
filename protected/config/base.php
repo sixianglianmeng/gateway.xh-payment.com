@@ -11,6 +11,8 @@ $config = [
     'bootstrap' => [
         'log',
         'paymentNotifyQueue',
+        'remitBankCommitQueue',
+        'remitQueryQueue',
     ],
     'runtimePath' => constant('RUNTIME_DIR'),
     'modules' => [
@@ -168,13 +170,30 @@ $config = [
 //            'strictJobType' => false,
 //            'serializer' => \yii\queue\serializers\JsonSerializer::class,
         ],
+        'remitBankCommitQueue' => [
+            'class' => \yii\queue\redis\Queue::class,
+            'redis' => 'redis',
+            'as log' => \yii\queue\LogBehavior::class,
+            'channel' => 'task_queue',
+//            'strictJobType' => false,
+//            'serializer' => \yii\queue\serializers\JsonSerializer::class,
+        ],
+        'remitQueryQueue' => [
+            'class' => \yii\queue\redis\Queue::class,
+            'redis' => 'redis',
+            'as log' => \yii\queue\LogBehavior::class,
+            'channel' => 'task_queue',
+//            'strictJobType' => false,
+//            'serializer' => \yii\queue\serializers\JsonSerializer::class,
+        ],
         'on beforeRequest' => ['\power\yii2\log\LogHelper', 'onBeforeRequest'],
         'on afterRequest' => ['\power\yii2\log\LogHelper', 'onAfterRequest'],
     ],
 
     'params' => [
-        'secrect'   => [        // 参数签名私钥, 由客户端、服务端共同持有
-            'test'   => 'e09813f8015339fc445f3a84bb8c4023',
+        'secret'   => [        // 参数签名私钥, 由客户端、服务端共同持有
+            'test'          => 'e09813f8015339fc445f3a84bb8c4023',
+            'agent.payment' => '736a0658e8a20f70ba5e53dc1ae9dc9f',
         ],
 
         'paymentGateWayApiDefaultSignType' => 'md5',//rsa
@@ -183,6 +202,7 @@ $config = [
         'user.passwordResetTokenExpire' => 600,
         'user.rateLimit' => [60, 60],
         'domain.cdn' => 'dev.gateway.payment.com',
+        'domain.gateway.rpc' => 'dev.gateway.payment.com',
         'corsOriginDomain' => ['*','dev.gateway.payment.com'],
     ],
 ];

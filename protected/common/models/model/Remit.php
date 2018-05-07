@@ -47,12 +47,15 @@ class Remit extends BaseModel
     const STATUS_BANK_PROCESSING=30;
     const STATUS_SUCCESS=40;
     const STATUS_REFUND=50;
-    const STATUS_NON_REFUND=60;
+    const STATUS_NOT_REFUND=60;
     //银行处理状态 0 未处理 1 银行处理中 2 已打款 3失败
     const BANK_STATUS_NONE=0;
     const BANK_STATUS_PROCESSING=1;
     const BANK_STATUS_SUCCESS=2;
     const BANK_STATUS_FAIL=3;
+
+    const FINANCIAL_STATUS_NONE = 0;
+    const FINANCIAL_STATUS_SUCCESS = 10;
 
     const ARR_STATUS = [
         self::STATUS_NONE              => '未处理',
@@ -61,7 +64,7 @@ class Remit extends BaseModel
         self::STATUS_BANK_PROCESSING   => '银行处理中',
         self::STATUS_SUCCESS           => '成功已出款',
         self::STATUS_REFUND            => '失败已退款',
-        self::STATUS_NON_REFUND        => '失败未退款',
+        self::STATUS_NOT_REFUND        => '失败未退款',
         self::STATUS_BANK_NET_FAIL     => '提交银行失败',
         self::STATUS_BANK_PROCESS_FAIL => '银行处理失败',
     ];

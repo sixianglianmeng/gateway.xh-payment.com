@@ -57,7 +57,6 @@ class RequestSignController extends \power\yii2\web\Controller
             [
                 'verifySign' => [
                     'class'     => \app\components\filters\VerifySign::className(),
-                    'godSig'    => '56610f9fce1cdAcs07098cd80d',
                 ],
             ]
         );

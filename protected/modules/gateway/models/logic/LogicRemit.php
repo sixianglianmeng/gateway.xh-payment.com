@@ -55,7 +55,7 @@ class LogicRemit
             $remitData['status'] = Remit::STATUS_CHECKED;
         }
         $remitData['bank_status'] = Remit::BANK_STATUS_NONE;
-
+        $orderData['financial_status'] = Remit::FINANCIAL_STATUS_NONE;
         $remitData['merchant_account'] = $merchant->username;
 
         $remitData['channel_account_id'] = $paymentChannelAccount->id;
@@ -143,7 +143,10 @@ class LogicRemit
                 break;
             case Remit::STATUS_BANK_PROCESS_FAIL:
             case Remit::STATUS_BANK_NET_FAIL:
-                $remit = self::refund($remit);
+            case Remit::STATUS_NOT_REFUND:
+                //$remit = self::refund($remit);
+//                $remit->status = Remit::STATUS_NOT_REFUND;
+//                $remit->save();
                 break;
             default:
                 break;
@@ -152,6 +155,55 @@ class LogicRemit
         return $remit;
     }
 
+    /*
+     * 订单分润
+     */
+    static public function bonus(Remit $remit)
+    {
+        Yii::debug([__CLASS__ . ':' . __FUNCTION__ . ' ' . $remit->order_no]);
+        if ($remit->financial_status === Remit::FINANCIAL_STATUS_SUCCESS) {
+            Yii::warning([__FUNCTION__ . ' remit has been bonus,will return, ' . $remit->order_no]);
+            return $remit;
+        }
+
+        //所有上级代理UID
+        $parentIds = $remit->merchant->getAllParentAgentId();
+        //从自己开始算
+        $parentIds[] = $remit->merchant->id;
+
+        bcscale(9);
+        $parentIdLen = count($parentIds) - 1;
+        for ($i = $parentIdLen; $i >= 0; $i--) {
+            $pUser      = User::findActive($parentIds[$i]);
+
+            //有上级的才返
+            if (empty($pUser->paymentInfo->remit_fee_rebate)) {
+                Yii::debug(["remit bonus, parent fee empty", $pUser->id, $pUser->username, $pUser->parentAgent - id, $pUser->parentAgent->usename]);
+                continue;
+            }
+
+            //没有上级可以直接中断了
+            if (!$pUser->parentAgent) {
+                Yii::debug(["remit bonus, has no parent", $pUser->id, $pUser->username]);
+                break;
+            }
+
+            //有上级的才返，余额操作对象是上级代理
+            Yii::debug(["remit bonus parent", $pUser->id, $pUser->username, $pUser->parentAgent->id, $pUser->parentAgent->username]);
+            $logicUser   = new LogicUser($pUser->parentAgent);
+            $logicUser->changeUserBalance($pUser->paymentInfo->remit_fee_rebate, Financial::EVENT_TYPE_REMIT_BONUS, $remit->order_no, Yii::$app->request->userIP);
+        }
+
+        //更新订单账户处理状态
+        $remit->financial_status = Remit::FINANCIAL_STATUS_SUCCESS;
+        $remit->save();
+
+        return $remit;
+    }
+
+    /*
+     * 提款扣款
+     */
     static public function deduct(Remit $remit){
         Yii::debug([__CLASS__.':'.__FUNCTION__,$remit->order_no]);
         //账户余额扣款
@@ -164,6 +216,9 @@ class LogicRemit
             $amount =  0-$remit->remit_fee;
             $logicUser->changeUserBalance($amount, Financial::EVENT_TYPE_REMIT_FEE, $remit->order_no, Yii::$app->request->userIP);
 
+            //出款分润
+            self::bonus($remit);
+
             $remit->status = Remit::STATUS_DEDUCT;
             $remit->save();
 
@@ -173,6 +228,9 @@ class LogicRemit
         }
     }
 
+    /*
+     * 提交提款请求到银行
+     */
     static public function commitToBank(Remit $remit, ChannelAccount $paymentChannelAccount){
         Yii::debug([__CLASS__.':'.__FUNCTION__,$remit->order_no]);
         if($remit->status == Remit::STATUS_DEDUCT){
@@ -192,7 +250,7 @@ class LogicRemit
                         $remit->status = Remit::STATUS_SUCCESS;
                         $remit->bank_status =  Remit::BANK_STATUS_SUCCESS;
                     case '05':
-                        $remit->status = Remit::STATUS_BANK_PROCESS_FAIL;
+                        $remit->status = Remit::STATUS_NOT_REFUND;
                         $remit->bank_status =  Remit::BANK_STATUS_FAIL;
                 }
 
@@ -201,7 +259,7 @@ class LogicRemit
                 }
                 $remit->save();
             }
-            //失败或者银行拒绝，退款
+            //失败或者银行拒绝
             else{
                 $remit = self::setFail($remit, $ret['message']);
             }
@@ -214,8 +272,10 @@ class LogicRemit
         }
     }
 
-    static public function queryChannelRemitStatus(Remit $remit, ChannelAccount $paymentChannelAccount){
+    static public function queryChannelRemitStatus(Remit $remit){
         Yii::debug([__CLASS__.':'.__FUNCTION__,$remit->order_no]);
+
+        $paymentChannelAccount = $remit->channelAccount;
         //提交到银行
         //银行状态说明：00处理中，04成功，05失败或拒绝
         $payment = new ChannelPayment($remit, $paymentChannelAccount);
@@ -231,7 +291,7 @@ class LogicRemit
                     $remit->status = Remit::STATUS_SUCCESS;
                     $remit->bank_status =  Remit::BANK_STATUS_SUCCESS;
                 case '05':
-                    $remit->status = Remit::STATUS_BANK_PROCESS_FAIL;
+                    $remit->status = Remit::STATUS_NOT_REFUND;
                     $remit->bank_status =  Remit::BANK_STATUS_FAIL;
             }
 
@@ -250,11 +310,12 @@ class LogicRemit
         return $remit;
     }
 
-    static public function refund($remit){
+    static public function refund($remit, $reason = ''){
         Yii::debug([__CLASS__.':'.__FUNCTION__,$remit->order_no]);
         if(
             $remit->status == Remit::STATUS_BANK_PROCESS_FAIL
             || $remit->status == Remit::STATUS_BANK_NET_FAIL
+            || $remit->status == Remit::STATUS_NOT_REFUND
         ){
             //退回账户扣款
             $logicUser = new LogicUser($remit->merchant);
@@ -265,6 +326,14 @@ class LogicRemit
             $amount =  $remit->remit_fee;
 
             $logicUser->changeUserBalance($amount, Financial::EVENT_TYPE_REFUND_REMIT_FEE, $remit->order_no, $ip);
+
+            //退回分润
+            $parentRebate = Financial::findAll(['event_id'=>$remit->id,
+                'event_type'=>Financial::EVENT_TYPE_REMIT_BONUS,'uid'=>$remit->merchant_id]);
+            foreach ($parentRebate as $pr){
+                $logicUser->changeUserBalance((0-$remit->amount), Financial::EVENT_TYPE_REFUND_REMIT_FEE,
+                    $remit->order_no, $ip, $reason);
+            }
 
             $remit->status = Remit::STATUS_REFUND;
             $remit->save();

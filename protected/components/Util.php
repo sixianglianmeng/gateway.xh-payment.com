@@ -701,7 +701,9 @@ class Util
     }
 
     public static function uuid(string $type = 'mongoId'){
-        $chars = new \MongoDB\BSON\ObjectId();
+//        $chars = new \MongoDB\BSON\ObjectId();
+        $chars = uniqid('', true);
+
         switch ($type){
             case 'md5':
                 $chars = md5($chars);
@@ -750,6 +752,6 @@ class Util
             $msg = Macro::MSG_LIST[$code];
         }
 
-        throw new Exception($msg);
+        throw new \Exception($msg);
     }
 }

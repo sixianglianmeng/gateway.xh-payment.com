@@ -7,7 +7,6 @@ use app\common\models\model\LogApiRequest;
 use app\components\Macro;
 use app\modules\gateway\models\logic\LogicOrder;
 use yii\base\BaseObject;
-use yii\queue\JobInterface;
 use yii\queue\RetryableJobInterface;
 use app\common\models\model\Order;
 
@@ -20,7 +19,7 @@ class PaymentNotifyJob extends BaseObject implements RetryableJobInterface
     public function execute($queue)
     {
         $urlInfo = parse_url($this->url);
-        \Yii::debug(['got PaymentNotifyJob ret',$this->orderNo]);
+        Yii::debug(['got PaymentNotifyJob ret',$this->orderNo]);
         $ts = microtime(true);
         $orderNo = $this->orderNo;
         \Swoole\Async::dnsLookup($urlInfo['host'], function ($domainName, $ip) use($urlInfo,$queue,$orderNo,$ts) {
@@ -34,7 +33,7 @@ class PaymentNotifyJob extends BaseObject implements RetryableJobInterface
             ]);
             $urlInfo['path'] = $urlInfo['path']??'/';
             $cli->post($urlInfo['path'], $this->data, function ($cli) use ($queue,$orderNo,$ts) {
-                \Yii::debug(['PaymentNotifyJob ret',$this->orderNo,$cli->statusCode]);
+                Yii::debug(['PaymentNotifyJob ret',$this->orderNo,$cli->statusCode]);
                 $costTime = bcsub(microtime(true),$ts,4);
 
                 //接口日志埋点

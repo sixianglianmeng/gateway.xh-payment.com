@@ -1,16 +1,40 @@
 {
   "apps": [
     {
-      "name": "remit-status-check",
-      "args": "remit-status-check/check --verbose",
+      "name": "bank-commit-queue-producer",
+      "args": "remit/bank-commit-queue-producer",
       "script": "./protected/yii",
       "exec_interpreter": "php",
       "exec_mode": "fork",
-      "max_memory_restart": "128M"
+      "max_memory_restart": "256M"
+    },
+    {
+      "name": "check-status-queue-producer",
+      "args": "remit/check-status-queue-producer",
+      "script": "./protected/yii",
+      "exec_interpreter": "php",
+      "exec_mode": "fork",
+      "max_memory_restart": "256M"
+    },
+    {
+      "name": "re-check-fail-queue-producer",
+      "args": "remit/re-check-fail-queue-producer",
+      "script": "./protected/yii",
+      "exec_interpreter": "php",
+      "exec_mode": "fork",
+      "max_memory_restart": "256M"
     },
     {
       "name": "payment-notify-queue",
-      "args": "payment-notify-queue/listen ",
+      "args": "payment-notify-queue/listen --verbose",
+      "script": "./protected/yii",
+      "exec_interpreter": "php",
+      "exec_mode": "fork",
+      "max_memory_restart": "256M"
+    },
+    {
+      "name": "remit-query-queue",
+      "args": "remit-query-queue/listen --verbose",
       "script": "./protected/yii",
       "exec_interpreter": "php",
       "exec_mode": "fork",
