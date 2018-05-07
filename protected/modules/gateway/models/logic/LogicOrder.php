@@ -288,7 +288,7 @@ class LogicOrder
      */
     static public function unfrozen(Order $order, $bak='', $opUid, $opUsername){
         Yii::debug(__FUNCTION__.' '.$order->order_no.' '.$bak);
-        if($order->status === Order::STATUS_PAID){
+        if($order->status === Order::STATUS_FREEZE){
             return $order;
         }
 
@@ -298,7 +298,7 @@ class LogicOrder
             $order->order_no, Yii::$app->request->userIP, $bak, $opUid, $opUsername);
 
         //更改订单状态
-        $order->status = Order::STATUS_FREEZE;
+        $order->status = Order::STATUS_PAID;
         $order->save();
 
         return $order;
