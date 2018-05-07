@@ -419,4 +419,45 @@ class LogicOrder
 
         return $order;
     }
+
+    /*
+     * 到第三方查询订单状态
+     */
+    static public function queryChannelOrderStatus(Order $order){
+        Yii::debug([__CLASS__.':'.__FUNCTION__,$order->order_no]);
+
+        $paymentChannelAccount = $order->channelAccount;
+        //提交到银行
+        //银行状态说明：00处理中，04成功，05失败或拒绝
+        $payment = new ChannelPayment($order, $paymentChannelAccount);
+        $ret = $payment->orderStatus();
+        Yii::info('order status check: '.json_encode($ret,JSON_UNESCAPED_UNICODE));
+        if($ret['code'] === 0){
+            switch ($ret['data']['status']){
+                case '00':
+                    $order->status = Order::STATUS_BANK_PROCESSING;
+                    $order->bank_status =  Order::BANK_STATUS_PROCESSING;
+                    $order->channel_order_no = $ret['order_id'];
+                case '04':
+                    $order->status = Order::STATUS_SUCCESS;
+                    $order->bank_status =  Order::BANK_STATUS_SUCCESS;
+                case '05':
+                    $order->status = Order::STATUS_NOT_REFUND;
+                    $order->bank_status =  Order::BANK_STATUS_FAIL;
+            }
+
+            if(!empty($ret['order_id']) && empty($order->channel_order_no)){
+                $order->channel_order_no = $ret['order_id'];
+            }
+            $order->save();
+
+            self::processOrder($order, $paymentChannelAccount);
+        }
+        //失败
+        else{
+
+        }
+
+        return $order;
+    }
 }

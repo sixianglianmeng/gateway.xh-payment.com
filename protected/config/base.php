@@ -1,5 +1,7 @@
 <?php
-!defined('SYSTEM_NAME') && define('SYSTEM_NAME', 'yii2');
+!defined('SYSTEM_NAME') && define('SYSTEM_NAME', 'gateway_payment');
+//redis key前缀，用于在同一个redis实例部署多套相同程序时使用
+!defined('REDIS_PREFIX') && define('REDIS_PREFIX', 'gp_');
 !defined('WWW_DIR') && define('WWW_DIR', realpath(__DIR__ . '/../../'));
 !defined('RUNTIME_DIR') && define('RUNTIME_DIR', WWW_DIR . '/runtime');
 //!is_dir(RUNTIME_DIR) && mkdir(RUNTIME_DIR, 0777, true);
@@ -13,6 +15,7 @@ $config = [
         'paymentNotifyQueue',
         'remitBankCommitQueue',
         'remitQueryQueue',
+        'orderQueryQueue'
     ],
     'runtimePath' => constant('RUNTIME_DIR'),
     'modules' => [
@@ -166,7 +169,7 @@ $config = [
             'class' => \yii\queue\redis\Queue::class,
             'redis' => 'redis',
             'as log' => \yii\queue\LogBehavior::class,
-            'channel' => 'task_queue',
+            'channel' => REDIS_PREFIX.'tq_on',
 //            'strictJobType' => false,
 //            'serializer' => \yii\queue\serializers\JsonSerializer::class,
         ],
@@ -174,17 +177,19 @@ $config = [
             'class' => \yii\queue\redis\Queue::class,
             'redis' => 'redis',
             'as log' => \yii\queue\LogBehavior::class,
-            'channel' => 'task_queue',
-//            'strictJobType' => false,
-//            'serializer' => \yii\queue\serializers\JsonSerializer::class,
+            'channel' => REDIS_PREFIX.'tq_rbc',
         ],
         'remitQueryQueue' => [
             'class' => \yii\queue\redis\Queue::class,
             'redis' => 'redis',
             'as log' => \yii\queue\LogBehavior::class,
-            'channel' => 'task_queue',
-//            'strictJobType' => false,
-//            'serializer' => \yii\queue\serializers\JsonSerializer::class,
+            'channel' => REDIS_PREFIX.'tq_rq',
+        ],
+        'orderQueryQueue' => [
+            'class' => \yii\queue\redis\Queue::class,
+            'redis' => 'redis',
+            'as log' => \yii\queue\LogBehavior::class,
+            'channel' => REDIS_PREFIX.'tq_oq',
         ],
         'on beforeRequest' => ['\power\yii2\log\LogHelper', 'onBeforeRequest'],
         'on afterRequest' => ['\power\yii2\log\LogHelper', 'onAfterRequest'],

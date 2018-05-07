@@ -59,12 +59,13 @@ class PaymentNotifyJob extends BaseObject implements RetryableJobInterface
 
     public function getRetryDelay($attempt, $error)
     {
-        return $attempt * 30;
+        //通知分钟数: 2,10,28,60,110,182,280,408,570,770
+        return $attempt * $attempt * 120;
     }
 
     public function getTtr()
     {
-        return 100;
+        return 30;
     }
 
     public function canRetry($attempt, $error)

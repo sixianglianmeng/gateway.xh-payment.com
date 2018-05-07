@@ -1,13 +1,13 @@
 <?php
 namespace app\jobs;
 
-use app\common\models\model\Remit;
-use app\modules\gateway\models\logic\LogicRemit;
+use app\common\models\model\Order;
+use app\modules\gateway\models\logic\LogicOrder;
 use Yii;
 use yii\base\BaseObject;
 use yii\queue\RetryableJobInterface;
 
-class RemitQueryJob extends BaseObject implements RetryableJobInterface
+class OrderQueryJob extends BaseObject implements RetryableJobInterface
 {
     public $orderNo;
     public $url;
@@ -15,15 +15,15 @@ class RemitQueryJob extends BaseObject implements RetryableJobInterface
 
     public function execute($queue)
     {
-        Yii::debug(['got PaymentNotifyJob ret',$this->orderNo]);
+        Yii::debug(['got OrderQueryJob ret',$this->orderNo]);
 
-        $remit = Remit::findOne(['order_no'=>$this->orderNo]);
-        if(!$remit){
-            Yii::warning('JobRemitQuery error, empty remit:'.$this->orderNo);
+        $order = Order::findOne(['order_no'=>$this->orderNo]);
+        if(!$order){
+            Yii::warning('JobOrderQuery error, empty remit:'.$this->orderNo);
             return true;
         }
 
-        LogicRemit::queryChannelRemitStatus($remit);
+        LogicOrder::queryChannelOrderStatus($order);
     }
 
     public function getRetryDelay($attempt, $error)
@@ -31,6 +31,9 @@ class RemitQueryJob extends BaseObject implements RetryableJobInterface
         return 60;
     }
 
+    /*
+     * Max time for job execution
+     */
     public function getTtr()
     {
         return 30;
