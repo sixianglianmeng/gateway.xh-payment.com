@@ -51,6 +51,7 @@ class LogicUser
                 //写入账变日志
                 $financial                 = new Financial();
                 $financial->uid            = $this->user->id;
+                $financial->username       = $this->user->username;
                 $financial->event_id       = $eventId;
                 $financial->event_type     = $eventType;
                 $financial->amount         = $amount;
@@ -131,22 +132,23 @@ class LogicUser
 //                throw new \Exception('账户余额已经完成变动，请勿重复修改。');
 
                 //写入账变日志
-                $financial              = new Financial();
-                $financial->uid         = $this->user->id;
-                $financial->event_id    = $eventId;
-                $financial->event_type  = $eventType;
-                $financial->famount      = $amount;
-                $financial->frozen_balance     = bcadd($this->user->frozen_balance, $amount);
-                $financial->frozen_balance_before     = $this->user->frozen_balance;
-                $financial->balance        = bcadd($this->user->balance, $usableAmount);
-                $financial->balance_before = $this->user->balance;
-                $financial->created_at  = time();
-                $financial->client_ip   = $clientIp;
-                $financial->created_at  = $clientIp;
-                $financial->bak         = $bak;
-                $financial->op_uid      = $opUid;
-                $financial->status      = Financial::STATUS_UNFINISHED;
-                $financial->op_username = $opUsername;
+                $financial                        = new Financial();
+                $financial->uid                   = $this->user->id;
+                $financial->username              = $this->user->username;
+                $financial->event_id              = $eventId;
+                $financial->event_type            = $eventType;
+                $financial->famount               = $amount;
+                $financial->frozen_balance        = bcadd($this->user->frozen_balance, $amount);
+                $financial->frozen_balance_before = $this->user->frozen_balance;
+                $financial->balance               = bcadd($this->user->balance, $usableAmount);
+                $financial->balance_before        = $this->user->balance;
+                $financial->created_at            = time();
+                $financial->client_ip             = $clientIp;
+                $financial->created_at            = $clientIp;
+                $financial->bak                   = $bak;
+                $financial->op_uid                = $opUid;
+                $financial->status                = Financial::STATUS_UNFINISHED;
+                $financial->op_username           = $opUsername;
                 $financial->save();
 
                 //更新账户余额

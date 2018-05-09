@@ -701,9 +701,7 @@ class Util
     }
 
     public static function uuid(string $type = 'mongoId'){
-//        $chars = new \MongoDB\BSON\ObjectId();
-        $chars = uniqid('', true);
-
+        $chars = new \MongoDB\BSON\ObjectId();
         switch ($type){
             case 'md5':
                 $chars = md5($chars);

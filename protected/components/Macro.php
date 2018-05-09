@@ -33,25 +33,27 @@ class Macro
     const ERROR_LOGIN_INFO = 10003;    //登录错误
     const ERR_REFERRER = 10004;
     const ERR_API_IP_DENIED = 10005;
-    const ERR_PAGE_NOT_FOUND = 404;
+    const ERR_PAGE_NOT_FOUND= 404;
 
     const ERR_NEED_LOGIN = 401;
     const ERR_LOGIN_FAIL = 1001;
     const ERR_NEED_SOME_PARAM = 1011;
-    const ERR_PARAM_SIGN = 1012;
-    const ERR_PARAM_FORMAT = 1013;
+    const ERR_PARAM_SIGN= 1012;
+    const ERR_PARAM_FORMAT= 1013;
 
-    const ERR_PERMISSION = 1021;
+    const ERR_PERMISSION= 1021;
 
-    const ERR_SMS_SEND_FAIL = 2021;
-    const ERR_SMS_REACH_MAX = 2022;
-    const ERR_SMS_VERIFY_CODE = 2023;
+    const ERR_SMS_SEND_FAIL= 2021;
+    const ERR_SMS_REACH_MAX= 2022;
+    const ERR_SMS_VERIFY_CODE= 2023;
 
     const ERR_USERNAME_FORMAT = 10011;
     const ERR_USER_EXISTS = 10012;
     const ERR_USER_NOT_FOUND = 10013;
     const ERR_USER_BAN = 10014;
     const ERR_BALANCE_NOT_ENOUGH = 10015;
+    const ERR_USER_PASSWORD = 10016;
+    const ERR_USER_PASSWORD_CONFIRM = 10017;
 
     const ERR_PHONE_FORMAT = 10021;
     const ERR_PHONE_EXISTS = 10022;
