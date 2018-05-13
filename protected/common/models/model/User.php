@@ -18,14 +18,19 @@ class User extends BaseModel
     ];
 
     const GROUP_ADMIN = 10;
-    const GROUP_MERCHANT = 20;
-    const GROUP_AGENT = 30;
+    const GROUP_AGENT = 20;
+    const GROUP_MERCHANT = 30;
     const ARR_GROUP = [
         self::GROUP_ADMIN => '管理员',
         self::GROUP_MERCHANT => '商户',
         self::GROUP_AGENT => '代理',
     ];
 
+    const ARR_GROUP_EN = [
+        self::GROUP_ADMIN => 'admin',
+        self::GROUP_MERCHANT => 'merchant',
+        self::GROUP_AGENT => 'agent',
+    ];
     const DEFAULT_RECHARGE_RATE = 0.6;
     const DEFAULT_REMIT_FEE = 0.6;
 
@@ -45,7 +50,7 @@ class User extends BaseModel
     {
         return [
             ['status','default','value'=>self::STATUS_INACTIVE],
-            ['status','in','range'=>[self::STATUS_ACTIVE,self::STATUS_INACTIVE,self::STATUS_BANED]],s
+            ['status','in','range'=>[self::STATUS_ACTIVE,self::STATUS_INACTIVE,self::STATUS_BANED]],
         ];
     }
 
@@ -97,5 +102,25 @@ class User extends BaseModel
     public function getGroupStr()
     {
         return self::ARR_GROUP[$this->group_id]??'-';
+    }
+
+    /*
+    * 获取分组英文描述
+    *
+    * @return string
+    * @author bootmall@gmail.com
+    */
+    public function getGroupEnStr()
+    {
+        return self::ARR_GROUP_EN[$this->group_id]??'-';
+    }
+
+    /**
+     * 注销
+     */
+    public function logOut()
+    {
+        $this->access_token = '';
+        $this->save();
     }
 }

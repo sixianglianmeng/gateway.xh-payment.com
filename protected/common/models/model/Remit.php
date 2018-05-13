@@ -58,7 +58,7 @@ class Remit extends BaseModel
     const FINANCIAL_STATUS_SUCCESS = 10;
 
     const ARR_STATUS = [
-        self::STATUS_NONE              => '未处理',
+        self::STATUS_NONE              => '待审核',
         self::STATUS_CHECKED           => '已审核',
         self::STATUS_DEDUCT            => '账户已扣款',
         self::STATUS_BANK_PROCESSING   => '银行处理中',
@@ -138,9 +138,15 @@ class Remit extends BaseModel
      * @return string
      * @author bootmall@gmail.com
      */
-    public function getStatusStr()
+    public function showStatusStr()
     {
-        return self::ARR_STATUS[$this->status]??'-';
+        if(in_array($this->status,array(10,20,30))){
+            return '处理中';
+        }elseif (in_array($this->status,array(50,60,-10,-20))){
+            return '出款失败';
+        }else{
+            return self::ARR_STATUS[$this->status]??'-';
+        }
     }
 
 }

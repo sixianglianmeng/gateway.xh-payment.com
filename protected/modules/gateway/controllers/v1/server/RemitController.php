@@ -39,7 +39,7 @@ class RemitController extends BaseServerSignedRequestController
         //检测参数合法性，判断用户合法性
         $paymentRequest->validate($this->allParams, $needParams);
 
-        $paymentChannelAccount = LogicChannelAccount::getDefaultRemitChannelAccount();
+        $paymentChannelAccount = $this->merchantPayment->remitChannel;
         if(!$paymentChannelAccount){
             throw new InValidRequestException('提款渠道配置错误');
         }

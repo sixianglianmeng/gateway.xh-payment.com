@@ -246,7 +246,6 @@ class LogicRemit
                     case '00':
                         $remit->status = Remit::STATUS_BANK_PROCESSING;
                         $remit->bank_status =  Remit::BANK_STATUS_PROCESSING;
-                        $remit->channel_order_no = $ret['order_id'];
                     case '04':
                         $remit->status = Remit::STATUS_SUCCESS;
                         $remit->bank_status =  Remit::BANK_STATUS_SUCCESS;
@@ -255,8 +254,8 @@ class LogicRemit
                         $remit->bank_status =  Remit::BANK_STATUS_FAIL;
                 }
 
-                if(!empty($ret['order_id']) && empty($remit->channel_order_no)){
-                    $remit->channel_order_no = $ret['order_id'];
+                if(!empty($ret['data']['orderId']) && empty($remit->channel_order_no)){
+                    $remit->channel_order_no = $ret['data']['orderId'];
                 }
                 $remit->save();
             }

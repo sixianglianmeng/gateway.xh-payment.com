@@ -70,8 +70,8 @@ class LogicOrder
         if(empty($payMethods)){
             Util::throwException(Macro::ERR_PAYMENT_TYPE_NOT_ALLOWED);
         }
-        $orderData['fee_rate'] = $payMethods['rate'];
-        $orderData['fee_amount'] = bcmul($payMethods['rate'],$orderData['amount'],9);
+
+        $orderData['fee_amount'] = bcmul($payMethods->fee_rate,$orderData['amount'],9);
         $orderData['plat_fee_rate'] = $channelAccount->recharge_rate;
         $orderData['plat_fee_amount'] = bcmul($channelAccount->recharge_rate,$orderData['amount'],9);
 

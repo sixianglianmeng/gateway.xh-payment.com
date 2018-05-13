@@ -68,7 +68,7 @@ class Channel extends BaseModel
     }
 
     public static function getPayMethodsStr($methodId){
-        return self::ARR_METHOD[$methodId];
+        return self::ARR_METHOD[$methodId]??'';
     }
     public function getPayMethodsArr()
     {
@@ -83,5 +83,10 @@ class Channel extends BaseModel
         }
 
         return $methods;
+    }
+
+    public static function getALLChannel()
+    {
+        return self::find()->select('id,name')->asArray()->all();
     }
 }
