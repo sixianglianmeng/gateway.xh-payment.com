@@ -48,43 +48,50 @@ class ChannelAccount extends BaseModel
         return empty($this->app_secrets)?[]:json_decode($this->app_secrets,true);
     }
 
-    /*
-     * 充值渠道是否支持某个支付方式
-     */
-//    public function hasPaymentMethod($methodId)
-//    {
-//        $has = strpos($this->methods,'"id":'.$methodId.',')!==false;
-//        return $has;
-//    }
-//
-//    public function getPayMethodsArr()
-//    {
-//        $raWmethods = empty($this->methods)?[]:json_decode($this->methods,true);
-//        $methods = [];
-//        foreach ($raWmethods as $m){
-//            $methods[] = [
-//                'id'=>$m['id'],
-//                'rate'=>$m['rate'],
-//                'name'=>Channel::ARR_METHOD[$m['id']]??'支付方式：'.$m['id'],
-//            ];
-//        }
-//
-//        return $methods;
-//    }
-
-    public function updatedPayMethod($method)
+    public function getPayMethodsArr()
     {
-        $raWmethods = empty($this->methods)?[]:json_decode($this->methods,true);
-        foreach ($raWmethods as $k=>$m){
-            if($method['id'] == $m['id']){
-                $method['name'] = Channel::ARR_METHOD[$m['id']]??'支付方式：'.$m['id'];
-                $raWmethods[$k] =  ArrayHelper::merge($m,$method);
-            }
+        $raWmethods = $this->getPayMethods()->toArray();
+        foreach ($raWmethods as $m){
+            $methods[] = [
+                'id'=>$m['id'],
+                'rate'=>$m['rate'],
+                'name'=>$m['name'],
+            ];
         }
-        $this->methods = json_encode($raWmethods,JSON_UNESCAPED_UNICODE);
-        $this->update();
 
-        return $this;
+        return $methods;
+    }
+
+    /**
+     * 充值渠道账户是否支持某个支付方式
+     */
+    public function hasPaymentMethod($methodId)
+    {
+        $has = $this->getPayMethodById($methodId);
+        return $has;
+    }
+
+    /**
+     * 根据支付方式id获取支付方式信息
+     *
+     * @param int $id 支付方式id
+     * @return ActiveRecord
+     */
+    public function getPayMethodById($id)
+    {
+        return $this->hasOne(MerchantRechargeMethod::className(), ['channel_account_id' => 'id'])
+            ->where(['method_id' => $id])->one();
+    }
+
+    /**
+     * 获取支付方式列表
+     *
+     * @param int $id 支付方式id
+     * @return array
+     */
+    public function getPayMethods()
+    {
+        return $this->hasMany(MerchantRechargeMethod::className(), ['channel_account_id' => 'id']);
     }
 
     public static function getALLChannelAccount()

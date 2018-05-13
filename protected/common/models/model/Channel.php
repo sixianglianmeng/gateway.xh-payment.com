@@ -70,6 +70,7 @@ class Channel extends BaseModel
     public static function getPayMethodsStr($methodId){
         return self::ARR_METHOD[$methodId]??'';
     }
+
     public function getPayMethodsArr()
     {
         $raWmethods = empty($this->pay_methods)?[]:json_decode($this->pay_methods,true);
