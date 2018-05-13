@@ -53,8 +53,7 @@ class AllScoreBasePayment extends BasePayment
         $merchantId = ControllerParameterValidator::getRequestParam($request, 'merchantId',null,Macro::CONST_PARAM_TYPE_STRING, 'merchantId错误！',[3]);
 
         $order = LogicOrder::getOrderByOrderNo($orderNo);
-        $channelAccount = LogicOrder::getPaymentChannelAccount($order);
-        $this->setPaymentConfig($channelAccount);
+        $this->setPaymentConfig($order->channelAccount);
         $this->setOrder($order);
 
         $ret = new ObjectNoticeResult();
@@ -150,7 +149,12 @@ class AllScoreBasePayment extends BasePayment
 
         // 构造代扣支付接口
         $allscoreService = new \AllscoreService($this->paymentConfig);
-        $resTxt = $allscoreService->payment($parameter);
+//        $resTxt = $allscoreService->payment($parameter);
+        //TODO 取消测试数据构造，恢复正常提交
+        if(YII_DEBUG && YII_ENV == YII_ENV_DEV) {
+            $resTxt='{"merchantId": "001015013101118","orderId": "20160618155020329942","outOrderId": "20160618155640950","retCode": "0000","retMsg": "操作完成","status": "00","transTime": "2016-06-18 15:52:43"}';
+            $res = json_decode($resTxt,true);
+        }
         $ret = Macro::FAILED_MESSAGE;
         if(!empty($resTxt)){
             $res = json_decode($resTxt,true);

@@ -35,11 +35,18 @@ class OrderController extends BaseWebSignedRequestController
         //检测参数合法性，判断用户合法性
         $paymentRequest->validate($this->allParams, $needParams);
 
+
+        $payMethod = $this->merchantPayment->getPayMethodById($orderData['pay_method_code']);
+        if(empty($payMethod)){
+            Util::throwException(Macro::ERR_PAYMENT_TYPE_NOT_ALLOWED);
+        }
+
+
         //生成订单
-        $order = LogicOrder::addOrder($this->allParams,$this->merchant,$this->merchantPayment);
+        $order = LogicOrder::addOrder($this->allParams,$this->merchant, $payMethod);
 
         //生成跳转连接
-        $payment = new ChannelPayment($order,$this->merchantPayment->paymentChannel);
+        $payment = new ChannelPayment($order, $payMethod->channelAccount);
         $redirect = $payment->createPaymentRedirectParams();
 
         //设置客户端唯一id

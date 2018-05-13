@@ -10,4 +10,9 @@ class ChannelAccountRechargeMethod extends BaseModel
     {
         return '{{%channel_account_recharge_methods}}';
     }
+
+    public function getChannelAccount()
+    {
+        return $this->hasOne(ChannelAccount::className(), ['id'=>'channel_account_id']);
+    }
 }

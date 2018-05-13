@@ -149,13 +149,4 @@ class PaymentRequest
             ]));
         }
     }
-
-
-    public function getPaymentChannelAccount(){
-        if(empty($this->merchantPayment)){
-            throw new \Exception('订单信息错误',Macro::ERR_PAYMENT_CHANNEL_ACCOUNT);
-        }
-
-        return $this->merchantPayment->paymentChannel;
-    }
 }

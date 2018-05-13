@@ -357,21 +357,6 @@ class LogicRemit
         return $order;
     }
 
-    static public function getPaymentChannelAccount(Remit $order)
-    {
-        $channel = ChannelAccount::findOne([
-            'channel_id'=>$order->channel_id,
-            'merchant_id'=>$order->channel_merchant_id,
-            'app_id'=>$order->channel_app_id,
-        ]);
-
-        if(empty($channel)){
-            throw new InValidRequestException('无法根据订单查找支付渠道信息');
-        }
-
-        return $channel;
-    }
-
     /*
      * 订单成功
      *

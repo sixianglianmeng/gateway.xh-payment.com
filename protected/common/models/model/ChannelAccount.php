@@ -55,7 +55,7 @@ class ChannelAccount extends BaseModel
             $methods[] = [
                 'id'=>$m['id'],
                 'rate'=>$m['rate'],
-                'name'=>$m['name'],
+                'name'=>$m['method_name'],
             ];
         }
 

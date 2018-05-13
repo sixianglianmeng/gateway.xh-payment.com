@@ -6,6 +6,7 @@ namespace app\modules\gateway\models\logic;
 use app\common\exceptions\InValidRequestException;
 use app\common\models\logic\LogicUser;
 use app\common\models\model\ChannelAccount;
+use app\common\models\model\ChannelAccountRechargeMethod;
 use app\common\models\model\Financial;
 use app\common\models\model\LogApiRequest;
 use app\common\models\model\UserPaymentInfo;
@@ -32,7 +33,7 @@ class LogicOrder
      * @param User $merchant 充值账户
      * @param ChannelAccount $paymentChannelAccount 充值的三方渠道账户
      */
-    static public function addOrder(array $request, User $merchant, UserPaymentInfo $userPaymentInfo){
+    static public function addOrder(array $request, User $merchant, ChannelAccountRechargeMethod $rechargeMethod){
 
         $orderData = [];
         $orderData['order_no'] = self::generateOrderNo();
@@ -55,25 +56,20 @@ class LogicOrder
         $orderData['merchant_account'] = $merchant->username;
         $orderData['created_at'] = time();
 
-        $channelAccount = $userPaymentInfo->paymentChannel;
-        $orderData['channel_id'] = $channelAccount->channel_id;
-        $orderData['channel_account_id'] = $channelAccount->id;
-        $orderData['channel_merchant_id'] = $channelAccount->merchant_id;
-        $orderData['channel_app_id'] = $channelAccount->app_id;
+        $orderData['channel_id'] = $rechargeMethod->channel_id;
+        $orderData['channel_account_id'] = $rechargeMethod->id;
+        $orderData['channel_merchant_id'] = $rechargeMethod->merchant_id;
+        $orderData['channel_app_id'] = $rechargeMethod->app_id;
 
         $orderData['op_uid'] = $request['op_uid']??0;
         $orderData['op_username'] = $request['op_username']??'';
         $orderData['description'] = '';
         $orderData['notify_ret'] = '';
 
-        $payMethods = $userPaymentInfo->getPayMethodById($orderData['pay_method_code']);
-        if(empty($payMethods)){
-            Util::throwException(Macro::ERR_PAYMENT_TYPE_NOT_ALLOWED);
-        }
-
-        $orderData['fee_amount'] = bcmul($payMethods->fee_rate,$orderData['amount'],9);
-        $orderData['plat_fee_rate'] = $channelAccount->recharge_rate;
-        $orderData['plat_fee_amount'] = bcmul($channelAccount->recharge_rate,$orderData['amount'],9);
+        $orderData['fee_rate'] = $rechargeMethod->fee_rate;
+        $orderData['fee_amount'] = bcmul($rechargeMethod->fee_rate,$orderData['amount'],9);
+        $orderData['plat_fee_rate'] = $rechargeMethod->channelAccount->recharge_rate;
+        $orderData['plat_fee_amount'] = bcmul($rechargeMethod->channelAccount->recharge_rate,$orderData['amount'],9);
 
         $hasOrder = Order::findOne(['app_id'=>$orderData['app_id'],'merchant_order_no'=>$request['order_no']]);
         if($hasOrder){
@@ -83,7 +79,7 @@ class LogicOrder
 
         $newOrder = new Order();
         $newOrder->setAttributes($orderData,false);
-        self::beforeAddOrder($newOrder, $merchant, $channelAccount);
+        self::beforeAddOrder($newOrder, $merchant, $rechargeMethod->channelAccount);
 
         $newOrder->save();
 
