@@ -85,34 +85,37 @@ class User extends BaseModel
     /*
     * 获取状态描述
     *
+    * @param int $status 状态ID
     * @return string
     * @author bootmall@gmail.com
     */
-    public function getStatusStr()
+    public static function getStatusStr($status)
     {
-        return self::ARR_STATUS[$this->status]??'-';
+        return self::ARR_STATUS[$status]??'-';
     }
 
     /*
     * 获取分组描述
     *
+    * @param int $groupId 分组ID
     * @return string
     * @author bootmall@gmail.com
     */
-    public function getGroupStr()
+    public static function getGroupStr($groupId)
     {
-        return self::ARR_GROUP[$this->group_id]??'-';
+        return self::ARR_GROUP[$groupId]??'-';
     }
 
     /*
     * 获取分组英文描述
-    *
+     *
+    * @param int $groupId 分组ID
     * @return string
     * @author bootmall@gmail.com
     */
-    public function getGroupEnStr()
+    public static function getGroupEnStr($groupId)
     {
-        return self::ARR_GROUP_EN[$this->group_id]??'-';
+        return self::ARR_GROUP_EN[$groupId]??'-';
     }
 
     /**

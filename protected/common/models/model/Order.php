@@ -106,6 +106,17 @@ class Order extends BaseModel
     }
 
     /**
+     * 获取支付方式配置信息
+     *
+     * @return ActiveRecord
+     */
+    public function getMethodConfig()
+    {
+        return $this->hasOne(MerchantRechargeMethod::className(), ['app_id' => 'app_id'])
+            ->where(['method_id' => $this->pay_method_code])->one();
+    }
+
+    /**
      * 获取订单状态描述
      *
      * @return string

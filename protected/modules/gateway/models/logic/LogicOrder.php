@@ -9,6 +9,7 @@ use app\common\models\model\ChannelAccount;
 use app\common\models\model\ChannelAccountRechargeMethod;
 use app\common\models\model\Financial;
 use app\common\models\model\LogApiRequest;
+use app\common\models\model\MerchantRechargeMethod;
 use app\common\models\model\UserPaymentInfo;
 use app\components\Util;
 use app\jobs\PaymentNotifyJob;
@@ -144,21 +145,6 @@ class LogicOrder
             throw new InValidRequestException('订单不存在');
         }
         return $order;
-    }
-
-    static public function getPaymentChannelAccount(Order $order)
-    {
-        $channel = ChannelAccount::findOne([
-            'channel_id'=>$order->channel_id,
-            'merchant_id'=>$order->channel_merchant_id,
-            'app_id'=>$order->channel_app_id,
-        ]);
-
-        if(empty($channel)){
-            throw new InValidRequestException('无法根据订单查找支付渠道信息');
-        }
-
-        return $channel;
     }
 
     static public function processChannelNotice(ObjectNoticeResult $noticeResult){
@@ -311,23 +297,26 @@ class LogicOrder
         }
 
         //所有上级代理UID
-        $parentIds = $order->merchant->getAllParentAgentId();
+        $parentIds = $order->methodConfig->getAllParentAgentId();
         //从自己开始算
-        $parentIds[] = $order->merchant->id;
+        $rechargeConfig = MerchantRechargeMethod::getMethodConfigByAppIdAndMethodId($order->app_id, $order->pay_method_code);
+        $parentIds[] = $rechargeConfig->id;
 
         bcscale(9);
         $parentIdLen = count($parentIds)-1;
         for($i=$parentIdLen;$i>=0;$i--){
-            $pUser = User::findActive($parentIds[$i]);
-            $payMethods = $pUser->paymentInfo->getPayMethodById($order->pay_method_code);
+            //获取订单对应支付方式的费率及上级返点配置
+            $rechargeConfig = MerchantRechargeMethod::findOne(['id'=>$parentIds[$i]]);
 
-            if(!empty($payMethods)){
+            if(!empty($rechargeConfig)){
+                $pUser = User::findActive($rechargeConfig->merchant_id);
+
                 //parent_recharge_rebate_rate
-                if(empty($payMethods['parent_recharge_rebate_rate'])){
+                if(empty($rechargeConfig['parent_recharge_rebate_rate'])){
                     Yii::debug(["order bonus, recharge_parent_rebate_rate empty",$pUser->id,$pUser->username]);
                     continue;
                 }
-                Yii::debug(["order bonus, find config",\GuzzleHttp\json_encode($payMethods)]);
+                Yii::debug(["order bonus, find config",\GuzzleHttp\json_encode($rechargeConfig)]);
 
                 //没有上级可以直接中断了
                 if(!$pUser->parentAgent){
@@ -337,7 +326,7 @@ class LogicOrder
                 //有上级的才返，余额操作对象是上级代理
                 Yii::debug(["order bonus parent",$pUser->id,$pUser->username,$pUser->parentAgent->id,$pUser->parentAgent->username]);
                 $logicUser =  new LogicUser($pUser->parentAgent);
-                $rechargeFee =  bcmul($payMethods['parent_recharge_rebate_rate'],$order->paid_amount);
+                $rechargeFee =  bcmul($rechargeConfig['parent_recharge_rebate_rate'],$order->paid_amount);
                 $logicUser->changeUserBalance($rechargeFee, Financial::EVENT_TYPE_BONUS, $order->order_no, Yii::$app->request->userIP);
             }
         }

@@ -63,7 +63,27 @@ class UserPaymentInfo extends BaseModel
         return $methods;
     }
 
-     /**
+    /**
+     * 根据appId获取对应的支付方式列表，目前appId=merchantId
+     *
+     * @return string
+     */
+    public static function getPayMethodsArrByAppId($appId)
+    {
+        $raWmethods = MerchantRechargeMethod::findAll(['app_id'=>$appId]);
+        $methods = [];
+        foreach ($raWmethods as $m){
+            $methods[] = [
+                'id'=>$m->method_id,
+                'rate'=>$m->fee_rate,
+                'name'=>$m->method_name,
+            ];
+        }
+
+        return $methods;
+    }
+
+    /**
      * 充值渠道是否支持某个支付方式
      */
     public function hasPaymentMethod($methodId)
