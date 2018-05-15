@@ -55,6 +55,8 @@ class PaymentNotifyJob extends BaseObject implements RetryableJobInterface
                 LogicOrder::updateNotifyResult($this->orderNo,$noticeOk,$cli->body);
             });
         });
+
+        return true;
     }
 
     public function getRetryDelay($attempt, $error)

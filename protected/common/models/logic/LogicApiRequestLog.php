@@ -59,7 +59,7 @@ class LogicApiRequestLog
             $logData = Yii::$app->params['apiRequestLog'];
             $logData['request_url'] = $url;
             $logData['request_method'] = strtoupper($method)=='GET'?1:2;
-            $logData['post_data'] = $logRequest;
+            $logData['post_data'] = is_string($logRequest)?$logRequest:json_encode($logRequest);
             $logData['response_data'] = json_encode($logResponse,JSON_UNESCAPED_UNICODE);
             $logData['http_status'] = $httpStatus;
             $logData['remote_ip'] = '';

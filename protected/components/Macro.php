@@ -57,6 +57,7 @@ class Macro
     const ERR_USER_GOOGLE_CODE = 10027;
     const ERR_USER_MASTER = 10037;
     const ERR_USER_CHILD_USERNAME = 10087;
+    const ERR_USER_CHILD_NON = 10067;
 
     const ERR_USER_PAYMENT_INFO_CHANNLE_ACCOUNT_ID = 10501;
     const ERR_USER_PAYMENT_INFO_REMIT_QUOTA_PEDAY = 10502;
@@ -93,6 +94,18 @@ class Macro
     const ERR_REMIT_MANUAL_NOT_ALLOWED = 10206;
     const ERR_REMIT_NOT_FOUND = 10207;
 
+    //下级管理
+    const ERR_ACCOUNT_ORDER = 10301;
+
+    //批量excel处理错误
+    const ERR_EXCEL_BATCH_REMIT = 10311;
+    const ERR_REMIT_BANK_CONFIG = 10312;
+    const ERR_USER_FINANCIAL_PASSWORD = 10313;
+    const ERR_USER_KEY_FA = 10314;
+
+    //调单记录
+    const ERR_TRACK_NON = 10320;
+
     const CONST_PAYMENT_GETWAY_SIGN_TYPE = 'MD5';
     const CONST_JSON = 'json';
     const CONST_HTML = 'html';
@@ -101,7 +114,7 @@ class Macro
     const CONST_PARAM_TYPE_ARRAY = 'array';
     const CONST_PARAM_TYPE_ARRAY_HAS_KEY = 'array_has_key';
     const CONST_PARAM_TYPE_EMAIL = 'email';
-    const CONST_PARAM_TYPE_USENAME = 'username';
+    const CONST_PARAM_TYPE_USERNAME = 'username';
     const CONST_PARAM_TYPE_MOBILE = 'mobile';
     const CONST_PARAM_TYPE_TEL = 'tel';
     const CONST_PARAM_TYPE_IDCARD = 'idcard';

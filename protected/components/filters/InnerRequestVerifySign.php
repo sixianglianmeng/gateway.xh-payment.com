@@ -24,6 +24,10 @@ class InnerRequestVerifySign extends ActionFilter
 
         $nonce = ControllerParameterValidator::getRequestParam($allParams, '_nonce_', null, Macro::CONST_PARAM_TYPE_STRING,"nonce错误:10-64",[10,64]);
         $sign = ControllerParameterValidator::getRequestParam($allParams, '_sign_', null, Macro::CONST_PARAM_TYPE_STRING,"sign错误:10-64",[10,64]);
+        $opUserId = ControllerParameterValidator::getRequestParam($allParams, 'op_uid', null,Macro::CONST_PARAM_TYPE_INT_GT_ZERO,'操作者uid错误');
+        $opUsername = ControllerParameterValidator::getRequestParam($allParams, 'op_username', null,Macro::CONST_PARAM_TYPE_USERNAME,'操作者username错误');
+        $opIp = ControllerParameterValidator::getRequestParam($allParams, 'op_ip', null,Macro::CONST_PARAM_TYPE_STRING,'操作IP错误',[1,32]);
+
 
         $localSign = md5(Yii::$app->params['secret']['agent.payment'].$nonce);
         if ($localSign!==$sign) {

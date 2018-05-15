@@ -173,8 +173,6 @@ class LogicOrder
         //未处理
         if( $noticeResult->status === Macro::SUCCESS && $order->status !== Order::STATUS_PAID){
             $order = self::paySuccess($order,$noticeResult->amount,$noticeResult->channelOrderNo);
-
-            $order = self::bonus($order);
         }
         elseif( $noticeResult->status === Macro::FAIL){
             $order = self::payFail($order,$noticeResult->msg);
@@ -212,7 +210,7 @@ class LogicOrder
      * @param Decimal $paidAmount 实际支付金额
      * @param String $channelOrderNo 第三方流水号
      */
-    static public function paySuccess(Order $order,$paidAmount,$channelOrderNo){
+    static public function paySuccess(Order $order,$paidAmount,$channelOrderNo, $opUid=0, $opUsername='',$bak=''){
         Yii::debug([__FUNCTION__.' '.$order->order_no.','.$paidAmount.','.$channelOrderNo]);
         if($order->status === Order::STATUS_PAID){
             return $order;
@@ -226,6 +224,9 @@ class LogicOrder
         $order->channel_order_no = $channelOrderNo;
         $order->status = Order::STATUS_PAID;
         $order->paid_at = time();
+        $order->op_uid = $opUid;
+        $order->op_username = $opUsername;
+        $order->bak .=$bak;
         $order->save();
 
         $logicUser = new LogicUser($order->merchant);
@@ -236,6 +237,9 @@ class LogicOrder
         //需扣除充值手续费
         $logicUser->changeUserBalance(0-$order->fee_amount, Financial::EVENT_TYPE_RECHARGE_FEE, $order->order_no, Yii::$app->request->userIP);
 
+        //发放分润
+        $order = self::bonus($order);
+
         return $order;
     }
 
@@ -245,19 +249,22 @@ class LogicOrder
      * @param Order $order 订单对象
      * @param String $bak 备注
      */
-    static public function frozen(Order $order, $bak='', $opUid, $opUsername){
+    static public function frozen(Order $order, $opUid, $opUsername, $bak='', $ip=''){
         Yii::debug(__FUNCTION__.' '.$order->order_no.' '.$bak);
-        if($order->status === Order::STATUS_PAID){
+        if($order->status === Order::STATUS_FREEZE){
             return $order;
         }
 
         $logicUser = new LogicUser($order->merchant);
+        if(!$ip) $ip = Yii::$app->request->userIP;
         //冻结余额
-        $logicUser->changeUserFrozenBalance($order->amount, Financial::EVENT_TYPE_RECHARGE_FROZEN, $order->order_no,
-            Yii::$app->request->userIP, $bak, $opUid, $opUsername);
+        $logicUser->changeUserFrozenBalance($order->amount, Financial::EVENT_TYPE_RECHARGE_FROZEN, $order->order_no, $ip, $bak, $opUid, $opUsername);
 
         //更改订单状态
         $order->status = Order::STATUS_FREEZE;
+        $order->op_uid = $opUid;
+        $order->op_username = $opUsername;
+        $order->bak .=$bak;
         $order->save();
 
         return $order;
@@ -268,19 +275,23 @@ class LogicOrder
      *
      * @param Order $order 订单对象
      */
-    static public function unfrozen(Order $order, $bak='', $opUid, $opUsername){
+    static public function unfrozen(Order $order, $opUid, $opUsername, $bak='', $ip=''){
         Yii::debug(__FUNCTION__.' '.$order->order_no.' '.$bak);
-        if($order->status === Order::STATUS_FREEZE){
+        if($order->status != Order::STATUS_FREEZE){
             return $order;
         }
 
         $logicUser = new LogicUser($order->merchant);
         //冻结余额
-        $logicUser->changeUserFrozenBalance($order->amount, Financial::EVENT_TYPE_RECHARGE_FROZEN,
-            $order->order_no, Yii::$app->request->userIP, $bak, $opUid, $opUsername);
+        if(!$ip) $ip = Yii::$app->request->userIP;
+        $logicUser->changeUserFrozenBalance($order->amount, Financial::EVENT_TYPE_RECHARGE_UNFROZEN,
+            $order->order_no, $ip, $bak, $opUid, $opUsername);
 
         //更改订单状态
         $order->status = Order::STATUS_PAID;
+        $order->op_uid = $opUid;
+        $order->op_username = $opUsername;
+        $order->bak .=$bak;
         $order->save();
 
         return $order;
@@ -347,7 +358,7 @@ class LogicOrder
             case Order::STATUS_PAID:
                 $tradeStatus = 'success';
                 break;
-            case Order::STATUS_PAYING:
+            case Order::STATUS_NOTPAY:
                 $tradeStatus = 'paying';
                 break;
             case Order::STATUS_FAIL:
@@ -413,8 +424,8 @@ class LogicOrder
      * 异步通知商户
      */
     static public function notify(Order $order){
+        Yii::trace((new \ReflectionClass(__CLASS__))->getShortName().'-'.__FUNCTION__.' '.$order->order_no);
         //TODO: add task queue
-
         $arrParams = self::createNotifyParameters($order);
         $job = new PaymentNotifyJob([
             'orderNo'=>$order->order_no,
@@ -458,7 +469,7 @@ class LogicOrder
      * 到第三方查询订单状态
      */
     static public function queryChannelOrderStatus(Order $order){
-        Yii::debug([__CLASS__.':'.__FUNCTION__,$order->order_no]);
+        Yii::debug([(new \ReflectionClass(__CLASS__))->getShortName().':'.__FUNCTION__,$order->order_no]);
 
         $paymentChannelAccount = $order->channelAccount;
         //提交到银行

@@ -129,7 +129,7 @@ class Util
             case Macro::CONST_PARAM_TYPE_MOBILE:
                 $exp =  "/^1[3|5|7|8|9]{1}[0-9]{9}$/i";
                 break;
-            case Macro::CONST_PARAM_TYPE_USENAME:
+            case Macro::CONST_PARAM_TYPE_USERNAME:
                 $exp =  "/^[1-9a-zA-Z]{1}[0-9a-zA-Z\-_]{5,32}$/i";
                 break;
             case Macro::CONST_PARAM_TYPE_PASSWORD:
@@ -701,7 +701,7 @@ class Util
     }
 
     public static function uuid(string $type = 'mongoId'){
-        $chars = new \MongoDB\BSON\ObjectId();
+        $chars = (string)(new \MongoDB\BSON\ObjectId());
         switch ($type){
             case 'md5':
                 $chars = md5($chars);

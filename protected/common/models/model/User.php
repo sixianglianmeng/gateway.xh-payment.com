@@ -126,4 +126,26 @@ class User extends BaseModel
         $this->access_token = '';
         $this->save();
     }
+
+    public function getTags()
+    {
+        return $this->hasMany(Tag::className(), ['id' => 'object_id'])
+            ->viaTable(TagRelation::tableName(), ['tag_id' => 'id']);
+    }
+
+    /*
+     * 根据uid获取他的标签
+     *
+     * @param int $uid 用户UID
+     */
+    public static function getTagsArr($uid)
+    {
+        $tags = (new \yii\db\Query())->from(TagRelation::tableName().' r')
+            ->select(['t.id', 't.name'])
+            ->leftJoin(Tag::tableName().' t', 't.id=r.tag_id')
+        ->where(['r.object_type' => 1,'r.object_id'=>$uid])
+            ->all();
+        return $tags;
+//        $sql = "select t.* form ".Tag::tableName()." t,".TagRelation::tableName()." r WHERE t.id=r.tag_id AND r.object_type=1 AND t.id={$uid}";
+    }
 }

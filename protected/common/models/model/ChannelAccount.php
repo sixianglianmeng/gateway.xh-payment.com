@@ -48,14 +48,19 @@ class ChannelAccount extends BaseModel
         return empty($this->app_secrets)?[]:json_decode($this->app_secrets,true);
     }
 
+    /**
+     * 获取appId对应的所有支付方式数组
+     *
+     * @return array
+     */
     public function getPayMethodsArr()
     {
-        $raWmethods = $this->getPayMethods()->toArray();
-        foreach ($raWmethods as $m){
+        $methods = [];
+        foreach ($this->payMethods as $m){
             $methods[] = [
-                'id'=>$m['id'],
-                'rate'=>$m['rate'],
-                'name'=>$m['method_name'],
+                'id'=>$m->method_id,
+                'rate'=>$m->fee_rate,
+                'name'=>$m->method_name,
             ];
         }
 
@@ -79,7 +84,7 @@ class ChannelAccount extends BaseModel
      */
     public function getPayMethodById($id)
     {
-        return $this->hasOne(MerchantRechargeMethod::className(), ['channel_account_id' => 'id'])
+        return $this->hasOne(ChannelAccountRechargeMethod::className(), ['channel_account_id' => 'id'])
             ->where(['method_id' => $id])->one();
     }
 

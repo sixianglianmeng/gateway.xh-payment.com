@@ -1,4 +1,5 @@
 <?php
+//'充值平台银行编码'       => ['code' => '三方银行编码', 'name' => '银行名称', 'plat_code' => '充值平台银行编码'],
 $banks = [
     'WZCB'       => ['code' => 'WZCB', 'name' => '温州银行', 'plat_code' => 'WZCB'],
     'HZLHSB'     => ['code' => 'HZLHSB', 'name' => '杭州联合农村商业银行股份有限公司', 'plat_code' => 'HZLHSB'],

@@ -8,6 +8,14 @@ use yii\db\ActiveRecord;
 
 class MerchantRechargeMethod extends BaseModel
 {
+    const STATUS_INACTIVE=0;
+    const STATUS_ACTIVE=1;
+
+    const ARR_STATUS = [
+        self::STATUS_ACTIVE => '启用',
+        self::STATUS_INACTIVE => '停用',
+    ];
+
     public static function tableName()
     {
         return '{{%merchant_recharge_methods}}';

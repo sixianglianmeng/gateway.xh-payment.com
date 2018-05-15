@@ -39,7 +39,7 @@ class UserPaymentInfo extends BaseModel
         return [];
     }
 
-    public function getPaymentChannels()
+    public function getPaymentChannel()
     {
         return $this->hasOne(ChannelAccount::className(), ['id'=>'channel_account_id']);
     }
@@ -49,14 +49,20 @@ class UserPaymentInfo extends BaseModel
         return $this->hasOne(ChannelAccount::className(), ['id'=>'remit_channel_account_id']);
     }
 
+    /**
+     * 获取appId对应的所有支付方式数组
+     *
+     * @return array
+     */
     public function getPayMethodsArr()
     {
-        $raWmethods = $this->getPayMethods()->toArray();
-        foreach ($raWmethods as $m){
+        $raWmethods = $this->getPayMethods();
+        $methods = [];
+        foreach ($this->payMethods as $m){
             $methods[] = [
-                'id'=>$m['id'],
-                'rate'=>$m['rate'],
-                'name'=>$m['method_name'],
+                'id'=>$m->method_id,
+                'rate'=>$m->fee_rate,
+                'name'=>$m->method_name,
             ];
         }
 

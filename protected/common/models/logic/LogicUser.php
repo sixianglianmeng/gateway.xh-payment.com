@@ -32,6 +32,7 @@ class LogicUser
     public function changeUserBalance($amount, $eventType, $eventId, $clientIp='', $bak='', $opUid=0, $opUsername=''){
         Yii::debug([__FUNCTION__.' '.$this->user->id.','.$amount.','.$eventType.','.$eventId]);
         if(empty($this->user) || $amount==0){
+            Yii::debug('user or amount empty'.$this->user->id.','.$amount.','.$eventType.','.$eventId);
             return false;
         }
         if($amount<0 && $this->user->balance<abs($amount)){
@@ -57,6 +58,8 @@ class LogicUser
                 $financial->amount         = $amount;
                 $financial->balance        = bcadd($this->user->balance, $amount);
                 $financial->balance_before = $this->user->balance;
+                $financial->frozen_balance        = $this->user->frozen_balance;
+                $financial->frozen_balance_before = $this->user->frozen_balance;
                 $financial->created_at     = time();
                 $financial->client_ip      = $clientIp;
                 $financial->created_at     = $clientIp;
@@ -66,6 +69,11 @@ class LogicUser
                 $financial->op_username    = $opUsername;
                 $financial->save();
 
+            }else{
+                Yii::warning("changeUserBalance already has record: uid:{$this->user->id},{$amount},{$eventType},{$eventId}");
+            }
+
+            if($financial->status == Financial::STATUS_UNFINISHED){
                 //更新账户余额
                 $this->user->updateCounters(['balance' => $amount]);
 
@@ -77,7 +85,7 @@ class LogicUser
                     throw new \Exception($msg);
                 }
             }else{
-                Yii::warning("changeUserBalance already changed: uid:{$this->user->id},{$amount},{$eventType},{$eventId}");
+                Yii::warning("changeUserFrozenBalance already done: uid:{$this->user->id},{$amount},{$eventType},{$eventId}");
             }
 
             $transaction->commit();
@@ -108,6 +116,7 @@ class LogicUser
     public function changeUserFrozenBalance($amount, $eventType, $eventId, $clientIp='', $bak='', $opUid=0, $opUsername=''){
         Yii::debug([__FUNCTION__.' '.$this->user->id.','.$amount.','.$eventType.','.$eventId]);
         if(empty($this->user) || $amount==0){
+            Yii::debug('user or amount empty'.$this->user->id.','.$amount.','.$eventType.','.$eventId);
             return false;
         }
         //冻结金额，冻结字段+，余额字段-
@@ -137,7 +146,7 @@ class LogicUser
                 $financial->username              = $this->user->username;
                 $financial->event_id              = $eventId;
                 $financial->event_type            = $eventType;
-                $financial->famount               = $amount;
+                $financial->amount               = $amount;
                 $financial->frozen_balance        = bcadd($this->user->frozen_balance, $amount);
                 $financial->frozen_balance_before = $this->user->frozen_balance;
                 $financial->balance               = bcadd($this->user->balance, $usableAmount);
@@ -150,6 +159,11 @@ class LogicUser
                 $financial->status                = Financial::STATUS_UNFINISHED;
                 $financial->op_username           = $opUsername;
                 $financial->save();
+            }else{
+                Yii::warning("changeUserFrozenBalance already has record: uid:{$this->user->id},{$amount},{$eventType},{$eventId}");
+            }
+
+            if($financial->status == Financial::STATUS_UNFINISHED){
 
                 //更新账户余额
                 $this->user->updateCounters(['balance' => $usableAmount]);
@@ -157,15 +171,13 @@ class LogicUser
 
                 //更新账变状态
                 $financial->status = Financial::STATUS_FINISHED;
-                $financial->save();
-
                 if (!$financial->update()) {
                     $msg = '帐变记录更新失败: '.$eventType.':'.$eventId;
                     Yii::error($msg);
                     throw new \Exception($msg);
                 }
             }else{
-                Yii::warning("changeUserFrozenBalance already changed: uid:{$this->user->id},{$amount},{$eventType},{$eventId}");
+                Yii::warning("changeUserFrozenBalance already done: uid:{$this->user->id},{$amount},{$eventType},{$eventId}");
             }
 
             $transaction->commit();
