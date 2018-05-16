@@ -60,9 +60,10 @@ class LogicOrder
         $orderData['notify_status']    = Order::NOTICE_STATUS_NONE;
         $orderData['created_at']       = time();
 
-        $orderData['app_id']            = $request['app_id'] ?? $merchant->id;
-        $orderData['merchant_id']       = $merchant->id;
+        $orderData['app_id']              = $request['app_id'] ?? $merchant->id;
+        $orderData['merchant_id']         = $merchant->id;
         $orderData['merchant_account']    = $merchant->username;
+        $orderData['all_parent_agent_id'] = $merchant->all_parent_agent_id;
         $orderData['channel_id']          = $rechargeMethod->channel_id;
         $orderData['channel_account_id']  = $rechargeMethod->id;
         $orderData['channel_merchant_id'] = $rechargeMethod->merchant_id;
@@ -71,6 +72,7 @@ class LogicOrder
         $orderData['fee_amount']          = bcmul($rechargeMethod->fee_rate, $orderData['amount'], 9);
         $orderData['plat_fee_rate']       = $rechargeMethod->channelAccount->recharge_rate;
         $orderData['plat_fee_amount']     = bcmul($rechargeMethod->channelAccount->recharge_rate, $orderData['amount'], 9);
+
 
         $hasOrder = Order::findOne(['app_id' => $orderData['app_id'], 'merchant_order_no' => $orderData['merchant_order_no']]);
         if ($hasOrder) {

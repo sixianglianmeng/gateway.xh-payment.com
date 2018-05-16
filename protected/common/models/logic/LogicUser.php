@@ -50,23 +50,24 @@ class LogicUser
 //                throw new \Exception('账户余额已经完成变动，请勿重复修改。');
 
                 //写入账变日志
-                $financial                 = new Financial();
-                $financial->uid            = $this->user->id;
-                $financial->username       = $this->user->username;
-                $financial->event_id       = $eventId;
-                $financial->event_type     = $eventType;
-                $financial->amount         = $amount;
-                $financial->balance        = bcadd($this->user->balance, $amount);
-                $financial->balance_before = $this->user->balance;
+                $financial                        = new Financial();
+                $financial->uid                   = $this->user->id;
+                $financial->username              = $this->user->username;
+                $financial->event_id              = $eventId;
+                $financial->event_type            = $eventType;
+                $financial->amount                = $amount;
+                $financial->balance               = bcadd($this->user->balance, $amount);
+                $financial->balance_before        = $this->user->balance;
                 $financial->frozen_balance        = $this->user->frozen_balance;
                 $financial->frozen_balance_before = $this->user->frozen_balance;
-                $financial->created_at     = time();
-                $financial->client_ip      = $clientIp;
-                $financial->created_at     = $clientIp;
-                $financial->bak            = $bak;
-                $financial->op_uid         = $opUid;
-                $financial->status         = Financial::STATUS_UNFINISHED;
-                $financial->op_username    = $opUsername;
+                $financial->created_at            = time();
+                $financial->client_ip             = $clientIp;
+                $financial->created_at            = $clientIp;
+                $financial->bak                   = $bak;
+                $financial->op_uid                = $opUid;
+                $financial->status                = Financial::STATUS_UNFINISHED;
+                $financial->op_username           = $opUsername;
+                $financial->all_parent_agent_id   = $this->user->all_parent_agent_id;
                 $financial->save();
 
             }else{
@@ -137,8 +138,8 @@ class LogicUser
             $financial = Financial::findOne(['event_id'=>$eventId,'event_type'=>$eventType,'uid'=>$this->user->id]);
             if(!$financial){
                 Yii::info("changeUserFrozenBalance: uid:{$this->user->id},{$amount},{$eventType},{$eventId}");
-//                var_dump("changeUserBalance: uid:{$this->user->id},{$amount},{$eventType},{$eventId}");
-//                throw new \Exception('账户余额已经完成变动，请勿重复修改。');
+                //                var_dump("changeUserBalance: uid:{$this->user->id},{$amount},{$eventType},{$eventId}");
+                //                throw new \Exception('账户余额已经完成变动，请勿重复修改。');
 
                 //写入账变日志
                 $financial                        = new Financial();
@@ -146,7 +147,7 @@ class LogicUser
                 $financial->username              = $this->user->username;
                 $financial->event_id              = $eventId;
                 $financial->event_type            = $eventType;
-                $financial->amount               = $amount;
+                $financial->amount                = $amount;
                 $financial->frozen_balance        = bcadd($this->user->frozen_balance, $amount);
                 $financial->frozen_balance_before = $this->user->frozen_balance;
                 $financial->balance               = bcadd($this->user->balance, $usableAmount);
@@ -158,12 +159,13 @@ class LogicUser
                 $financial->op_uid                = $opUid;
                 $financial->status                = Financial::STATUS_UNFINISHED;
                 $financial->op_username           = $opUsername;
+                $financial->all_parent_agent_id   = $this->user->all_parent_agent_id;
                 $financial->save();
-            }else{
+            } else {
                 Yii::warning("changeUserFrozenBalance already has record: uid:{$this->user->id},{$amount},{$eventType},{$eventId}");
             }
 
-            if($financial->status == Financial::STATUS_UNFINISHED){
+            if ($financial->status == Financial::STATUS_UNFINISHED) {
 
                 //更新账户余额
                 $this->user->updateCounters(['balance' => $usableAmount]);

@@ -35,44 +35,46 @@ class LogicRemit
      * @param User $merchant 提款账户
      * @param ChannelAccount $paymentChannelAccount 提款的三方渠道账户
      */
-    static public function addRemit(array $request, User $merchant, ChannelAccount $paymentChannelAccount){
-//        ['merchant_code', 'trade_no', 'order_amount', 'order_time', 'bank_code', ' account_name', 'account_number',
-        $remitData = [];
-        $remitData['order_no'] = self::generateRemitNo();
-        $remitData['bat_order_no'] = $request['bat_order_no']??'';
-        $remitData['bat_index'] = $request['bat_index']??0;
-        $remitData['bat_count'] = $request['bat_count']??0;
-        $remitData['bank_code'] = $request['bank_code'];
-        $remitData['bank_account'] = $request['account_name'];
-        $remitData['bank_no'] = $request['account_number'];
+    static public function addRemit(array $request, User $merchant, ChannelAccount $paymentChannelAccount)
+    {
+        //        ['merchant_code', 'trade_no', 'order_amount', 'order_time', 'bank_code', ' account_name', 'account_number',
+        $remitData                      = [];
+        $remitData['order_no']          = self::generateRemitNo();
+        $remitData['bat_order_no']      = $request['bat_order_no'] ?? '';
+        $remitData['bat_index']         = $request['bat_index'] ?? 0;
+        $remitData['bat_count']         = $request['bat_count'] ?? 0;
+        $remitData['bank_code']         = $request['bank_code'];
+        $remitData['bank_account']      = $request['account_name'];
+        $remitData['bank_no']           = $request['account_number'];
         $remitData['merchant_order_no'] = $request['trade_no'];
-        $remitData['amount'] = $request['order_amount'];
+        $remitData['amount']            = $request['order_amount'];
 
-        $remitData['client_ip'] = $request['client_ip']??'';
-        $remitData['op_uid'] = $request['op_uid']??0;
-        $remitData['op_username'] = $request['op_username']??'';
+        $remitData['client_ip']   = $request['client_ip'] ?? '';
+        $remitData['op_uid']      = $request['op_uid'] ?? 0;
+        $remitData['op_username'] = $request['op_username'] ?? '';
 
 
-        $remitData['status'] = Remit::STATUS_NONE;
+        $remitData['status']    = Remit::STATUS_NONE;
         $remitData['remit_fee'] = $merchant->paymentInfo->remit_fee;
-        if($merchant->paymentInfo->allow_api_fast_remit == UserPaymentInfo::ALLOW_API_FAST_REMIT_YES){
+        if ($merchant->paymentInfo->allow_api_fast_remit == UserPaymentInfo::ALLOW_API_FAST_REMIT_YES) {
             $remitData['status'] = Remit::STATUS_CHECKED;
         }
-        $remitData['bank_status'] = Remit::BANK_STATUS_NONE;
+        $remitData['bank_status']      = Remit::BANK_STATUS_NONE;
         $orderData['financial_status'] = Remit::FINANCIAL_STATUS_NONE;
 
-        $orderData['app_id']            = $request['app_id'] ?? $merchant->id;
-        $remitData['merchant_id'] = $merchant->id;
-        $remitData['merchant_account'] = $merchant->username;
+        $orderData['app_id']              = $request['app_id'] ?? $merchant->id;
+        $remitData['merchant_id']         = $merchant->id;
+        $remitData['merchant_account']    = $merchant->username;
+        $orderData['all_parent_agent_id'] = $merchant->all_parent_agent_id;
 
-        $remitData['channel_account_id'] = $paymentChannelAccount->id;
-        $remitData['channel_id'] = $paymentChannelAccount->channel_id;
+        $remitData['channel_account_id']  = $paymentChannelAccount->id;
+        $remitData['channel_id']          = $paymentChannelAccount->channel_id;
         $remitData['channel_merchant_id'] = $paymentChannelAccount->merchant_id;
-        $remitData['channel_app_id'] = $paymentChannelAccount->app_id;
-        $remitData['created_at'] = time();
-        $orderData['plat_fee_amount'] = $paymentChannelAccount->remit_fee;
+        $remitData['channel_app_id']      = $paymentChannelAccount->app_id;
+        $remitData['created_at']          = time();
+        $orderData['plat_fee_amount']     = $paymentChannelAccount->remit_fee;
 
-        $hasRemit = Remit::findOne(['app_id'=>$remitData['app_id'],'merchant_order_no'=>$request['trade_no']]);
+        $hasRemit = Remit::findOne(['app_id' => $remitData['app_id'], 'merchant_order_no'=>$request['trade_no']]);
         if($hasRemit){
 //            throw new InValidRequestException('请不要重复下单');
             return $hasRemit;
