@@ -34,52 +34,52 @@ class LogicOrder
      * @param User $merchant 充值账户
      * @param ChannelAccount $paymentChannelAccount 充值的三方渠道账户
      */
-    static public function addOrder(array $request, User $merchant, ChannelAccountRechargeMethod $rechargeMethod){
+    static public function addOrder(array $request, User $merchant, ChannelAccountRechargeMethod $rechargeMethod)
+    {
 
-        $orderData = [];
-        $orderData['order_no'] = self::generateOrderNo();
-        $orderData['pay_method_code'] = $request['pay_type'];
-        $orderData['notify_url'] = $request['notify_url'];
-        $orderData['return_url'] = $request['return_url'];
-        $orderData['bank_code'] = $request['bank_code'];
-        $orderData['merchant_id'] = $request['merchant_code'];
-        $orderData['merchant_user_id'] = $merchant->id;
+        $orderData                      = [];
+        $orderData['order_no']          = self::generateOrderNo();
+        $orderData['pay_method_code']   = $request['pay_type'];
+        $orderData['amount']            = $request['order_amount'];
         $orderData['merchant_order_no'] = $request['order_no'];
-        $orderData['merchant_order_time'] = strtotime($request['order_time']);
-        $orderData['amount'] = $request['order_amount'];
-        $orderData['client_ip'] = Yii::$app->request->userIP;
-        $orderData['return_params'] = $request['return_params'];
 
-        $orderData['app_id'] = $request['merchant_code'];
-        $orderData['status'] = Order::STATUS_NOTPAY;
+        $orderData['notify_url']          = $request['notify_url'] ?? '';
+        $orderData['return_url']          = $request['return_url'] ?? '';
+        $orderData['bank_code']           = $request['bank_code'] ?? '';
+        $orderData['op_uid']              = $request['op_uid'] ?? 0;
+        $orderData['op_username']         = $request['op_username'] ?? '';
+        $orderData['merchant_user_id']    = $request['user_id'] ?? '';
+        $orderData['merchant_order_time'] = strtotime($request['order_time'] ?? 'now');
+        $orderData['description']         = '';
+        $orderData['notify_ret']          = '';
+        $orderData['client_ip']           = $request['client_ip'] ?? Yii::$app->request->userIP;
+        $orderData['return_params']       = $request['return_params'] ?? '';
+
+        $orderData['status']           = Order::STATUS_NOTPAY;
         $orderData['financial_status'] = Order::FINANCIAL_STATUS_NONE;
-        $orderData['notify_status'] = Order::NOTICE_STATUS_NONE;
-        $orderData['merchant_account'] = $merchant->username;
-        $orderData['created_at'] = time();
+        $orderData['notify_status']    = Order::NOTICE_STATUS_NONE;
+        $orderData['created_at']       = time();
 
-        $orderData['channel_id'] = $rechargeMethod->channel_id;
-        $orderData['channel_account_id'] = $rechargeMethod->id;
+        $orderData['app_id']            = $request['app_id'] ?? $merchant->id;
+        $orderData['merchant_id']       = $merchant->id;
+        $orderData['merchant_account']    = $merchant->username;
+        $orderData['channel_id']          = $rechargeMethod->channel_id;
+        $orderData['channel_account_id']  = $rechargeMethod->id;
         $orderData['channel_merchant_id'] = $rechargeMethod->merchant_id;
-        $orderData['channel_app_id'] = $rechargeMethod->app_id;
+        $orderData['channel_app_id']      = $rechargeMethod->app_id;
+        $orderData['fee_rate']            = $rechargeMethod->fee_rate;
+        $orderData['fee_amount']          = bcmul($rechargeMethod->fee_rate, $orderData['amount'], 9);
+        $orderData['plat_fee_rate']       = $rechargeMethod->channelAccount->recharge_rate;
+        $orderData['plat_fee_amount']     = bcmul($rechargeMethod->channelAccount->recharge_rate, $orderData['amount'], 9);
 
-        $orderData['op_uid'] = $request['op_uid']??0;
-        $orderData['op_username'] = $request['op_username']??'';
-        $orderData['description'] = '';
-        $orderData['notify_ret'] = '';
-
-        $orderData['fee_rate'] = $rechargeMethod->fee_rate;
-        $orderData['fee_amount'] = bcmul($rechargeMethod->fee_rate,$orderData['amount'],9);
-        $orderData['plat_fee_rate'] = $rechargeMethod->channelAccount->recharge_rate;
-        $orderData['plat_fee_amount'] = bcmul($rechargeMethod->channelAccount->recharge_rate,$orderData['amount'],9);
-
-        $hasOrder = Order::findOne(['app_id'=>$orderData['app_id'],'merchant_order_no'=>$request['order_no']]);
-        if($hasOrder){
-//            throw new InValidRequestException('请不要重复下单');
+        $hasOrder = Order::findOne(['app_id' => $orderData['app_id'], 'merchant_order_no' => $orderData['merchant_order_no']]);
+        if ($hasOrder) {
+            //            throw new InValidRequestException('请不要重复下单');
             return $hasOrder;
         }
 
         $newOrder = new Order();
-        $newOrder->setAttributes($orderData,false);
+        $newOrder->setAttributes($orderData, false);
         self::beforeAddOrder($newOrder, $merchant, $rechargeMethod->channelAccount);
 
         $newOrder->save();
@@ -137,6 +137,10 @@ class LogicOrder
 
     static public function generateOrderNo(){
         return 'P'.date('ymdHis').mt_rand(10000,99999);
+    }
+
+    static public function generateMerchantOrderNo(){
+        return 'Msys'.date('ymdHis').mt_rand(1000,9999);
     }
 
     static public function getOrderByOrderNo($orderNo){

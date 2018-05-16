@@ -10,7 +10,7 @@ use app\modules\gateway\controllers\v1\BaseInnerController;
 use app\modules\gateway\models\logic\LogicOrder;
 use Yii;
 
-/*
+/**
  * 后台充值订单接口
  */
 class OrderController extends BaseInnerController
@@ -24,7 +24,40 @@ class OrderController extends BaseInnerController
         return parent::beforeAction($action);
     }
 
-    /*
+    /**
+     * 手工充值
+     */
+    public function actionAdd()
+    {
+        $payeeName = ControllerParameterValidator::getRequestParam($this->allParams, 'merchant_username', null,Macro::CONST_PARAM_TYPE_USERNAME,'充值账户错误');
+        $request['order_amount'] = ControllerParameterValidator::getRequestParam($this->allParams, 'amount', null,Macro::CONST_PARAM_TYPE_DECIMAL,'充值金额错误');
+        $request['pay_type'] = ControllerParameterValidator::getRequestParam($this->allParams, 'pay_type', null,Macro::CONST_PARAM_TYPE_INT,'充值渠道错误');
+        $request['bank_code'] = ControllerParameterValidator::getRequestParam($this->allParams, 'bank_code', '',Macro::CONST_PARAM_TYPE_INT,'银行代码错误');
+
+        $merchant = User::findOne(['username'=>$payeeName]);
+        if(empty($merchant)){
+            Util::throwException(Macro::ERR_USER_NOT_FOUND);
+        }
+        $payMethod = $merchant->merchantPayment->getPayMethodById($payMethodId);
+        if(empty($payMethod)){
+            Util::throwException(Macro::ERR_PAYMENT_TYPE_NOT_ALLOWED);
+        }
+
+        $request['merchant_order_no'] = LogicOrder::generateMerchantOrderNo();
+        $request['op_uid']              = $this->allParams['op_uid'] ?? 0;
+        $request['op_username']         = $this->allParams['op_username'] ?? '';
+        $request['client_ip']         = $this->allParams['op_ip'] ?? '';
+        //生成订单
+        $order = LogicOrder::addOrder($request, $merchant, $payMethod);
+
+        //生成跳转连接
+        $payment = new ChannelPayment($order, $payMethod->channelAccount);
+        $redirect = $payment->createPaymentRedirectParams();
+
+        return ResponseHelper::formatOutput(Macro::SUCCESS,'',$redirect);
+    }
+
+    /**
      * 发送订单通知
      */
     public function actionSyncStatus()
@@ -59,7 +92,7 @@ class OrderController extends BaseInnerController
         return ResponseHelper::formatOutput(Macro::SUCCESS,'');
     }
 
-    /*
+    /**
      * 设置订单为成功
      */
     public function actionSetSuccess()
@@ -93,7 +126,7 @@ class OrderController extends BaseInnerController
         return ResponseHelper::formatOutput(Macro::SUCCESS);
     }
 
-    /*
+    /**
      * 冻结订单
      */
     public function actionFrozen()
@@ -123,7 +156,7 @@ class OrderController extends BaseInnerController
     }
 
 
-    /*
+    /**
      * 解冻订单
      */
     public function actionUnFrozen()

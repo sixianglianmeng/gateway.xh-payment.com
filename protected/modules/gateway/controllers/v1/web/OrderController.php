@@ -36,7 +36,7 @@ class OrderController extends BaseWebSignedRequestController
         $paymentRequest->validate($this->allParams, $needParams);
 
 
-        $payMethod = $this->merchantPayment->getPayMethodById($orderData['pay_method_code']);
+        $payMethod = $this->merchantPayment->getPayMethodById($this->allParams['pay_type']);
         if(empty($payMethod)){
             Util::throwException(Macro::ERR_PAYMENT_TYPE_NOT_ALLOWED);
         }
