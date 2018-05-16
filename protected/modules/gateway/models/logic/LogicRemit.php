@@ -40,22 +40,29 @@ class LogicRemit
         $remitData = [];
         $remitData['order_no'] = self::generateRemitNo();
         $remitData['bat_order_no'] = $request['bat_order_no']??'';
+        $remitData['bat_index'] = $request['bat_index']??0;
+        $remitData['bat_count'] = $request['bat_count']??0;
         $remitData['bank_code'] = $request['bank_code'];
         $remitData['bank_account'] = $request['account_name'];
         $remitData['bank_no'] = $request['account_number'];
-        $remitData['merchant_id'] = $request['merchant_code'];
         $remitData['merchant_order_no'] = $request['trade_no'];
         $remitData['amount'] = $request['order_amount'];
-        $remitData['remit_fee'] = $merchant->paymentInfo->remit_fee;
-        $remitData['client_ip'] = $request['client_ip']??'';
 
-        $remitData['app_id'] = $request['merchant_code'];
+        $remitData['client_ip'] = $request['client_ip']??'';
+        $remitData['op_uid'] = $request['op_uid']??0;
+        $remitData['op_username'] = $request['op_username']??'';
+
+
         $remitData['status'] = Remit::STATUS_NONE;
+        $remitData['remit_fee'] = $merchant->paymentInfo->remit_fee;
         if($merchant->paymentInfo->allow_api_fast_remit == UserPaymentInfo::ALLOW_API_FAST_REMIT_YES){
             $remitData['status'] = Remit::STATUS_CHECKED;
         }
         $remitData['bank_status'] = Remit::BANK_STATUS_NONE;
         $orderData['financial_status'] = Remit::FINANCIAL_STATUS_NONE;
+
+        $orderData['app_id']            = $request['app_id'] ?? $merchant->id;
+        $remitData['merchant_id'] = $merchant->id;
         $remitData['merchant_account'] = $merchant->username;
 
         $remitData['channel_account_id'] = $paymentChannelAccount->id;
@@ -63,8 +70,6 @@ class LogicRemit
         $remitData['channel_merchant_id'] = $paymentChannelAccount->merchant_id;
         $remitData['channel_app_id'] = $paymentChannelAccount->app_id;
         $remitData['created_at'] = time();
-        $remitData['op_uid'] = $request['op_uid']??0;
-        $remitData['op_username'] = $request['op_username']??'';
         $orderData['plat_fee_amount'] = $paymentChannelAccount->remit_fee;
 
         $hasRemit = Remit::findOne(['app_id'=>$remitData['app_id'],'merchant_order_no'=>$request['trade_no']]);
@@ -347,6 +352,14 @@ class LogicRemit
 
     static public function generateRemitNo(){
         return 'R'.date('ymdHis').mt_rand(10000,99999);
+    }
+
+    static public function generateMerchantRemitNo(){
+        return 'Rsys'.date('ymdHis').mt_rand(10000,99999);
+    }
+
+    static public function generateBatRemitNo(){
+        return 'RB'.date('ymdHis').mt_rand(10000,99999);
     }
 
     static public function getRemitByRemitNo($orderNo){
