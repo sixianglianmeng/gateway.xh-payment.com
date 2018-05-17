@@ -4,6 +4,7 @@ namespace app\components;
 use app\common\models\model\Channel;
 use app\common\models\model\Order;
 use app\components\Macro;
+use yii\base\Security;
 
 class Util
 {
@@ -700,8 +701,9 @@ class Util
         return $params;
     }
 
-    public static function uuid(string $type = 'mongoId'){
-        $chars = (string)(new \MongoDB\BSON\ObjectId());
+    public static function uuid(string $type = 'rand24'){
+//        $chars = (string)(new \MongoDB\BSON\ObjectId());
+        $chars = Security::generateRandomString(24);
         switch ($type){
             case 'md5':
                 $chars = md5($chars);
@@ -715,6 +717,7 @@ class Util
                 $uuid .= substr($chars,20,12);
                 $chars = $uuid;
                 break;
+            case 'rand24':
             default:
                 break;
         }

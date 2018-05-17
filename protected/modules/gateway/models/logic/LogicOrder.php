@@ -82,7 +82,7 @@ class LogicOrder
 
         $newOrder = new Order();
         $newOrder->setAttributes($orderData, false);
-        self::beforeAddOrder($newOrder, $merchant, $rechargeMethod->channelAccount);
+        self::beforeAddOrder($newOrder, $merchant, $rechargeMethod->channelAccount, $rechargeMethod);
 
         $newOrder->save();
 
@@ -96,8 +96,9 @@ class LogicOrder
      * @param array $request 请求数组
      * @param User $merchant 提款账户
      * @param ChannelAccount $paymentChannelAccount 提款的三方渠道账户
+     * @param MerchantRechargeMethod $rechargeMethod 商户的当前收款渠道配置
      */
-    static public function beforeAddOrder(Order $order, User $merchant, ChannelAccount $paymentChannelAccount){
+    static public function beforeAddOrder(Order $order, User $merchant, ChannelAccount $paymentChannelAccount, $rechargeMethod){
         $userPaymentConfig = $merchant->paymentInfo;
 
         //接口日志埋点
@@ -109,6 +110,11 @@ class LogicOrder
             'channel_account_id'=>$paymentChannelAccount->id,
             'channel_name'=>$paymentChannelAccount->channel_name,
         ];
+
+        //渠道开关检测
+        if($rechargeMethod->status != MerchantRechargeMethod::STATUS_ACTIVE){
+            throw new Exception(null,Macro::ERR_PAYMENT_TYPE_NOT_ALLOWED);
+        }
 
         //检测账户单笔限额
         if($userPaymentConfig->recharge_quota_pertime && $order->amount > $userPaymentConfig->recharge_quota_pertime){
