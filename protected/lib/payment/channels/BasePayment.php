@@ -75,8 +75,8 @@ class BasePayment
         }
 
         $appSecrets = $channelAccount->getAppSectets();
-        if(empty($appSecrets)){
-            throw new \Exception("收款渠道key配置错误",Macro::ERR_PAYMENT_CHANNEL_CONFIG);
+        if(empty($appSecrets) || empty($channelAccount->merchant_id)){
+            throw new \Exception("收款渠道配置错误:caId:{$channelAccount->id}",Macro::ERR_PAYMENT_CHANNEL_CONFIG);
         }
         $paymentConfig = \yii\helpers\ArrayHelper::merge($baseConfig,$envConfig);
         $paymentConfig = \yii\helpers\ArrayHelper::merge($paymentConfig,$appSecrets);

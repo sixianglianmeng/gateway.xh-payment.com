@@ -69,7 +69,7 @@ class MerchantRechargeMethod extends BaseModel
     public function getAllParentAgentConfig()
     {
         $pids = $this->getAllParentAgentId();
-        return self::find(['id'=>$pids])->all();
+        return self::findAll(['id'=>$pids]);
     }
 
     /**

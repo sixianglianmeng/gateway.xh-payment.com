@@ -60,20 +60,33 @@ class LogicRemit
             $remitData['status'] = Remit::STATUS_CHECKED;
         }
         $remitData['bank_status']      = Remit::BANK_STATUS_NONE;
-        $orderData['financial_status'] = Remit::FINANCIAL_STATUS_NONE;
+        $remitData['financial_status'] = Remit::FINANCIAL_STATUS_NONE;
 
-        $orderData['app_id']              = $request['app_id'] ?? $merchant->id;
+        $remitData['app_id']              = $request['app_id'] ?? $merchant->id;
         $remitData['merchant_id']         = $merchant->id;
         $remitData['merchant_account']    = $merchant->username;
-        $orderData['all_parent_agent_id'] = $merchant->all_parent_agent_id;
+        $remitData['all_parent_agent_id'] = $merchant->all_parent_agent_id;
 
         $remitData['channel_account_id']  = $paymentChannelAccount->id;
         $remitData['channel_id']          = $paymentChannelAccount->channel_id;
         $remitData['channel_merchant_id'] = $paymentChannelAccount->merchant_id;
         $remitData['channel_app_id']      = $paymentChannelAccount->app_id;
         $remitData['created_at']          = time();
-        $orderData['plat_fee_amount']     = $paymentChannelAccount->remit_fee;
-
+        $remitData['plat_fee_amount']     = $paymentChannelAccount->remit_fee;
+        $parentConfigModels = UserPaymentInfo::findAll(['app_id'=>$merchant->getAllParentAgentId()]);
+        //把自己也存进去
+        $parentConfigModels[] = $merchant->paymentInfo;
+        $parentConfigs = [];
+        foreach ($parentConfigModels as $pc){
+            $parentConfigs[] = [
+                'channel_account_id'=>$pc->remit_channel_account_id,
+                'fee'=>$pc->remit_fee,
+                'fee_rebate'=>$pc->remit_fee_rebate,
+                'app_id'=>$pc->app_id,
+                'merchant_id'=>$pc->user_id,
+            ];
+        }
+        $remitData['all_parent_remit_config'] = json_encode($parentConfigs);
         $hasRemit = Remit::findOne(['app_id' => $remitData['app_id'], 'merchant_order_no'=>$request['trade_no']]);
         if($hasRemit){
 //            throw new InValidRequestException('请不要重复下单');
@@ -180,13 +193,17 @@ class LogicRemit
         $parentIds[] = $remit->merchant->id;
 
         bcscale(9);
-        $parentIdLen = count($parentIds) - 1;
-        for ($i = $parentIdLen; $i >= 0; $i--) {
-            $pUser      = User::findActive($parentIds[$i]);
+        $parentRemitConfig = $remit->getAllParentRemitConfig();
+        $parentRemitConfigMaxIdx = count($parentRemitConfig)-1;
+        for($i=$parentRemitConfigMaxIdx; $i>=0; $i--){
+            $remitConfig = $parentRemitConfig[$i];
+            Yii::debug(["remit bonus, find config",json_encode($remitConfig)]);
+
+            $pUser      = User::findActive($remitConfig['merchant_id']);
 
             //有上级的才返
-            if (empty($pUser->paymentInfo->remit_fee_rebate)) {
-                Yii::debug(["remit bonus, parent fee empty", $pUser->id, $pUser->username, $pUser->parentAgent - id, $pUser->parentAgent->usename]);
+            if ($remitConfig['fee_rebate']<=0) {
+                Yii::debug(["remit bonus, parent fee empty", $pUser->id, $pUser->username,$remitConfig['fee_rebate']]);
                 continue;
             }
 
@@ -197,9 +214,9 @@ class LogicRemit
             }
 
             //有上级的才返，余额操作对象是上级代理
-            Yii::debug(["remit bonus parent", $pUser->id, $pUser->username, $pUser->parentAgent->id, $pUser->parentAgent->username]);
+            Yii::debug(["remit bonus parent", $pUser->id, $pUser->username, $remitConfig['fee_rebate'],$pUser->parentAgent->id, $pUser->parentAgent->username]);
             $logicUser   = new LogicUser($pUser->parentAgent);
-            $logicUser->changeUserBalance($pUser->paymentInfo->remit_fee_rebate, Financial::EVENT_TYPE_REMIT_BONUS, $remit->order_no, Yii::$app->request->userIP);
+            $logicUser->changeUserBalance($remitConfig['fee_rebate'], Financial::EVENT_TYPE_REMIT_BONUS, $remit->order_no, Yii::$app->request->userIP);
         }
 
         //更新订单账户处理状态

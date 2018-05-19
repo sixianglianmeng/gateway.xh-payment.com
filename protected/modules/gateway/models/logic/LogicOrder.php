@@ -88,6 +88,7 @@ class LogicOrder
                 'parent_rebate_rate'=>$pc->parent_recharge_rebate_rate,
                 'app_id'=>$pc->app_id,
                 'merchant_id'=>$pc->merchant_id,
+                'channel_account_id'=>$rechargeMethod->channel_account_id,
             ];
         }
         $orderData['all_parent_recharge_config'] = json_encode($parentConfigs);
@@ -343,7 +344,7 @@ class LogicOrder
 
             Yii::debug(["order bonus, find config",json_encode($rechargeConfig)]);
             //parent_recharge_rebate_rate
-            if(empty($rechargeConfig['parent_rebate_rate'])){
+            if ($rechargeConfig['parent_rebate_rate']<=0) {
                 Yii::debug(["order bonus, parent_rebate_rate empty",$pUser->id,$pUser->username]);
                 continue;
             }

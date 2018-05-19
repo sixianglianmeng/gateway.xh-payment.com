@@ -149,4 +149,15 @@ class Remit extends BaseModel
         }
     }
 
+    /**
+     * 获取所有上级代理账户此订单支付方式的配置
+     *
+     * @return array
+     * @author bootmall@gmail.com
+     */
+    public function getAllParentRemitConfig()
+    {
+        return $this->all_parent_remit_config?json_decode($this->all_parent_remit_config,true):[];
+    }
+
 }

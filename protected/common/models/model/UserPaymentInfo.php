@@ -135,4 +135,26 @@ class UserPaymentInfo extends BaseModel
 
         return $this;
     }
+
+    /**
+     * 获取所有上级支付方式配置
+     *
+     * @return array|mixed
+     */
+    public function getAllParentRemitChannelAccount()
+    {
+        $pids = $this->getAllParentAgentId();
+        return self::find(['id'=>$pids])->all();
+    }
+
+    /**
+     * 获取某支付方式所有上级支付方式配置
+     *
+     * @return array|mixed
+     */
+    public function getMethodAllParentAgentConfig($pids)
+    {
+        $pids = $this->getAllParentAgentId();
+        return UserPaymentInfo::findAll(['app_id'=>$pids,'method_id'=>$mid]);
+    }
 }
