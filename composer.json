@@ -17,9 +17,8 @@
     "require": {
         "guzzlehttp/guzzle": "~6.0",
         "php": ">=7.0",
-        "swoole": "2.1.*",
-        "mongodb": "1.4.*",
-        "redis": "4.*",
+        "ext-swoole": "2.1.*",
+        "ext-redis": "4.*",
         "yiisoft/yii2": "2.*",
         "symfony/console": "2.*",
         "power/yii2": "^0.1.0",

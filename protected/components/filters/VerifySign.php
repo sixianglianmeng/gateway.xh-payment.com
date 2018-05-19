@@ -27,6 +27,9 @@ class VerifySign extends ActionFilter
         if(empty($merchant)){
             throw new SignatureNotMatchException("商户信息不存在或未激活:({$merchantId})");
         }
+        if(!$merchant->isMerchant()){
+            throw new SignatureNotMatchException("不属于可收款商户组:({$merchantId}-{$merchant->group_id})");
+        }
         Yii::$app->params['merchant'] = $merchant;
         Yii::$app->controller->merchant = $merchant;
 

@@ -39,10 +39,10 @@ class UserPaymentInfo extends BaseModel
         return [];
     }
 
-    public function getPaymentChannel()
-    {
-        return $this->hasOne(ChannelAccount::className(), ['id'=>'channel_account_id']);
-    }
+//    public function getPaymentChannel()
+//    {
+//        return $this->hasOne(ChannelAccount::className(), ['id'=>'channel_account_id']);
+//    }
 
     public function getRemitChannel()
     {

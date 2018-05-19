@@ -148,4 +148,85 @@ class User extends BaseModel
         return $tags;
 //        $sql = "select t.* form ".Tag::tableName()." t,".TagRelation::tableName()." r WHERE t.id=r.tag_id AND r.object_type=1 AND t.id={$uid}";
     }
+    /**
+     * 根据uids获取他们的上级代理的用户名
+     */
+    public static function getParentUserName($uids)
+    {
+        return self::find()->where(['in','id',$uids])->select('id,username')->asArray()->all();
+    }
+
+    /**
+     * 设置用户基础权限
+     */
+    public function setBaseRole()
+    {
+        $auth    = Yii::$app->authManager;
+        $baseRole = $auth->getRole(AuthItem::ROLE_USER_BASE);
+        $auth->revoke($baseRole, $this->id);
+        $auth->assign($baseRole, $this->id);
+    }
+
+    /**
+     * 获取所有代理
+     */
+    public static function getAgentAll($agentIds)
+    {
+        return self::find()->where(['not in','id',$agentIds])->andWhere(['group_id' => 20])->select('id,username')->asArray()->all();
+    }
+
+    /**
+     * 是否是商户账户
+     */
+    public function isMerchant()
+    {
+        return $this->group_id==self::GROUP_MERCHANT;
+    }
+
+    /**
+     * 是否是代理账户
+     */
+    public function isAgent()
+    {
+        return $this->group_id==self::GROUP_AGENT;
+    }
+
+    /**
+     * 是否是主账号
+     */
+    public function isMainAccount()
+    {
+        return $this->parent_merchant_id==0;
+    }
+
+    /**
+     * 获取主账号
+     */
+    public function getMainAccount()
+    {
+        if($this->parent_merchant_id==0){
+            return $this;
+        }else{
+            self::findOne(['id'=>$this->parent_merchant_id]);
+        }
+    }
+
+    /**
+     * 获取代理的所有下级账户
+     *
+     * @param $uid 用户ID
+     * @return array
+     */
+    public static function getAllAgentChildren($uid)
+    {
+        $query = User::find();
+        $query->andWhere(['like','all_parent_agent_id',','.$uid.',']);
+        $query->orWhere(['like','all_parent_agent_id','['.$uid.']']);
+        $query->orWhere(['like','all_parent_agent_id','['.$uid.',']);
+        $query->orWhere(['like','all_parent_agent_id',','.$uid.']']);
+        $query->select('all_parent_agent_id');
+        $children = $query->all();
+
+        return $children;
+    }
 }

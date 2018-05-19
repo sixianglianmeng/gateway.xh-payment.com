@@ -78,6 +78,7 @@ class Macro
     const ERR_PAYMENT_PROCESSING = 10104;
     const ERR_PAYMENT_NOTICE_RESULT_OBJECT = 10105;
     const ERR_PAYMENT_ALREADY_DONE = 10106;
+    const ERR_PAYMENT_CHANNEL_CONFIG = 10107;
     const ERR_PAYMENT_REACH_ACCOUNT_QUOTA_PER_DAY = 10111;
     const ERR_PAYMENT_REACH_ACCOUNT_QUOTA_PER_TIME = 10112;
     const ERR_PAYMENT_REACH_CHANNEL_QUOTA_PER_DAY = 10113;
@@ -211,6 +212,7 @@ class Macro
         self::ERR_PAYMENT_PROCESSING => '充值已经处于处理状态',
         self::ERR_PAYMENT_NOTICE_RESULT_OBJECT => '充值结果对象不存在',
         self::ERR_PAYMENT_ALREADY_DONE => '充值已处理完毕',
+        self::ERR_PAYMENT_CHANNEL_CONFIG => '充值渠道账户配置错误',
         self::ERR_PAYMENT_REACH_ACCOUNT_QUOTA_PER_DAY => '已达到账户单日充值最大额度',
         self::ERR_PAYMENT_REACH_ACCOUNT_QUOTA_PER_TIME => '已达到账户单次充值最大额度',
         self::ERR_PAYMENT_REACH_CHANNEL_QUOTA_PER_DAY => '已达到渠道单日充值最大额度',

@@ -73,8 +73,13 @@ class BasePayment
         if(file_exists($envFile)){
             $envConfig = require $envFile;
         }
+
+        $appSecrets = $channelAccount->getAppSectets();
+        if(empty($appSecrets)){
+            throw new \Exception("收款渠道key配置错误",Macro::ERR_PAYMENT_CHANNEL_CONFIG);
+        }
         $paymentConfig = \yii\helpers\ArrayHelper::merge($baseConfig,$envConfig);
-        $paymentConfig = \yii\helpers\ArrayHelper::merge($paymentConfig,$channelAccount->getAppSectets());
+        $paymentConfig = \yii\helpers\ArrayHelper::merge($paymentConfig,$appSecrets);
         $this->paymentConfig = $paymentConfig;
     }
 

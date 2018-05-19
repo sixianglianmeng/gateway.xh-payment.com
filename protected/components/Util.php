@@ -703,7 +703,7 @@ class Util
 
     public static function uuid(string $type = 'rand24'){
 //        $chars = (string)(new \MongoDB\BSON\ObjectId());
-        $chars = Security::generateRandomString(24);
+        $chars = (new Security())->generateRandomString(24);
         switch ($type){
             case 'md5':
                 $chars = md5($chars);

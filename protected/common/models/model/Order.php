@@ -137,4 +137,15 @@ class Order extends BaseModel
     {
         return self::ARR_NOTICE_STATUS[$this->notify_status]??'-';
     }
+
+    /**
+     * 获取所有上级代理账户此订单支付方式的配置
+     *
+     * @return array
+     * @author bootmall@gmail.com
+     */
+    public function getAllParentRechargeConfig()
+    {
+        return $this->all_parent_recharge_config?json_decode($this->all_parent_recharge_config,true):[];
+    }
 }
