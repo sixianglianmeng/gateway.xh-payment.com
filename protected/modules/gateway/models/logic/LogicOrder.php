@@ -105,6 +105,19 @@ class LogicOrder
 
         $newOrder->save();
 
+
+        //接口日志埋点
+        if(empty($remitData['op_uid']) && empty($remitData['op_username'])){
+            Yii::$app->params['apiRequestLog'] = [
+                'event_id'=>$newOrder->order_no,
+                'event_type'=>LogApiRequest::EVENT_TYPE_IN_RECHARGE_ADD,
+                'merchant_id'=>$order->merchant_id??$merchant->id,
+                'merchant_name'=>$order->merchant_account??$merchant->username,
+                'channel_account_id'=>$rechargeMethod->id,
+                'channel_name'=>$rechargeMethod->channel_account_name,
+            ];
+        }
+
         return $newOrder;
     }
 
@@ -119,16 +132,6 @@ class LogicOrder
      */
     static public function beforeAddOrder(Order $order, User $merchant, ChannelAccount $paymentChannelAccount, $rechargeMethod){
         $userPaymentConfig = $merchant->paymentInfo;
-
-        //接口日志埋点
-        Yii::$app->params['apiRequestLog'] = [
-            'event_id'=>$order->order_no,
-            'event_type'=>LogApiRequest::EVENT_TYPE_IN_RECHARGE_ADD,
-            'merchant_id'=>$order->merchant_id??$merchant->id,
-            'merchant_name'=>$order->merchant_account??$merchant->username,
-            'channel_account_id'=>$paymentChannelAccount->id,
-            'channel_name'=>$paymentChannelAccount->channel_name,
-        ];
 
         //渠道开关检测
         if($rechargeMethod->status != MerchantRechargeMethod::STATUS_ACTIVE){
@@ -252,8 +255,9 @@ class LogicOrder
             $order->channel_order_no = $channelOrderNo;
             $order->status = Order::STATUS_PAID;
             $order->paid_at = time();
-            $order->op_uid = $opUid;
-            $order->op_username = $opUsername;
+//            $order->op_uid = $opUid;
+//            $order->op_username = $opUsername;
+            if(empty($bak) && $opUsername) $bak="{$opUsername} set success at ".date('Ymd H:i:s')."\n";
             $order->bak .=$bak;
             $order->save();
 
@@ -291,8 +295,11 @@ class LogicOrder
 
         //更改订单状态
         $order->status = Order::STATUS_FREEZE;
-        $order->op_uid = $opUid;
-        $order->op_username = $opUsername;
+//        $order->op_uid = $opUid;
+//        $order->op_username = $opUsername;
+        //            $order->op_uid = $opUid;
+        //            $order->op_username = $opUsername;
+        if(empty($bak) && $opUsername) $bak="{$opUsername} set frozen at ".date('Ymd H:i:s')."\n";
         $order->bak .=$bak;
         $order->save();
 
@@ -318,8 +325,11 @@ class LogicOrder
 
         //更改订单状态
         $order->status = Order::STATUS_PAID;
-        $order->op_uid = $opUid;
-        $order->op_username = $opUsername;
+//        $order->op_uid = $opUid;
+//        $order->op_username = $opUsername;
+        //            $order->op_uid = $opUid;
+        //            $order->op_username = $opUsername;
+        if(empty($bak) && $opUsername) $bak="{$opUsername} set unfrozen at ".date('Ymd H:i:s')."\n";
         $order->bak .=$bak;
         $order->save();
 

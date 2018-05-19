@@ -1,8 +1,8 @@
 <?php
 namespace app\modules\gateway\controllers\v1\inner;
 
-use app\common\models\model\ChannelAccount;
-use app\common\models\model\Order;
+use app\common\models\model\LogApiRequest;
+use app\common\models\model\User;
 use app\common\models\model\Remit;
 use app\components\Macro;
 use app\components\Util;
@@ -17,7 +17,7 @@ use Yii;
 /**
  * 后台充值订单接口
  */
-class OrderController extends BaseInnerController
+class RemitController extends BaseInnerController
 {
     /**
      * 前置action
@@ -83,13 +83,13 @@ class OrderController extends BaseInnerController
             Util::throwException(Macro::ERR_BALANCE_NOT_ENOUGH);
         }
 
-        $channelAccount = $merchant->merchantPayment->remitChannel;
+        $channelAccount = $merchant->paymentInfo->remitChannel;
         if(empty($channelAccount)){
             Util::throwException(Macro::ERR_REMIT_BANK_CONFIG);
         }
 
         foreach ($remits as $remit){
-            $request['merchant_order_no'] = LogicOrder::generateMerchantRemitNo();
+            $request['trade_no'] = LogicRemit::generateMerchantRemitNo();
             $request['op_uid']              = $this->allParams['op_uid'] ?? 0;
             $request['op_username']         = $this->allParams['op_username'] ?? '';
             $request['client_ip']         = $this->allParams['op_ip'] ?? '';
@@ -99,15 +99,15 @@ class OrderController extends BaseInnerController
             $request['bat_index'] = $remit['bat_index']??0;
             $request['bat_count'] = $remit['bat_count']??0;
             $request['bank_code'] = $remit['bank_code'];
-            $request['bank_account'] = $remit['account_name'];
-            $request['bank_no'] = $remit['account_number'];
-            $request['amount'] = $remit['order_amount'];
+            $request['account_name'] = $remit['bank_account'];
+            $request['account_number'] = $remit['bank_no'];
+            $request['order_amount'] = $remit['amount'];
 
             //生成订单
             $remit = LogicRemit::addRemit($request, $merchant, $channelAccount);
         }
 
-        return ResponseHelper::formatOutput(Macro::SUCCESS,'',$redirect);
+        return ResponseHelper::formatOutput(Macro::SUCCESS);
     }
 
     /**
@@ -148,5 +148,73 @@ class OrderController extends BaseInnerController
         }
 
         return ResponseHelper::formatOutput(Macro::SUCCESS,'');
+    }
+
+
+    /**
+     * 设置订单为成功
+     */
+    public function actionSetSuccess()
+    {
+        $rawOrderList = ControllerParameterValidator::getRequestParam($this->allParams, 'orderNoList', '',Macro::CONST_PARAM_TYPE_ARRAY,'订单号列表错误');
+
+        Yii::info($rawOrderList);
+        if(empty($rawOrderList)){
+            Util::throwException(Macro::PARAMETER_VALIDATION_FAILED);
+        }
+
+        $opOrderList = [];
+        foreach ($rawOrderList as $k=>$on){
+            if(Util::validate($on['order_no'],Macro::CONST_PARAM_TYPE_ORDER_NO)){
+                $opOrderList[$on['order_no']] = $on;
+            }
+        }
+        if(empty($opOrderList)){
+            Util::throwException(Macro::PARAMETER_VALIDATION_FAILED,json_encode($rawOrderList));
+        }
+
+        $filter['order_no'] = array_keys($opOrderList);
+
+        $orders = Remit::findAll($filter);
+        foreach ($orders as $order){
+            $bak = $opOrderList[$order->order_no]['bak']??'';
+            LogicRemit::setSuccess($order,$this->allParams['op_uid'],$this->allParams['op_username'],$bak);
+        }
+
+        return ResponseHelper::formatOutput(Macro::SUCCESS);
+    }
+
+
+    /**
+     * 设置订单为失败
+     */
+    public function actionSetFail()
+    {
+        $rawOrderList = ControllerParameterValidator::getRequestParam($this->allParams, 'orderNoList', '',Macro::CONST_PARAM_TYPE_ARRAY,'订单号列表错误');
+
+        Yii::info($rawOrderList);
+        if(empty($rawOrderList)){
+            Util::throwException(Macro::PARAMETER_VALIDATION_FAILED);
+        }
+
+        $opOrderList = [];
+        foreach ($rawOrderList as $k=>$on){
+            if(Util::validate($on['order_no'],Macro::CONST_PARAM_TYPE_ORDER_NO)){
+                $opOrderList[$on['order_no']] = $on;
+            }
+        }
+        if(empty($opOrderList)){
+            Util::throwException(Macro::PARAMETER_VALIDATION_FAILED,json_encode($rawOrderList));
+        }
+
+        $filter['order_no'] = array_keys($opOrderList);
+
+        $orders = Remit::findAll($filter);
+        foreach ($orders as $order){
+            $bak = $opOrderList[$order->order_no]['bak']??'';
+            LogicRemit::setFail($order,$bak,$this->allParams['op_uid'],$this->allParams['op_username']);
+        }
+
+        return ResponseHelper::formatOutput(Macro::SUCCESS);
     }
 }

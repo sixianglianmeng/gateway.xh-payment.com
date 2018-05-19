@@ -61,6 +61,7 @@ class ChannelAccount extends BaseModel
                 'id'=>$m->method_id,
                 'rate'=>$m->fee_rate,
                 'name'=>$m->method_name,
+                'status'=>$m->method_name,
             ];
         }
 
@@ -86,6 +87,13 @@ class ChannelAccount extends BaseModel
     {
         return $this->hasOne(ChannelAccountRechargeMethod::className(), ['channel_account_id' => 'id'])
             ->where(['method_id' => $id])->one();
+    }
+
+    public function getMetchodRate($method_id)
+    {
+        $rateInfo = $this->hasOne(ChannelAccountRechargeMethod::className(), ['channel_account_id' => 'id'])
+            ->where(['method_id' => $method_id])->limit(1)->one();
+        return $rateInfo->fee_rate;
     }
 
     /**

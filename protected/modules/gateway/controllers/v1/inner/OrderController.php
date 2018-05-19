@@ -118,7 +118,7 @@ class OrderController extends BaseInnerController
 
         $orders = Order::findAll($filter);
         foreach ($orders as $order){
-            $bak = $opOrderList[$order->order_no]['bak']??'admin_'.$this->allParams['op_username'].'_'.date('ymdHis');
+            $bak = $opOrderList[$order->order_no]['bak']??'';
             LogicOrder::paySuccess($order,$order->amount,$bak,$this->allParams['op_uid'],$this->allParams['op_username']);
             LogicOrder::notify($order);
         }
@@ -148,7 +148,7 @@ class OrderController extends BaseInnerController
 
         $orders = Order::findAll($filter);
         foreach ($orders as $order){
-            $bak = $opOrderList[$order->order_no]['bak']??'admin_'.$this->allParams['op_username'].'_'.date('ymdHis');
+            $bak = $opOrderList[$order->order_no]['bak']??'';
             LogicOrder::frozen($order,$this->allParams['op_uid'],$this->allParams['op_username'],$bak,$this->allParams['op_ip']);
         }
 
@@ -178,7 +178,7 @@ class OrderController extends BaseInnerController
 
         $orders = Order::findAll($filter);
         foreach ($orders as $order){
-            $bak = $opOrderList[$order->order_no]['bak']??'admin_'.$this->allParams['op_username'].'_'.date('ymdHis');
+            $bak = $opOrderList[$order->order_no]['bak']??'';
             LogicOrder::unfrozen($order,$this->allParams['op_uid'],$this->allParams['op_username'],$bak,$this->allParams['op_ip']);
         }
 

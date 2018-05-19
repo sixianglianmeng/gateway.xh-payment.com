@@ -53,7 +53,6 @@ class LogicRemit
         $remitData['op_uid']      = $request['op_uid'] ?? 0;
         $remitData['op_username'] = $request['op_username'] ?? '';
 
-
         $remitData['status']    = Remit::STATUS_NONE;
         $remitData['remit_fee'] = $merchant->paymentInfo->remit_fee;
         if ($merchant->paymentInfo->allow_api_fast_remit == UserPaymentInfo::ALLOW_API_FAST_REMIT_YES) {
@@ -99,6 +98,18 @@ class LogicRemit
 
         $newRemit->save();
 
+        if(empty($remitData['op_uid']) && empty($remitData['op_username'])){
+            //接口日志埋点
+            Yii::$app->params['apiRequestLog'] = [
+                'event_id'=>$newRemit->order_no,
+                'event_type'=> LogApiRequest::EVENT_TYPE_IN_REMIT_ADD,
+                'merchant_id'=>$newRemit->merchant_id??$merchant->id,
+                'merchant_name'=>$newRemit->merchant_account??$merchant->username,
+                'channel_account_id'=>$paymentChannelAccount->id,
+                'channel_name'=>$paymentChannelAccount->channel_name,
+            ];
+        }
+
         self::updateToRedis($newRemit);
 
         return $newRemit;
@@ -114,16 +125,6 @@ class LogicRemit
      */
     static public function beforeAddRemit(Remit $remit, User $merchant, ChannelAccount $paymentChannelAccount){
         $userPaymentConfig = $merchant->paymentInfo;
-
-        //接口日志埋点
-        Yii::$app->params['apiRequestLog'] = [
-            'event_id'=>$remit->order_no,
-            'event_type'=> LogApiRequest::EVENT_TYPE_IN_REMIT_ADD,
-            'merchant_id'=>$remit->merchant_id??$merchant->id,
-            'merchant_name'=>$remit->merchant_account??$merchant->username,
-            'channel_account_id'=>$paymentChannelAccount->id,
-            'channel_name'=>$paymentChannelAccount->channel_name,
-        ];
 
         //检测账户单笔限额
         if($userPaymentConfig->remit_quota_pertime && $remit->amount > $userPaymentConfig->remit_quota_pertime){
@@ -394,10 +395,14 @@ class LogicRemit
      *
      * @param Remit $remit 订单对象
      */
-    static public function setSuccess(Remit $remit)
+    public static function setSuccess(Remit $remit, $opUid=0, $opUsername='',$bak='')
     {
         $remit->status = Remit::STATUS_SUCCESS;
         $remit->bank_status =  Remit::BANK_STATUS_SUCCESS;
+        //            $order->op_uid = $opUid;
+        //            $order->op_username = $opUsername;
+        if($opUsername) $bak.="{$opUsername} set success at ".date('Ymd H:i:s')."\n";
+        $remit->bak .=$bak;
         $remit->save();
 
         self::updateToRedis($remit);
@@ -411,11 +416,15 @@ class LogicRemit
      * @param Remit $remit 订单对象
      * @param String $failMsg 失败描述信息
      */
-    static public function setFail(Remit $remit, $failMsg='')
+    public static function setFail(Remit $remit, $failMsg='', $opUid=0, $opUsername='')
     {
-        $remit->fail_msg = $failMsg;
+        if($failMsg) $remit->fail_msg = $remit->fail_msg.$failMsg.date('Ymd H:i:s')."\n";
         $remit->status = Remit::STATUS_BANK_PROCESS_FAIL;
         $remit->bank_status =  Remit::BANK_STATUS_FAIL;
+        //            $order->op_uid = $opUid;
+        //            $order->op_username = $opUsername;
+        if($opUsername) $bak="{$opUsername} set fail at ".date('Ymd H:i:s')."\n";
+        $remit->bak .=$bak;
         $remit->save();
 
         self::updateToRedis($remit);
