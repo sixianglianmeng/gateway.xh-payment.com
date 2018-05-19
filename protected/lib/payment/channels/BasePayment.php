@@ -132,5 +132,15 @@ class BasePayment
 //    public function remit()
 //    {
 //    }
+    //
+    /*
+      * 余额查询
+      *
+      * return array
+      */
+//    public function remit()
+//    {
+//            return $ret['data']['balance']
+//    }
 
 }

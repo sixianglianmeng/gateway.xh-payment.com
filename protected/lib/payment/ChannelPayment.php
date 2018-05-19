@@ -19,6 +19,24 @@ class ChannelPayment
         if($order instanceof Remit && $channelAccount){
             $this->setRemitHandle($order,$channelAccount);
         }
+
+        if(empty($order) && $channelAccount){
+            $this->setCommonHandle($channelAccount);
+        }
+    }
+
+    public function setCommonHandle($channelAccount){
+
+        $channel = $channelAccount->channel;
+
+        $payMethod = $channel->remit_handle_class;
+        if(empty($channel->remit_handle_class)){
+            throw new \Exception("渠道配置错误",Macro::ERR_PAYMENT_CHANNEL_ID);
+        }
+
+        $handleClass = "app\\lib\\payment\\channels\\".str_replace('/','\\',$channel->remit_handle_class);
+        $this->paymentHandle = new $handleClass();
+        $this->paymentHandle->setPaymentConfig($channelAccount);
     }
 
     public function setPaymentHandle($order,$channelAccount){

@@ -200,9 +200,6 @@ class AllScoreBasePayment extends BasePayment
             if(isset($res['retCode']) && $res['retCode']=='0000'){
                 $ret = Macro::SUCCESS_MESSAGE;
                 $ret['data'] = $res;
-            }elseif(isset($res['retCode']) && $res['retCode']=='0000'){
-                $ret = Macro::SUCCESS_MESSAGE;
-                $ret['data'] = $res;
             }else{
                 $ret['data'] = $res;
                 $ret['message'] = $res['retMsg'];
@@ -233,9 +230,39 @@ class AllScoreBasePayment extends BasePayment
             if(isset($res['retCode']) && $res['retCode']=='0000'){
                 $ret = Macro::SUCCESS_MESSAGE;
                 $ret['data'] = $res;
-            }elseif(isset($res['retCode']) && $res['retCode']=='0000'){
+            }else{
+                $ret['data'] = $resTxt;
+                $ret['message'] = $res['retMsg'];
+            }
+        }
+
+        return  $ret;
+    }
+
+    /*
+     * 查询余额
+     */
+    public function balance(){
+        require_once (Yii::getAlias("@app/lib/payment/channels/allscore/lib/allscore_service.class.php"));
+
+        //构造要请求的参数数组
+        $parameter = array(
+            "service" => 'agentpay',
+            "merchantId" => $this->order['channel_merchant_id'],
+            "format" => 'json',
+            "signType" => 'RSA',
+            "inputCharset" => trim($this->paymentConfig['input_charset']),
+            "outOrderId" => $this->order['order_no'],
+            //"version" => "1",
+        );
+
+        $resTxt = \AllscoreService::quickPost($this->paymentConfig['balance_query_url'],$parameter,$this->paymentConfig);
+        $ret = Macro::FAILED_MESSAGE;
+        if(!empty($resTxt)){
+            $res = json_decode($resTxt,true);
+            if(isset($res['retCode']) && $res['retCode']=='0000'){
                 $ret = Macro::SUCCESS_MESSAGE;
-                $ret['data'] = $res;
+                $ret['data']['balance'] = $res['availBalAmt'];
             }else{
                 $ret['data'] = $res;
                 $ret['message'] = $res['retMsg'];
