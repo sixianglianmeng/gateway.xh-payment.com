@@ -217,4 +217,37 @@ class RemitController extends BaseInnerController
 
         return ResponseHelper::formatOutput(Macro::SUCCESS);
     }
+
+    /**
+     * 设置订单为已审核
+     */
+    public function actionSetChecked()
+    {
+        $rawOrderList = ControllerParameterValidator::getRequestParam($this->allParams, 'orderNoList', '',Macro::CONST_PARAM_TYPE_ARRAY,'订单号列表错误');
+
+        Yii::info($rawOrderList);
+        if(empty($rawOrderList)){
+            Util::throwException(Macro::PARAMETER_VALIDATION_FAILED);
+        }
+
+        $opOrderList = [];
+        foreach ($rawOrderList as $k=>$on){
+            if(Util::validate($on['order_no'],Macro::CONST_PARAM_TYPE_ORDER_NO)){
+                $opOrderList[$on['order_no']] = $on;
+            }
+        }
+        if(empty($opOrderList)){
+            Util::throwException(Macro::PARAMETER_VALIDATION_FAILED,json_encode($rawOrderList));
+        }
+
+        $filter['order_no'] = array_keys($opOrderList);
+
+        $orders = Remit::findAll($filter);
+        foreach ($orders as $order){
+            $bak = $opOrderList[$order->order_no]['bak']??'';
+            LogicRemit::setChecked($order,$this->allParams['op_uid'],$this->allParams['op_username']);
+        }
+
+        return ResponseHelper::formatOutput(Macro::SUCCESS);
+    }
 }

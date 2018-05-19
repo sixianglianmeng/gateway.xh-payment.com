@@ -399,8 +399,6 @@ class LogicRemit
     {
         $remit->status = Remit::STATUS_SUCCESS;
         $remit->bank_status =  Remit::BANK_STATUS_SUCCESS;
-        //            $order->op_uid = $opUid;
-        //            $order->op_username = $opUsername;
         if($opUsername) $bak.="{$opUsername} set success at ".date('Ymd H:i:s')."\n";
         $remit->bak .=$bak;
         $remit->save();
@@ -421,8 +419,6 @@ class LogicRemit
         if($failMsg) $remit->fail_msg = $remit->fail_msg.$failMsg.date('Ymd H:i:s')."\n";
         $remit->status = Remit::STATUS_BANK_PROCESS_FAIL;
         $remit->bank_status =  Remit::BANK_STATUS_FAIL;
-        //            $order->op_uid = $opUid;
-        //            $order->op_username = $opUsername;
         if($opUsername) $bak="{$opUsername} set fail at ".date('Ymd H:i:s')."\n";
         $remit->bak .=$bak;
         $remit->save();
@@ -430,6 +426,24 @@ class LogicRemit
         self::updateToRedis($remit);
 
         $remit = self::refund($remit);
+
+        return $remit;
+    }
+
+    /*
+     * 订单更新为已审核
+     *
+     * @param Remit $remit 订单对象
+     * @param String $failMsg 失败描述信息
+     */
+    public static function setChecked(Remit $remit, $opUid=0, $opUsername='')
+    {
+        $remit->status = Remit::STATUS_CHECKED;
+        if($opUsername) $bak="{$opUsername} set checked at ".date('Ymd H:i:s')."\n";
+        $remit->bak .=$bak;
+        $remit->save();
+
+        self::updateToRedis($remit);
 
         return $remit;
     }
