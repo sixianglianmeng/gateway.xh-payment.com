@@ -34,8 +34,9 @@ class LogicRemit
      * @param array $request 请求数组
      * @param User $merchant 提款账户
      * @param ChannelAccount $paymentChannelAccount 提款的三方渠道账户
+     * @param boolean $skipCheck 是否跳过生成订单前检测,用于批量提交出款订单时保证都入库
      */
-    static public function addRemit(array $request, User $merchant, ChannelAccount $paymentChannelAccount)
+    static public function addRemit(array $request, User $merchant, ChannelAccount $paymentChannelAccount, $skipCheck=false)
     {
         //        ['merchant_code', 'trade_no', 'order_amount', 'order_time', 'bank_code', ' account_name', 'account_number',
         $remitData                      = [];
@@ -94,7 +95,10 @@ class LogicRemit
 
         $newRemit = new Remit();
         $newRemit->setAttributes($remitData,false);
-        self::beforeAddRemit($newRemit, $merchant, $paymentChannelAccount);
+        if(!$skipCheck){
+            self::beforeAddRemit($newRemit, $merchant, $paymentChannelAccount);
+        }
+
 
         $newRemit->save();
 

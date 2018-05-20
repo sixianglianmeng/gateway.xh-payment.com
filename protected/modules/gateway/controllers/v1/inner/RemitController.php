@@ -37,11 +37,10 @@ class RemitController extends BaseInnerController
         $rawRemits = ControllerParameterValidator::getRequestParam($this->allParams, 'remits', null,Macro::CONST_PARAM_TYPE_ARRAY,'提款列表错误');
 
         $totalAmount = 0;
-        $remits = [];
         $remitCount = count($rawRemits);
         $isBatch = $remitCount>1;
         $batOrderNo = $isBatch?LogicRemit::generateBatRemitNo():'';
-        $errRemits = [];
+        $remits = $errRemits = $okRemits = [];
         foreach ($rawRemits as $i=>$remitArr){
             $totalAmount=bcadd($totalAmount,$remitArr['amount'],6);
 
@@ -73,41 +72,47 @@ class RemitController extends BaseInnerController
             $remits[] = $remitArr;
 
         }
+
         //出款账户
         $merchant = User::findOne(['username'=>$merchantUsername]);
         if(empty($merchant)){
-            Util::throwException(Macro::ERR_USER_NOT_FOUND);
+            return ResponseHelper::formatOutput(Macro::ERR_USER_NOT_FOUND,'',['batOrderNo'=>$batOrderNo, 'errRemits'=>$rawRemits, 'okRemits'=>$okRemits]);
         }
         //初步余额检测
         if($merchant->balance<$totalAmount){
-            Util::throwException(Macro::ERR_BALANCE_NOT_ENOUGH);
+            return ResponseHelper::formatOutput(Macro::ERR_UNKNOWN,'',['batOrderNo'=>$batOrderNo, 'errRemits'=>$rawRemits, 'okRemits'=>$okRemits]);
         }
 
         $channelAccount = $merchant->paymentInfo->remitChannel;
         if(empty($channelAccount)){
-            Util::throwException(Macro::ERR_REMIT_BANK_CONFIG);
+            return ResponseHelper::formatOutput(Macro::ERR_REMIT_BANK_CONFIG,'',['batOrderNo'=>$batOrderNo, 'errRemits'=>$rawRemits, 'okRemits'=>$okRemits]);
         }
 
-        foreach ($remits as $remit){
-            $request['trade_no'] = LogicRemit::generateMerchantRemitNo();
-            $request['op_uid']              = $this->allParams['op_uid'] ?? 0;
-            $request['op_username']         = $this->allParams['op_username'] ?? '';
-            $request['client_ip']         = $this->allParams['op_ip'] ?? '';
+        try{
+            foreach ($remits as $remit){
+                $request['trade_no'] = LogicRemit::generateMerchantRemitNo();
+                $request['op_uid']              = $this->allParams['op_uid'] ?? 0;
+                $request['op_username']         = $this->allParams['op_username'] ?? '';
+                $request['client_ip']         = $this->allParams['op_ip'] ?? '';
 
+                $request['bat_order_no'] = $remit['bat_order_no']??'';
+                $request['bat_index'] = $remit['bat_index']??0;
+                $request['bat_count'] = $remit['bat_count']??0;
+                $request['bank_code'] = $remit['bank_code'];
+                $request['account_name'] = $remit['bank_account'];
+                $request['account_number'] = $remit['bank_no'];
+                $request['order_amount'] = $remit['amount'];
 
-            $request['bat_order_no'] = $remit['bat_order_no']??'';
-            $request['bat_index'] = $remit['bat_index']??0;
-            $request['bat_count'] = $remit['bat_count']??0;
-            $request['bank_code'] = $remit['bank_code'];
-            $request['account_name'] = $remit['bank_account'];
-            $request['account_number'] = $remit['bank_no'];
-            $request['order_amount'] = $remit['amount'];
-
-            //生成订单
-            $remit = LogicRemit::addRemit($request, $merchant, $channelAccount);
+                //生成订单
+                $remit = LogicRemit::addRemit($request, $merchant, $channelAccount, true);
+                $okRemits[] = [$remit->order_no];
+            }
+        }catch (\Exception $e){
+            return ResponseHelper::formatOutput(Macro::ERR_UNKNOWN,'',['batOrderNo'=>$batOrderNo, 'errRemits'=>$errRemits, 'okRemits'=>$okRemits]);
         }
 
-        return ResponseHelper::formatOutput(Macro::SUCCESS);
+
+        return ResponseHelper::formatOutput(Macro::SUCCESS,'',['batOrderNo'=>$batOrderNo, 'errRemits'=>$errRemits, 'okRemits'=>$okRemits]);
     }
 
     /**
@@ -149,7 +154,6 @@ class RemitController extends BaseInnerController
 
         return ResponseHelper::formatOutput(Macro::SUCCESS,'');
     }
-
 
     /**
      * 设置订单为成功
