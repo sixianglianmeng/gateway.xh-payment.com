@@ -101,10 +101,9 @@ class LogicOrder
 
         $newOrder = new Order();
         $newOrder->setAttributes($orderData, false);
-        self::beforeAddOrder($newOrder, $merchant, $rechargeMethod->channelAccount, $rechargeMethod);
+        self::beforeAddOrder($newOrder, $merchant, $rechargeMethod->channelAccount, $rechargeMethod, $channelAccountRechargeConfig);
 
         $newOrder->save();
-
 
         //接口日志埋点
         if(empty($remitData['op_uid']) && empty($remitData['op_username'])){
@@ -130,10 +129,16 @@ class LogicOrder
      * @param ChannelAccount $paymentChannelAccount 提款的三方渠道账户
      * @param MerchantRechargeMethod $rechargeMethod 商户的当前收款渠道配置
      */
-    static public function beforeAddOrder(Order $order, User $merchant, ChannelAccount $paymentChannelAccount, $rechargeMethod){
+    static public function beforeAddOrder(Order $order, User $merchant, ChannelAccount $paymentChannelAccount, MerchantRechargeMethod $rechargeMethod,
+                                          ChannelAccountRechargeMethod $channelAccountRechargeMethod){
         $userPaymentConfig = $merchant->paymentInfo;
 
-        //渠道开关检测
+        //账户费率检测
+        if($rechargeMethod->fee_rate <= 0){
+            throw new Exception(Macro::ERR_MERCHANT_FEE_CONIFG);
+        }
+
+        //账户支付方式开关检测
         if($rechargeMethod->status != MerchantRechargeMethod::STATUS_ACTIVE){
             throw new Exception(null,Macro::ERR_PAYMENT_TYPE_NOT_ALLOWED);
         }
@@ -153,6 +158,11 @@ class LogicOrder
         //检测是否支持手工充值
         elseif(!empty($order->op_uid) && $userPaymentConfig->allow_manual_recharge==UserPaymentInfo::ALLOW_MANUAL_RECHARGE_NO){
             throw new Exception(null,Macro::ERR_PAYMENT_MANUAL_NOT_ALLOWED);
+        }
+
+        //渠道费率检测
+        if($channelAccountRechargeMethod->fee_rate <= 0){
+            throw new Exception(Macro::ERR_CHANNEL_FEE_CONIFG);
         }
 
         //检测渠道单笔限额

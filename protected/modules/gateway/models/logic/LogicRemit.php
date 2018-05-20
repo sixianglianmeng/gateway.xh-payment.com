@@ -130,6 +130,11 @@ class LogicRemit
     static public function beforeAddRemit(Remit $remit, User $merchant, ChannelAccount $paymentChannelAccount){
         $userPaymentConfig = $merchant->paymentInfo;
 
+        //账户费率检测
+        if($userPaymentConfig->remit_fee <= 0){
+            throw new Exception(Macro::ERR_MERCHANT_FEE_CONIFG);
+        }
+
         //检测账户单笔限额
         if($userPaymentConfig->remit_quota_pertime && $remit->amount > $userPaymentConfig->remit_quota_pertime){
             throw new Exception(null,Macro::ERR_REMIT_REACH_ACCOUNT_QUOTA_PER_TIME);
@@ -147,6 +152,10 @@ class LogicRemit
             throw new Exception(null,Macro::ERR_PAYMENT_MANUAL_NOT_ALLOWED);
         }
 
+        //渠道费率检测
+        if($paymentChannelAccount->remit_fee <= 0){
+            throw new Exception(Macro::ERR_CHANNEL_FEE_CONIFG);
+        }
         //检测渠道单笔限额
         if($paymentChannelAccount->remit_quota_pertime && $remit->amount > $paymentChannelAccount->remit_quota_pertime){
             throw new Exception(null,Macro::ERR_REMIT_REACH_CHANNEL_QUOTA_PER_TIME);

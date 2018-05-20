@@ -86,6 +86,8 @@ class Macro
     const ERR_PAYMENT_API_NOT_ALLOWED = 10115;
     const ERR_PAYMENT_MANUAL_NOT_ALLOWED  = 10116;
     const ERR_PAYMENT_TYPE_NOT_ALLOWED  = 10117;
+    const ERR_MERCHANT_FEE_CONIFG  = 10118;
+    const ERR_CHANNEL_FEE_CONIFG  = 10119;
 
     const ERR_REMIT_REACH_ACCOUNT_QUOTA_PER_DAY = 10201;
     const ERR_REMIT_REACH_ACCOUNT_QUOTA_PER_TIME = 10202;
@@ -220,6 +222,8 @@ class Macro
         self::ERR_PAYMENT_API_NOT_ALLOWED => '商户不支持API充值',
         self::ERR_PAYMENT_MANUAL_NOT_ALLOWED => '商户不支持手工充值',
         self::ERR_PAYMENT_TYPE_NOT_ALLOWED => '商户不支持此充值方式',
+        self::ERR_MERCHANT_FEE_CONIFG => '商户费率配置错误',
+        self::ERR_CHANNEL_FEE_CONIFG => '渠道账户费率配置错误',
 
         self::ERR_REMIT_REACH_ACCOUNT_QUOTA_PER_DAY => '已达到账户单日提款最大额度',
         self::ERR_REMIT_REACH_ACCOUNT_QUOTA_PER_TIME => '已达到账户单次提款最大额度',
