@@ -111,4 +111,15 @@ class ChannelAccount extends BaseModel
     {
         return self::find()->select('id,channel_name')->asArray()->all();
     }
+
+    /**
+     * 获取状态描述
+     *
+     * @return string
+     * @author bootmall@gmail.com
+     */
+    public function getStatusStr()
+    {
+        return self::ARR_STATUS[$this->status]??'-';
+    }
 }

@@ -1,6 +1,7 @@
 <?php
 namespace app\modules\gateway\controllers\v1\web;
 
+use app\common\models\model\ChannelAccount;
 use app\common\models\model\User;
 use app\components\Util;
 use app\lib\payment\ChannelPayment;
@@ -38,6 +39,9 @@ class OrderController extends BaseWebSignedRequestController
         $payMethod = $this->merchantPayment->getPayMethodById($this->allParams['pay_type']);
         if(empty($payMethod) || empty($payMethod->channelAccount)){
             Util::throwException(Macro::ERR_PAYMENT_TYPE_NOT_ALLOWED);
+        }
+        if($payMethod->channelAccount->status!=ChannelAccount::STATUS_ACTIVE && $payMethod->channelAccount->status!=ChannelAccount::STATUS_REMIT_BANED){
+            Util::throwException(Macro::ERR_PAYMENT_TYPE_NOT_ALLOWED,"支付渠道状态不正确:".$payMethod->channelAccount->getStatusStr());
         }
 
         //生成订单
