@@ -9,6 +9,7 @@ use app\common\models\logic\LogicUser;
 use app\common\models\model\ChannelAccount;
 use app\common\models\model\Financial;
 use app\common\models\model\LogApiRequest;
+use app\common\models\model\SiteConfig;
 use app\common\models\model\UserPaymentInfo;
 use app\components\Util;
 use app\jobs\PaymentNotifyJob;
@@ -279,28 +280,30 @@ class LogicRemit
             $ret = $payment->remit();
 
             Yii::info('remit commitToBank: '.json_encode($ret,JSON_UNESCAPED_UNICODE));
-            if($ret['code'] === 0){
-                switch ($ret['data']['status']){
-                    case '00':
+            if($ret['status'] === Macro::SUCCESS){
+                switch ($ret['data']['bank_status']){
+                    case Remit::BANK_STATUS_PROCESSING:
                         $remit->status = Remit::STATUS_BANK_PROCESSING;
                         $remit->bank_status =  Remit::BANK_STATUS_PROCESSING;
-                    case '04':
+                    case Remit::BANK_STATUS_SUCCESS:
                         $remit->status = Remit::STATUS_SUCCESS;
                         $remit->bank_status =  Remit::BANK_STATUS_SUCCESS;
-                    case '05':
+                    case  Remit::BANK_STATUS_FAIL:
                         $remit->status = Remit::STATUS_NOT_REFUND;
                         $remit->bank_status =  Remit::BANK_STATUS_FAIL;
                 }
 
-                if(!empty($ret['data']['orderId']) && empty($remit->channel_order_no)){
-                    $remit->channel_order_no = $ret['data']['orderId'];
+                if(!empty($ret['data']['channel_order_no']) && empty($remit->channel_order_no)){
+                    $remit->channel_order_no = $ret['data']['channel_order_no'];
                 }
-                $remit->save();
             }
             //失败或者银行拒绝
             else{
-                $remit = self::setFail($remit, $ret['message']);
+                $remit->status = Remit::STATUS_NOT_REFUND;
+                $remit->bank_status =  Remit::BANK_STATUS_FAIL;
             }
+
+            $remit->save();
 
             return $remit;
 
@@ -318,32 +321,32 @@ class LogicRemit
         //银行状态说明：00处理中，04成功，05失败或拒绝
         $payment = new ChannelPayment($remit, $paymentChannelAccount);
         $ret = $payment->remitStatus();
+
         Yii::info('remit status check: '.json_encode($ret,JSON_UNESCAPED_UNICODE));
-        if($ret['code'] === 0){
-            switch ($ret['data']['status']){
-                case '00':
+        if($ret['status'] === Macro::SUCCESS){
+            switch ($ret['data']['bank_status']){
+                case Remit::BANK_STATUS_PROCESSING:
                     $remit->status = Remit::STATUS_BANK_PROCESSING;
                     $remit->bank_status =  Remit::BANK_STATUS_PROCESSING;
-                    $remit->channel_order_no = $ret['order_id'];
-                case '04':
+                case Remit::BANK_STATUS_SUCCESS:
                     $remit->status = Remit::STATUS_SUCCESS;
                     $remit->bank_status =  Remit::BANK_STATUS_SUCCESS;
-                case '05':
+                case  Remit::BANK_STATUS_FAIL:
                     $remit->status = Remit::STATUS_NOT_REFUND;
                     $remit->bank_status =  Remit::BANK_STATUS_FAIL;
             }
 
-            if(!empty($ret['order_id']) && empty($remit->channel_order_no)){
-                $remit->channel_order_no = $ret['order_id'];
+            if(!empty($ret['data']['channel_order_no']) && empty($remit->channel_order_no)){
+                $remit->channel_order_no = $ret['data']['channel_order_no'];
             }
-            $remit->save();
-
-            self::processRemit($remit, $paymentChannelAccount);
         }
-        //失败
+        //失败或者银行拒绝
         else{
-
+            $remit->status = Remit::STATUS_NOT_REFUND;
+            $remit->bank_status =  Remit::BANK_STATUS_FAIL;
         }
+
+        $remit->save();
 
         return $remit;
     }
@@ -522,6 +525,7 @@ class LogicRemit
      */
     public static function canCommitToBank($remit = null)
     {
-        return TRUE;
+        $enable = SiteConfig::cacheGetContent('enable_remit_commit');
+        return $enable==1;
     }
 }

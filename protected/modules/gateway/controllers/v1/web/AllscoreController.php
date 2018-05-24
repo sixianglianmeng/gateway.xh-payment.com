@@ -12,7 +12,6 @@ use app\modules\gateway\models\logic\LogicOrder;
 use app\modules\gateway\models\logic\PaymentRequest;
 use Yii;
 use app\modules\gateway\controllers\BaseController;
-use app\lib\payment\ObjectNoticeResult;
 
 /*
  * 微信后台接口

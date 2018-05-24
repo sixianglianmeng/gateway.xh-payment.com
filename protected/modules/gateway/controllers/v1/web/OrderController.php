@@ -3,6 +3,7 @@ namespace app\modules\gateway\controllers\v1\web;
 
 use app\common\models\model\ChannelAccount;
 use app\common\models\model\User;
+use app\components\Macro;
 use app\components\Util;
 use app\lib\payment\ChannelPayment;
 use app\modules\gateway\controllers\v1\BaseWebSignedRequestController;
@@ -54,6 +55,10 @@ class OrderController extends BaseWebSignedRequestController
         //设置客户端唯一id
         $paymentRequest->setClientIdCookie();
 
-        return $redirect['formHtml'];
+        if($redirect['status'] != Macro::SUCCESS || empty($redirect['data']['formHtml'])){
+            Util::throwException(Macro::ERR_UNKNOWN,"支付表单生成失败");
+        }
+
+        return $redirect['data']['formHtml'];
     }
 }

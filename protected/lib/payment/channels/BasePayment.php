@@ -28,6 +28,68 @@ class BasePayment
     //三方渠道处理类
     protected $paymentHandle = null;
 
+    /**********各接口操作结果数据结构,每种三方渠道必须返回统一的结构,上层才能处理***********/
+    //网银支付跳转接口结果
+    const RECHARGE_WEBBANK_RESULT = [
+        'status' => Macro::FAIL,
+        'data' => [
+            'url'      => 'get跳转链接',
+            'formHtml' => '自动提交的form表单HTML',
+        ],
+    ];
+    //支付通知解析结果
+    const RECHARGE_NOTIFY_RESULT = [
+        'status' => Macro::FAIL,
+        'data' => [
+            //订单对象 app\common\models\model\Order
+            'order' => null,
+            //平台订单号
+            'order_no' => '',
+            //订单实际支付金额
+            'amount' => 0,
+            //订单状态 Macro::SUCCESS为成功，Macro::FAIL失败',其它正在支付
+            'status' => Macro::FAIL,
+            //充值结果描述
+            'msg' => 'fail',
+            //三方订单流水号
+            'channel_order_no' => '',
+            //三方成功时间
+            'successTime' => '',
+        ],
+    ];
+    //收款订单查询接口结果
+    const RECHARGE_QUERY_RESULT = [
+        'status' => Macro::FAIL,
+        'data' => [
+            'channel_order_no' => '三方订单号',
+            'trade_status'       => "Macro::SUCCESS|Macro::FAIL",
+        ],
+    ];
+    //出款接口结果
+    const REMIT_RESULT = [
+        'status' => Macro::FAIL,
+        'data' => [
+            'channel_order_no' => '三方订单号',
+            'bank_status'       => '三方银行状态,需转换为Remit表状态',
+        ],
+    ];
+    //出款订单查询接口结果
+    const REMIT_QUERY_RESULT = [
+        'status' => Macro::FAIL,
+        'data' => [
+            'channel_order_no' => '三方订单号',
+            'bank_status'       => '三方银行状态,需转换为Remit表状态',
+        ],
+    ];
+    //余额查询接口结果
+    const BALANCE_QUERY_RESULT = [
+        'status' => Macro::FAIL,
+        'data' => [
+            'balance'        => '三方账户可用余额',
+            'frozen_balance' => '三方账户冻结余额',
+        ],
+    ];
+
     public function __construct(...$arguments)
     {
     }
@@ -76,11 +138,95 @@ class BasePayment
 
         $appSecrets = $channelAccount->getAppSectets();
         if(empty($appSecrets) || empty($channelAccount->merchant_id)){
-            throw new \Exception("收款渠道配置错误:caId:{$channelAccount->id}",Macro::ERR_PAYMENT_CHANNEL_CONFIG);
+            throw new \Exception("收款渠道配置错误:channelAccountId:{$channelAccount->id}",Macro::ERR_PAYMENT_CHANNEL_CONFIG);
         }
         $paymentConfig = \yii\helpers\ArrayHelper::merge($baseConfig,$envConfig);
         $paymentConfig = \yii\helpers\ArrayHelper::merge($paymentConfig,$appSecrets);
         $this->paymentConfig = $paymentConfig;
+    }
+
+
+    /**
+     *
+     * 获取参数排序md5签名
+     *
+     * @param array $params 要签名的参数数组
+     * @param string $signKey 签名密钥
+     *
+     * @return bool|string
+     */
+    public static function md5Sign($params, $signKey){
+        if (is_array($params)) {
+            $a      = $params;
+            $params = array();
+            foreach ($a as $key => $value) {
+                $params[] = "$key=$value";
+            }
+            sort($params,SORT_STRING);
+            $params = implode('&', $params);
+        } elseif (is_string($params)) {
+
+        } else {
+            return false;
+        }
+
+        $signStr = md5($params.'&key='.$signKey);
+        //        Yii::debug(['md5Sign string: ',$signStr,$params]);
+        return $signStr;
+    }
+
+    /**
+     *
+     * 发送post请求
+     *
+     * @param sttring $url 请求地址
+     * @param array $postData 请求数据
+     *
+     * @return bool|string
+     */
+    public static function post($url, $postData)
+    {
+        //        $client = new \GuzzleHttp\Client();
+        //        $response = $client->request('POST', $url, [
+        //            'form_params' => $postData
+        //        ]);
+
+        $headers = [];
+        $client = new \GuzzleHttp\Client();
+        $request = new \GuzzleHttp\Request('POST', $url, $headers, $postData);
+        $response = $client->send($request, ['timeout' => 5]);
+
+        $code = $response->getStatusCode();
+        $body = (string)$response->getBody();
+
+        return $body;
+    }
+
+    /**
+     * 构造提交表单HTML数据
+     * @param array $params 请求参数数组
+     * @param string $url 网关地址
+     * @param bool $autoSubmit 是否自动提交表单
+     * @param $method 提交方式。两个值可选：post、get
+     * @param $buttonName 确认按钮显示文字
+     * @return 提交表单HTML文本
+     */
+    public static function buildForm(array $params, string $url, bool $autoSubmit=true, $method='post', $buttonName='确定') {
+
+        $sHtml = "<form id='allscoresubmit' name='allscoresubmit' action='".$url."' method='".$method."'>";
+
+        foreach($params as $key=>$value){
+            $sHtml.= "<input type='hidden' name='".$key."' value='".$value."'/>";
+        }
+
+        if($autoSubmit){
+            $sHtml = $sHtml."<input type='submit' value='".$buttonName."' style='display:none;'></form>";
+            $sHtml = $sHtml."<script>document.forms['allscoresubmit'].submit();</script>";
+        }else{
+            $sHtml = $sHtml."<input type='submit' value='".$buttonName."></form>";
+        }
+
+        return $sHtml;
     }
 
     /*

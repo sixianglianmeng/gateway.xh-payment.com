@@ -10,7 +10,6 @@ use app\lib\helpers\ControllerParameterValidator;
 use app\lib\payment\channels\BasePayment;
 use app\modules\gateway\models\logic\LogicOrder;
 use power\yii2\net\exceptions\SignatureNotMatchException;
-use app\lib\payment\ObjectNoticeResult;
 
 class AllScoreBasePayment extends BasePayment
 {
@@ -24,16 +23,11 @@ class AllScoreBasePayment extends BasePayment
     /*
      * 解析异步通知请求，返回订单
      *
-     * return ObjectNoticeResult
+     * @return array self::RECHARGE_NOTIFY_RESULT
      */
     public function parseNotifyRequest(array $request){
         //check sign
-
-        //get order id from request
-//        $orderId = $_REQUEST['orderId'];
-//        //get order object and set order
-//        $order = Order::findOne(['order_no'=>$orderId]);
-//        $this->setOrder($order);
+        return $this->parseReturnRequest($request);
     }
 
     /*
@@ -42,7 +36,7 @@ class AllScoreBasePayment extends BasePayment
      * 返回int表示请求验证成功，订单未支付完成,int为订单在三方的状态
      * 其它表示错误
      *
-     * return ObjectNoticeResult
+     * @return array self::RECHARGE_NOTIFY_RESULT
      */
     public function parseReturnRequest(array $request){
         //notifyId, notifyTime, sign, outOrderId, merchantId
@@ -56,7 +50,7 @@ class AllScoreBasePayment extends BasePayment
         $this->setPaymentConfig($order->channelAccount);
         $this->setOrder($order);
 
-        $ret = new ObjectNoticeResult();
+        $ret = self::RECHARGE_NOTIFY_RESULT;
 
         //check sign
         //计算得出通知验证结果
@@ -71,19 +65,21 @@ class AllScoreBasePayment extends BasePayment
 //http://dev.gateway.payment.com/gateway/v1/web/allscore/return?outOrderId=P18042621133930266&notifyId=notifyId&notifyTime=notifyTime&sign=sign&merchantId=merchantId&tradeStatus=2&transAmt=1000&localOrderId=1111111
         if($verifyResult) {//验证成功
             //2表示交易成功，4表示交易失败,其他状态按“处理中”处理
+            $ret = self::RECHARGE_NOTIFY_RESULT;
             if(!empty($request['tradeStatus']) && $request['tradeStatus'] == self::TRADE_STATUS_SUCCESS) {
-                $ret->order = $order;
-                $ret->orderNo = $order->order_no;
-                $ret->amount = $request['transAmt'];
-                $ret->status = Macro::SUCCESS;
-                $ret->channelOrderNo = $request['localOrderId'];
+                $ret['order'] = $order;
+                $ret['order_no'] = $order->order_no;
+                $ret['amount'] = $request['transAmt'];
+                $ret['status'] = Macro::SUCCESS;
+                $ret['channel_order_no'] = $request['localOrderId'];
             }
-            elseif(!empty($request['tradeStatus']) && $request['tradeStatus'] == self::TRADE_STATUS_FAIL) {
-                $ret->status =  Macro::FAIL;
+            elseif(!empty($request['trade_status']) && $request['trade_status'] == self::TRADE_STATUS_FAIL) {
+                $ret['status'] =  Macro::FAIL;
             }
             else{
-                $ret->status =  Macro::ERR_PAYMENT_PROCESSING;
+                $ret['status'] =  Macro::ERR_PAYMENT_PROCESSING;
             }
+
             return $ret;
         }else{
             throw new SignatureNotMatchException("RSA签名验证失败");
@@ -155,15 +151,27 @@ class AllScoreBasePayment extends BasePayment
             $resTxt='{"merchantId": "001015013101118","orderId": "20160618155020329942","outOrderId": "20160618155640950","retCode": "0000","retMsg": "操作完成","status": "00","transTime": "2016-06-18 15:52:43"}';
             $res = json_decode($resTxt,true);
         }
-        $ret = Macro::FAILED_MESSAGE;
-        if(!empty($resTxt)){
-            $res = json_decode($resTxt,true);
+
+        $ret = self::REMIT_RESULT;
+        if (!empty($resTxt)) {
+            $res = json_decode($resTxt, true);
+
             if(isset($res['retCode']) && $res['retCode']=='0000'){
-                $ret = Macro::SUCCESS_MESSAGE;
-                $ret['data'] = $res;
-            }else{
-                $ret['data'] = $res;
-                $ret['message'] = $res['retMsg'];
+                switch ($res['status']){
+                    case '00':
+                        $ret['status']         = Macro::SUCCESS;
+                        $ret['data']['bank_status'] =  Remit::BANK_STATUS_PROCESSING;
+                    case '04':
+                        $ret['status']         = Macro::SUCCESS;
+                        $ret['data']['bank_status'] =  Remit::BANK_STATUS_SUCCESS;
+                    case '05':
+                        $ret['status'] = Macro::SUCCESS;
+                        $ret['data']['bank_status'] =  Remit::BANK_STATUS_FAIL;
+                }
+
+                if(!empty($res['orderId'])){
+                    $ret['data']['channel_order_no'] = $res['orderId'];
+                }
             }
         }
 
@@ -194,15 +202,25 @@ class AllScoreBasePayment extends BasePayment
         );
 
         $resTxt = \AllscoreService::quickPost($this->paymentConfig['payment_query_url'],$parameter,$this->paymentConfig);
-        $ret = Macro::FAILED_MESSAGE;
+        $ret = self::REMIT_QUERY_RESULT;
         if(!empty($resTxt)){
             $res = json_decode($resTxt,true);
             if(isset($res['retCode']) && $res['retCode']=='0000'){
-                $ret = Macro::SUCCESS_MESSAGE;
-                $ret['data'] = $res;
-            }else{
-                $ret['data'] = $res;
-                $ret['message'] = $res['retMsg'];
+                switch ($res['status']){
+                    case '00':
+                        $ret['status']         = Macro::SUCCESS;
+                        $ret['data']['bank_status'] =  Remit::BANK_STATUS_PROCESSING;
+                    case '04':
+                        $ret['status']         = Macro::SUCCESS;
+                        $ret['data']['bank_status'] =  Remit::BANK_STATUS_SUCCESS;
+                    case '05':
+                        $ret['status'] = Macro::SUCCESS;
+                        $ret['data']['bank_status'] =  Remit::BANK_STATUS_FAIL;
+                }
+
+                if(!empty($res['orderId'])){
+                    $ret['data']['channel_order_no'] = $res['orderId'];
+                }
             }
         }
 
@@ -228,8 +246,11 @@ class AllScoreBasePayment extends BasePayment
         if(!empty($resTxt)){
             $res = json_decode($resTxt,true);
             if(isset($res['retCode']) && $res['retCode']=='0000'){
+                throw new \Exception('订单查询返回: '.$resTxt);
                 $ret = Macro::SUCCESS_MESSAGE;
-                $ret['data'] = $res;
+                if($res['trade_status'] == Macro::SUCCESS){
+                    $ret['data']['trade_status'] = Order::STATUS_PAID;
+                }
             }else{
                 $ret['data'] = $resTxt;
                 $ret['message'] = $res['retMsg'];
@@ -257,15 +278,15 @@ class AllScoreBasePayment extends BasePayment
         );
 
         $resTxt = \AllscoreService::quickPost($this->paymentConfig['balance_query_url'],$parameter,$this->paymentConfig);
-        $ret = Macro::FAILED_MESSAGE;
-        if(!empty($resTxt)){
-            $res = json_decode($resTxt,true);
+
+        $ret = self::BALANCE_QUERY_RESULT;
+        if (!empty($resTxt)) {
+            $res = json_decode($resTxt, true);
             if(isset($res['retCode']) && $res['retCode']=='0000'){
-                $ret = Macro::SUCCESS_MESSAGE;
+                $ret['status']         = Macro::SUCCESS;
                 $ret['data']['balance'] = $res['availBalAmt'];
-            }else{
-                $ret['data'] = $res;
-                $ret['message'] = $res['retMsg'];
+            } else {
+                $ret['message'] = $res['retMsg']??'操作失败';
             }
         }
 

@@ -755,4 +755,14 @@ class Util
 
         throw new \Exception($msg);
     }
+
+    /**
+     * 获取当前带小数点的时间戳
+     *
+     * @return float
+     */
+    public static function getMillisecond() {
+        list($t1, $t2) = explode(' ', microtime());
+        return (float)sprintf('%.0f',(floatval($t1)+floatval($t2))*1000);
+    }
 }

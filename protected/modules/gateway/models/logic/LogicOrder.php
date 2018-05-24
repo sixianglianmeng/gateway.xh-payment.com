@@ -14,7 +14,6 @@ use app\common\models\model\UserPaymentInfo;
 use app\components\Util;
 use app\jobs\PaymentNotifyJob;
 use app\lib\helpers\SignatureHelper;
-use app\lib\payment\ObjectNoticeResult;
 use power\yii2\exceptions\ParameterValidationExpandException;
 use Yii;
 use app\common\models\model\User;
@@ -67,8 +66,11 @@ class LogicOrder
         $orderData['channel_id']          = $rechargeMethod->channel_id;
         $orderData['channel_account_id']  = $rechargeMethod->channel_account_id;
         $orderData['method_config_id']    =   $rechargeMethod->id;
-        $orderData['channel_merchant_id'] = $rechargeMethod->merchant_id;
-        $orderData['channel_app_id']      = $rechargeMethod->app_id;
+
+        $channelAccount = $rechargeMethod->channelAccount;
+        $orderData['channel_merchant_id'] = $channelAccount->merchant_id;
+        $orderData['channel_app_id']      = $channelAccount->app_id;
+
         $orderData['fee_rate']            = $rechargeMethod->fee_rate;
         $orderData['fee_amount']          = bcmul($rechargeMethod->fee_rate, $orderData['amount'], 9);
 
@@ -191,14 +193,14 @@ class LogicOrder
         return $order;
     }
 
-    static public function processChannelNotice(ObjectNoticeResult $noticeResult){
+    static public function processChannelNotice($noticeResult){
         if(
-            !$noticeResult->order
+        !$noticeResult['order']
         ){
             throw new InValidRequestException('支付结果对象错误',Macro::ERR_PAYMENT_NOTICE_RESULT_OBJECT);
         }
 
-        $order = $noticeResult->order;
+        $order = $noticeResult['order'];
 
         //接口日志埋点
         $eventType = LogApiRequest::EVENT_TYPE_IN_RECHARGE_RETURN;
@@ -215,12 +217,12 @@ class LogicOrder
         ];
 
         //未处理
-        if( $noticeResult->status === Macro::SUCCESS && $order->status !== Order::STATUS_PAID){
-            $order = self::paySuccess($order,$noticeResult->amount,$noticeResult->channelOrderNo);
+        if( $noticeResult['status'] === Macro::SUCCESS && $order->status !== Order::STATUS_PAID){
+            $order = self::paySuccess($order,$noticeResult['amount'],$noticeResult['channel_order_no']);
         }
-        elseif( $noticeResult->status === Macro::FAIL){
-            $order = self::payFail($order,$noticeResult->msg);
-            Yii::debug([__FUNCTION__,'order not paid',$noticeResult->orderNo]);
+        elseif( $noticeResult['status'] === Macro::FAIL){
+                $order = self::payFail($order,$noticeResult['msg']);
+            Yii::debug(__FUNCTION__.' order not paid: '.$noticeResult['order_no']);
         }
 
         if($order->notify_status != Order::NOTICE_STATUS_SUCCESS){
@@ -335,10 +337,6 @@ class LogicOrder
 
         //更改订单状态
         $order->status = Order::STATUS_PAID;
-//        $order->op_uid = $opUid;
-//        $order->op_username = $opUsername;
-        //            $order->op_uid = $opUid;
-        //            $order->op_username = $opUsername;
         if(empty($bak) && $opUsername) $bak="{$opUsername} set unfrozen at ".date('Ymd H:i:s')."\n";
         $order->bak .=$bak;
         $order->save();
@@ -365,7 +363,7 @@ class LogicOrder
             Yii::debug(["order bonus, find config",json_encode($rechargeConfig)]);
             //parent_recharge_rebate_rate
             if ($rechargeConfig['parent_rebate_rate']<=0) {
-                Yii::debug(["order bonus, parent_rebate_rate empty",$pUser->id,$pUser->username]);
+                Yii::debug(["order bonus, parent_rebate_rate empty",$order->order_no]);
                 continue;
             }
 
