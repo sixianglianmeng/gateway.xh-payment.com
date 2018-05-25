@@ -210,4 +210,22 @@ class UserPaymentInfo extends BaseModel
         return UserPaymentInfo::findAll(['app_id'=>$pids,'method_id'=>$mid]);
     }
 
+    /**
+     * 检测当前请求ip是否中商户配置的白名单中
+     * @return bool
+     */
+    public function checkAppServerIp()
+    {
+        if($this->app_server_ips){
+            $ip = Yii::$app->request->remoteIP;
+            $allowIps = json_decode($this->app_server_ips);
+
+            if(!$allowIps || !in_array($ip,$allowIps)){
+                return false;
+            }
+        }
+
+        return true;
+    }
+
 }

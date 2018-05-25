@@ -79,6 +79,13 @@ $config = [
 
 //            'enableStrictParsing' => true,
             'rules' => [
+                '/pay.html' => '/gateway/v1/web/order/pay',
+                '/order.html' => '/gateway/v1/web/order/order',
+                '/query.html' => '/gateway/v1/server/order/status',
+                '/remit.html' => '/gateway/v1/server/remit/single',
+                '/remit_query.html' => '/gateway/v1/server/remit/status',
+                '/balance.html' => '/gateway/v1/server/account/balance',
+
                 [
                     'class' => 'yii\rest\UrlRule',
                     'controller' => ['api/v1/user'],
@@ -88,16 +95,6 @@ $config = [
                         'GET signup-test' => 'signup-test',
                         'GET profile' => 'profile',
                     ]
-                ],
-                [
-                    'pattern' => 'MP_verify_<mp:\w+>',
-                    'route' => 'wx/wechat/mp',
-                    'suffix' => '.txt',
-                ],
-                [
-                    'class' => 'yii\rest\UrlRule',
-                    'controller' => ['api/v1/Wechatcustomer'],
-                    'pluralize' => true,
                 ],
             ]
         ],
