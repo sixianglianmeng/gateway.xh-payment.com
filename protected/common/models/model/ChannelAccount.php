@@ -89,6 +89,34 @@ class ChannelAccount extends BaseModel
             ->where(['method_id' => $id])->one();
     }
 
+    /**
+     * 获取渠道号对应的所有支付方式数组
+     *
+     * @return array
+     */
+    public function getChannelMethodsArr()
+    {
+        $methods = [];
+        foreach ($this->channelMetchods as $m){
+            $methods[] = [
+                'id'=>$m->method_id,
+                'rate'=>$m->fee_rate,
+                'name'=>$m->method_name,
+                'status'=>$m->status,
+            ];
+        }
+
+        return $methods;
+    }
+    /**
+     * 获取渠道号的支付方式
+     */
+    public function getChannelMetchods()
+    {
+        return $this->hasMany(ChannelAccountRechargeMethod::className(), ['channel_account_id' => 'id']);
+    }
+    
+    
     public function getMetchodRate($method_id)
     {
         $rateInfo = $this->hasOne(ChannelAccountRechargeMethod::className(), ['channel_account_id' => 'id'])

@@ -63,6 +63,7 @@ class UserPaymentInfo extends BaseModel
                 'id'=>$m->method_id,
                 'rate'=>$m->fee_rate,
                 'name'=>$m->method_name,
+                'status'=>$m->status,
             ];
         }
 
@@ -133,34 +134,37 @@ class UserPaymentInfo extends BaseModel
     public function updatePayMethods($parentAccount, $methods=[])
     {
         if(empty($methods)){
-            $methods = $this->payMethods;
+            $methods = $this->getPayMethodsArr();
         }
         $parentMinRate = $parentAccount?$parentAccount->paymentInfo->payMethods:[];
+
         foreach ($methods as $i => $pm) {
-            $pay_methods[$i]['parent_method_config_id']     = 0;
-            $pay_methods[$i]['parent_recharge_rebate_rate'] = 0;
-            $pay_methods[$i]['all_parent_method_config_id'] = [];
-            foreach ($parentMinRate as $k => $cmr) {
-                if ($pm['id'] == $cmr->method_id) {
-                    //echo json_encode($pm) . json_encode($cmr->toArray()) . PHP_EOL;
-                    if ($pm['rate'] < $cmr->fee_rate) {
-//                        return ResponseHelper::formatOutput(Macro::ERR_UNKNOWN, "收款渠道费率不能低于上级费率(" . Channel::ARR_METHOD[$pm['id']] . ":{$cmr->fee_rate})");
-                        throw new \Exception("收款渠道费率不能低于上级费率(" . Channel::ARR_METHOD[$pm['id']] . ":{$cmr->fee_rate})");
+            $methods[$i]['parent_method_config_id']     = $methods[$i]['parent_method_config_id'] ?? 0;
+            $methods[$i]['parent_recharge_rebate_rate'] = $methods[$i]['parent_recharge_rebate_rate'] ?? 0;
+            $methods[$i]['all_parent_method_config_id'] = $methods[$i]['all_parent_method_config_id'] ?? [];
+            $methods[$i]['status']                      = $methods[$i]['status'] ?? MerchantRechargeMethod::STATUS_ACTIVE;
+
+            if ($parentMinRate) {
+                foreach ($parentMinRate as $k => $cmr) {
+
+                    if ($pm['id'] == $cmr->method_id && $pm['status'] == '1') {
+                        if ($pm['rate'] < $cmr->fee_rate) {
+                            throw new \Exception("收款渠道费率不能低于上级费率(" . Channel::ARR_METHOD[$pm['id']] . ":{$cmr->fee_rate})");
+                        }
+                        //提前计算好需要给上级的分润比例
+                        $allMids = [];
+                        $methods[$i]['parent_method_config_id']     = $cmr->id;
+                        $methods[$i]['parent_recharge_rebate_rate'] = bcsub($pm['rate'], $cmr->fee_rate, 9);
+//                        echo "{$parentAccount->username},{$cmr->fee_rate},{$this->username},{$pm['rate']},{$methods[$i]['parent_recharge_rebate_rate']}\n";
+                        if($cmr->all_parent_method_config_id && $cmr->all_parent_method_config_id != 'null'){
+                            $allMids = json_decode($cmr->all_parent_method_config_id, true);
+                        }
+                        array_push($allMids, $cmr->id);
+                        $methods[$i]['all_parent_method_config_id'] = $allMids;
                     }
-                    //提前计算好需要给上级的分润比例
-                    $allMids = [];
-                    $pay_methods[$i]['parent_method_config_id']     = $cmr->id;
-                    $pay_methods[$i]['parent_recharge_rebate_rate'] = bcsub($pm['rate'], $cmr->fee_rate, 9);
-                    if($cmr->all_parent_method_config_id && $cmr->all_parent_method_config_id != 'null'){
-                        $allMids = json_decode($cmr->all_parent_method_config_id, true);
-                    }
-                    //$allMids                                        = !empty($cmr->all_parent_method_config_id) ? json_decode($cmr->all_parent_method_config_id, true) : [];
-                    //var_dump($allMids);
-                    array_push($allMids, $cmr->id);
-                    $pay_methods[$i]['all_parent_method_config_id'] = $allMids;
                 }
             }
-            $pay_methods[$i]['all_parent_method_config_id'] = json_encode($pay_methods[$i]['all_parent_method_config_id']);
+            $methods[$i]['all_parent_method_config_id'] = json_encode($methods[$i]['all_parent_method_config_id']);
         }
 
         //批量写入每种支付类型配置
@@ -175,13 +179,11 @@ class UserPaymentInfo extends BaseModel
 
                 $methodConfig->payment_info_id = $this->id;
                 $methodConfig->parent_method_config_id = $pm['parent_method_config_id'];
-                $methodConfig->parent_recharge_rebate_rate = $pm['parent_recharge_rebate_rate'];
                 $methodConfig->all_parent_method_config_id = $pm['all_parent_method_config_id'];
             }
 
+            $methodConfig->parent_recharge_rebate_rate = $pm['parent_recharge_rebate_rate'];
             $methodConfig->status = ($pm['status']==MerchantRechargeMethod::STATUS_ACTIVE)?MerchantRechargeMethod::STATUS_ACTIVE:MerchantRechargeMethod::STATUS_INACTIVE;
-            $methodConfig->method_id = $pm['id'];
-            $methodConfig->method_name = Channel::getPayMethodsStr($pm['id']);
             $methodConfig->fee_rate = $pm['rate'];
             $methodConfig->save();
         }

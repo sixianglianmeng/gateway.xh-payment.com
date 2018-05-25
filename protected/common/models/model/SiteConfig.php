@@ -52,6 +52,27 @@ class SiteConfig extends BaseModel
         return $content;
     }
 
+    /**
+     *
+     * 从缓存中获取所有站点配置
+     *
+     * @return string
+     */
+    public static function cacheGetAll()
+    {
+        $redisContent = Yii::$app->cache->hgetall(Macro::CACHE_HSET_SITE_CONFIG);
+        $content = [];
+        if($redisContent){
+            foreach ($redisContent as $k=>$v){
+                if($k==0) continue;
+
+                $content[$redisContent[$k-1]] = $v;
+            }
+        }
+
+        return $content;
+    }
+
     public function setContent($content)
     {
         $this->content = $content;

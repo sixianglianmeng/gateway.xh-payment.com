@@ -33,6 +33,7 @@ class Macro
     const ERROR_LOGIN_INFO = 10003;    //登录错误
     const ERR_REFERRER = 10004;
     const ERR_API_IP_DENIED = 10005;
+    const ERR_ACCESS_TOKEN = 10006;
     const ERR_PAGE_NOT_FOUND= 404;
 
     const ERR_NEED_LOGIN = 401;
@@ -58,6 +59,8 @@ class Macro
     const ERR_USER_MASTER = 10037;
     const ERR_USER_CHILD_USERNAME = 10087;
     const ERR_USER_CHILD_NON = 10067;
+    const ERR_USER_FINANCIAL_EMPTY = 10068;
+    const ERR_USER_2FA_EMPTY = 10069;
 
     const ERR_USER_PAYMENT_INFO_CHANNLE_ACCOUNT_ID = 10501;
     const ERR_USER_PAYMENT_INFO_REMIT_QUOTA_PEDAY = 10502;
@@ -105,6 +108,11 @@ class Macro
     const ERR_REMIT_BANK_CONFIG = 10312;
     const ERR_USER_FINANCIAL_PASSWORD = 10313;
     const ERR_USER_KEY_FA = 10314;
+    const ERR_EXCEL_BATCH_REMIT_NUMBERS = 10315;
+    const ERR_REMIT_CHANNEL_NOT_ENOUGH = 10316;
+    const ERR_EXCEL_BATCH_REMIT_TOTAL_AMOUNT = 10317;
+    const ERR_EXCEL_BATCH_REMIT_AMOUNT = 10318;
+
 
     //调单记录
     const ERR_TRACK_NON = 10320;
@@ -153,11 +161,7 @@ class Macro
     const CONST_DEV_TYPE_PAD = 2;
     const CONST_DEV_TYPE_LAPTOP = 3;
 
-    const TB_PREFIX = 'p_';
-    const TB_USERS = self::TB_PREFIX . 'users';
-    const TB_ORDERS = self::TB_PREFIX . 'orders';
-    const TB_FINANCIAL = self::TB_PREFIX . 'financial';
-    const TB_WITHDRAWAL = self::TB_PREFIX . 'withdrawal';
+    const CLIENT_ID_IN_COOKIE = 'x-client-id';
 
     const FORMAT_RAW = 'raw';
     const FORMAT_HTML = 'html';
@@ -167,6 +171,9 @@ class Macro
     const FORMAT_PAYMENT_GATEWAY_JSON = 'payment_json';
 
     const SELECT_OPTION_ALL = '__ALL__';
+
+    const CACHE_HSET_USER_PERMISSION = "user_permission";
+    const CACHE_HSET_SITE_CONFIG = "site_config";
 
     const MSG_LIST = [
         self::USER_LOGIN_REQUIRED => '系统需要登录',
@@ -179,6 +186,7 @@ class Macro
         self::ERR_REFERRER => '访问来源错误',
         self::ERR_PAGE_NOT_FOUND => '访问的内容不存在',
         self::ERR_API_IP_DENIED => '接口请求不在允许的IP范围',
+        self::ERR_ACCESS_TOKEN => '非法的token令牌',
 
         self::ERR_NEED_LOGIN => '系统需要登录',
         self::ERR_LOGIN_FAIL => '登录失败',
@@ -197,6 +205,10 @@ class Macro
         self::ERR_USER_NOT_FOUND => '用户不存在',
         self::ERR_USER_BAN => '用户已被禁用',
         self::ERR_BALANCE_NOT_ENOUGH => '余额不足',
+        self::ERR_USER_FINANCIAL_EMPTY => '资金密码未设置',
+        self::ERR_USER_2FA_EMPTY => '手机令牌为设置',
+        self::ERR_REMIT_CHANNEL_NOT_ENOUGH => '出款渠道未设置',
+
 
         self::ERR_PHONE_FORMAT => '手机号错误',
         self::ERR_PHONE_EXISTS => '手机号已存在',

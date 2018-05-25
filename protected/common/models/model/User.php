@@ -54,6 +54,28 @@ class User extends BaseModel
         ];
     }
 
+    public function beforeSave($insert)
+    {
+        if (!parent::beforeSave($insert)) {
+            return false;
+        }
+
+        if ($insert){
+            //按规则生成uid,(2位分组id+1位是否主账号+当前规则下数据库最大值区3位之后)+10-500随机数,且总长度中6位以上
+            $uidPrefix = ($this->group_id<10?99:$this->group_id).''.intval($this->isMainAccount());
+            $parentMerchantIdStr = $this->isMainAccount()?"AND parent_merchant_id=0":"AND parent_merchant_id>?0";
+            $maxPrefixId = Yii::$app->db->createCommand("SELECT id from ".User::tableName()." WHERE group_id={$this->group_id} $parentMerchantIdStr ORDER BY id DESC LIMIT 1")
+                ->queryScalar();
+            if($maxPrefixId>1000){
+                $maxPrefixId = substr($maxPrefixId,3);
+            }
+            if($maxPrefixId<1000)  $maxPrefixId = mt_rand(1000,1500);
+            $this->id = intval($uidPrefix.$maxPrefixId)+mt_rand(10,500);
+        }
+
+        return true;
+    }
+
     public function getPaymentInfo()
     {
         return $this->hasOne(UserPaymentInfo::className(), ['user_id'=>'id']);
@@ -115,7 +137,7 @@ class User extends BaseModel
     */
     public static function getGroupEnStr($groupId)
     {
-        return self::ARR_GROUP_EN[$groupId]??'-';
+        return self::ARR_GROUP_EN[$groupId]??'';
     }
 
     /**
@@ -157,7 +179,7 @@ class User extends BaseModel
     }
 
     /**
-     * 设置用户基础权限
+     * 设置用户基础角色
      */
     public function setBaseRole()
     {
@@ -168,11 +190,65 @@ class User extends BaseModel
     }
 
     /**
-     * 获取所有代理
+     * 设置用户分组对应角色(含基础权限)
      */
-    public static function getAgentAll($agentIds)
+    public function setGroupRole()
     {
-        return self::find()->where(['not in','id',$agentIds])->andWhere(['group_id' => 20])->select('id,username')->asArray()->all();
+        $groupStr = self::getGroupEnStr($this->group_id);
+        $auth    = Yii::$app->authManager;
+        //主账户才授予分组权限,子账户需要主账户单独赋予角色
+        if($groupStr && $this->isMainAccount()){
+            $baseRole = $auth->getRole($groupStr);
+            $auth->revoke($baseRole, $this->id);
+            $auth->assign($baseRole, $this->id);
+        }
+        $this->setBaseRole();
+
+    }
+
+
+    /**
+     * 获取代理
+     * 切换上级 获取出款费率，收款费率 比需要切换上级代理的商户费率 小的
+     */
+    public static function getAgentAll($agentIds,$methods,$remit_fee)
+    {
+        $allAgentIds = [];
+        $paymethodInfoQuery = UserPaymentInfo::find();
+        $paymethodInfoQuery->andWhere(['<=','remit_fee',$remit_fee]);
+        $paymethodInfoQuery->andWhere(['not in','user_id',$agentIds]);
+        $paymethodInfoQuery->select('user_id');
+        $paymethodInfo = $paymethodInfoQuery->asArray()->all();
+        if($paymethodInfo){
+            foreach ($paymethodInfo as $key => $val){
+                $allAgentIds[$key] = $val['user_id'];
+            }
+        }
+        if(empty($allAgentIds)){
+            return $allAgentIds;
+        }else{
+            $filter = ['and',['in','merchant_id',$allAgentIds]];
+            $minFeeFilter = ['or'];
+            foreach ($methods as $key => $val){
+                $minFeeFilter[]=["and","method_id={$key}","fee_rate<={$val}"];
+            }
+            $filter[] = $minFeeFilter;
+            $merchantRechargeMethods = (new Query())->select('count(id) as total,merchant_id')->from(MerchantRechargeMethod::tableName())->where($filter)->groupBy('merchant_id')->all();
+            if($merchantRechargeMethods){
+                $allAgentIds = [];
+                foreach ($merchantRechargeMethods as $key => $val){
+                    if($val['total'] == count($methods)){
+                        $allAgentIds[$key] = $val['merchant_id'];
+                    }
+                }
+            }
+//            var_dump($allAgentIds);die;
+            if(empty($allAgentIds)){
+                return $allAgentIds;
+            }else{
+                return self::find()->where(['in','id',$allAgentIds])->andWhere(['group_id' => 20])->select('id,username')->asArray()->all();
+            }
+        }
     }
 
     /**

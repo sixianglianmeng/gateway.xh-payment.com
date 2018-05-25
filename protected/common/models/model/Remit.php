@@ -140,9 +140,9 @@ class Remit extends BaseModel
      */
     public function showStatusStr()
     {
-        if(in_array($this->status,array(10,20,30))){
+        if(in_array($this->status,array(self::STATUS_CHECKED,self::STATUS_DEDUCT,self::STATUS_BANK_PROCESSING))){
             return '处理中';
-        }elseif (in_array($this->status,array(50,60,-10,-20))){
+        }elseif (in_array($this->status,array(self::STATUS_REFUND,self::STATUS_NOT_REFUND,self::STATUS_BANK_NET_FAIL,self::STATUS_BANK_PROCESS_FAIL))){
             return '出款失败';
         }else{
             return self::ARR_STATUS[$this->status]??'-';
