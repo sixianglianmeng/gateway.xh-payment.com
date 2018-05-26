@@ -23,13 +23,14 @@ class LogicUser
      * decimal $amount 更新金额
      * int $eventType 导致更新的事件类型
      * string $eventId 导致更新的事件唯一ID
+     * decimal $eventAmount 事件本身金额
      * string $clientIp 客户端IP
      * string $bak 备注
      * int $opUid 操作者UID
      * int $opUsername 操作者用户名
      *
      */
-    public function changeUserBalance($amount, $eventType, $eventId, $clientIp='', $bak='', $opUid=0, $opUsername=''){
+    public function changeUserBalance($amount, $eventType, $eventId, $eventAmount, $clientIp='', $bak='', $opUid=0, $opUsername=''){
         Yii::debug([__FUNCTION__.' '.$this->user->id.','.$amount.','.$eventType.','.$eventId]);
         if(empty($this->user) || $amount==0){
             Yii::debug('user or amount empty'.$this->user->id.','.$amount.','.$eventType.','.$eventId);
@@ -55,6 +56,7 @@ class LogicUser
                 $financial->username              = $this->user->username;
                 $financial->event_id              = $eventId;
                 $financial->event_type            = $eventType;
+                $financial->event_amount          = $eventAmount;
                 $financial->amount                = $amount;
                 $financial->balance               = bcadd($this->user->balance, $amount);
                 $financial->balance_before        = $this->user->balance;
@@ -108,13 +110,14 @@ class LogicUser
      * decimal $amount 更新的冻结金额
      * int $eventType 导致更新的事件类型
      * string $eventId 导致更新的事件唯一ID
+     * decimal $eventAmount 事件本身金额
      * string $clientIp 客户端IP
      * string $bak 备注
      * int $opUid 操作者UID
      * int $opUsername 操作者用户名
      *
      */
-    public function changeUserFrozenBalance($amount, $eventType, $eventId, $clientIp='', $bak='', $opUid=0, $opUsername=''){
+    public function changeUserFrozenBalance($amount, $eventType, $eventId, $eventAmount, $clientIp='', $bak='', $opUid=0, $opUsername=''){
         Yii::debug([__FUNCTION__.' '.$this->user->id.','.$amount.','.$eventType.','.$eventId]);
         if(empty($this->user) || $amount==0){
             Yii::debug('user or amount empty'.$this->user->id.','.$amount.','.$eventType.','.$eventId);
@@ -147,6 +150,7 @@ class LogicUser
                 $financial->username              = $this->user->username;
                 $financial->event_id              = $eventId;
                 $financial->event_type            = $eventType;
+                $financial->event_amount          = $eventAmount;
                 $financial->amount                = $amount;
                 $financial->frozen_balance        = bcadd($this->user->frozen_balance, $amount);
                 $financial->frozen_balance_before = $this->user->frozen_balance;

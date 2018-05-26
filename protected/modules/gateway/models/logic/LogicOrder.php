@@ -276,10 +276,11 @@ class LogicOrder
             $logicUser = new LogicUser($order->merchant);
             //更新充值金额
             bcscale(9);
-            $logicUser->changeUserBalance($order->paid_amount, Financial::EVENT_TYPE_RECHARGE, $order->order_no, Yii::$app->request->userIP);
+            $logicUser->changeUserBalance($order->paid_amount, Financial::EVENT_TYPE_RECHARGE, $order->order_no, $order->amount, Yii::$app->request->userIP);
 
             //需扣除充值手续费
-            $logicUser->changeUserBalance(0-$order->fee_amount, Financial::EVENT_TYPE_RECHARGE_FEE, $order->order_no, Yii::$app->request->userIP);
+            $logicUser->changeUserBalance(0-$order->fee_amount, Financial::EVENT_TYPE_RECHARGE_FEE, $order->order_no, $order->amount,
+                Yii::$app->request->userIP);
         }
 
         //发放分润
@@ -303,7 +304,7 @@ class LogicOrder
         $logicUser = new LogicUser($order->merchant);
         if(!$ip) $ip = Yii::$app->request->userIP;
         //冻结余额
-        $logicUser->changeUserFrozenBalance($order->amount, Financial::EVENT_TYPE_RECHARGE_FROZEN, $order->order_no, $ip, $bak, $opUid, $opUsername);
+        $logicUser->changeUserFrozenBalance($order->amount, Financial::EVENT_TYPE_RECHARGE_FROZEN, $order->order_no, $order->amount, $ip, $bak, $opUid, $opUsername);
 
         //更改订单状态
         $order->status = Order::STATUS_FREEZE;
@@ -333,7 +334,7 @@ class LogicOrder
         //冻结余额
         if(!$ip) $ip = Yii::$app->request->userIP;
         $logicUser->changeUserFrozenBalance($order->amount, Financial::EVENT_TYPE_RECHARGE_UNFROZEN,
-            $order->order_no, $ip, $bak, $opUid, $opUsername);
+            $order->order_no, $order->amount, $ip, $bak, $opUid, $opUsername);
 
         //更改订单状态
         $order->status = Order::STATUS_PAID;
@@ -377,7 +378,7 @@ class LogicOrder
             Yii::debug(["order bonus parent",$pUser->id,$pUser->username,$pUser->parentAgent->id,$pUser->parentAgent->username]);
             $logicUser =  new LogicUser($pUser->parentAgent);
             $rechargeFee =  bcmul($rechargeConfig['parent_rebate_rate'],$order->paid_amount);
-            $logicUser->changeUserBalance($rechargeFee, Financial::EVENT_TYPE_BONUS, $order->order_no, Yii::$app->request->userIP);
+            $logicUser->changeUserBalance($rechargeFee, Financial::EVENT_TYPE_BONUS, $order->order_no, $order->amount, Yii::$app->request->userIP);
         }
 
         //更新订单账户处理状态

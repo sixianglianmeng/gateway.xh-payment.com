@@ -231,7 +231,8 @@ class LogicRemit
             //有上级的才返，余额操作对象是上级代理
             Yii::debug(["remit bonus parent", $pUser->id, $pUser->username, $remitConfig['fee_rebate'],$pUser->parentAgent->id, $pUser->parentAgent->username]);
             $logicUser   = new LogicUser($pUser->parentAgent);
-            $logicUser->changeUserBalance($remitConfig['fee_rebate'], Financial::EVENT_TYPE_REMIT_BONUS, $remit->order_no, Yii::$app->request->userIP);
+            $logicUser->changeUserBalance($remitConfig['fee_rebate'], Financial::EVENT_TYPE_REMIT_BONUS, $remit->order_no, $remit->amount,
+                Yii::$app->request->userIP);
         }
 
         //更新订单账户处理状态
@@ -251,10 +252,10 @@ class LogicRemit
             //账户扣款
             $logicUser = new LogicUser($remit->merchant);
             $amount =  0-$remit->amount;
-            $logicUser->changeUserBalance($amount, Financial::EVENT_TYPE_REMIT, $remit->order_no, Yii::$app->request->userIP);
+            $logicUser->changeUserBalance($amount, Financial::EVENT_TYPE_REMIT, $remit->order_no, $remit->amount, Yii::$app->request->userIP);
             //手续费
             $amount =  0-$remit->remit_fee;
-            $logicUser->changeUserBalance($amount, Financial::EVENT_TYPE_REMIT_FEE, $remit->order_no, Yii::$app->request->userIP);
+            $logicUser->changeUserBalance($amount, Financial::EVENT_TYPE_REMIT_FEE, $remit->order_no, $remit->amount, Yii::$app->request->userIP);
 
             //出款分润
             self::bonus($remit);
@@ -362,18 +363,17 @@ class LogicRemit
             $logicUser = new LogicUser($remit->merchant);
             $amount =  $remit->amount;
             $ip = Yii::$app->request->userIP??'';
-            $logicUser->changeUserBalance($amount, Financial::EVENT_TYPE_REFUND_REMIT, $remit->order_no, $ip);
+            $logicUser->changeUserBalance($amount, Financial::EVENT_TYPE_REFUND_REMIT, $remit->order_no, $remit->amount,$ip);
             //退回手续费
             $amount =  $remit->remit_fee;
 
-            $logicUser->changeUserBalance($amount, Financial::EVENT_TYPE_REFUND_REMIT_FEE, $remit->order_no, $ip);
+            $logicUser->changeUserBalance($amount, Financial::EVENT_TYPE_REFUND_REMIT_FEE, $remit->order_no, $remit->amount, $ip);
 
             //退回分润
             $parentRebate = Financial::findAll(['event_id'=>$remit->id,
                 'event_type'=>Financial::EVENT_TYPE_REMIT_BONUS,'uid'=>$remit->merchant_id]);
             foreach ($parentRebate as $pr){
-                $logicUser->changeUserBalance((0-$remit->amount), Financial::EVENT_TYPE_REFUND_REMIT_FEE,
-                    $remit->order_no, $ip, $reason);
+                $logicUser->changeUserBalance((0-$remit->amount), Financial::EVENT_TYPE_REFUND_REMIT_BONUS,$remit->order_no, $remit->amount, $ip, $reason);
             }
 
             $remit->status = Remit::STATUS_REFUND;
