@@ -72,11 +72,7 @@ class LogicOrder
         $orderData['channel_app_id']      = $channelAccount->app_id;
 
         $orderData['fee_rate']            = $rechargeMethod->fee_rate;
-        $orderData['fee_amount']          = bcmul($rechargeMethod->fee_rate, $orderData['amount'], 9);
-
-        $channelAccountRechargeConfig = $rechargeMethod->getChannelAccountMethodConfig();
-        $orderData['plat_fee_rate']       = $channelAccountRechargeConfig->fee_rate;
-        $orderData['plat_fee_amount']     = bcmul($orderData['plat_fee_rate'], $orderData['amount'], 9);
+        $orderData['fee_amount']          = bcmul($rechargeMethod->fee_rate, $orderData['amount'], 6);
 
         //所有上级代理UID
         $parentConfigModels = $rechargeMethod->getMethodAllParentAgentConfig($rechargeMethod->method_id);
@@ -94,6 +90,18 @@ class LogicOrder
             ];
         }
         $orderData['all_parent_recharge_config'] = json_encode($parentConfigs);
+
+        //上级代理列表第一个为最上级代理
+        $topestPrent = array_shift($parentConfigs);
+        unset($parentConfigs);
+        usset($parentConfigModels);
+        $channelAccountRechargeConfig = $rechargeMethod->getChannelAccountMethodConfig();
+        $orderData['plat_fee_rate']       = $channelAccountRechargeConfig->fee_rate;
+        $orderData['plat_fee_amount']     = bcmul($orderData['plat_fee_rate'], $orderData['amount'], 6);
+        $orderData['plat_fee_profit']     = bcmul(bcsub($topestPrent['fee_rate'],$orderData['plat_fee_rate'],6), $orderData['amount'], 6);
+        if($topestPrent['fee_rate']>$orderData['plat_fee_rate']){
+            throw new InValidRequestException('商户费率配置错误,小于渠道最低费率!');
+        }
 
         $hasOrder = Order::findOne(['app_id' => $orderData['app_id'], 'merchant_order_no' => $orderData['merchant_order_no']]);
         if ($hasOrder) {

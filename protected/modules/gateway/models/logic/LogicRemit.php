@@ -73,7 +73,6 @@ class LogicRemit
         $remitData['channel_merchant_id'] = $paymentChannelAccount->merchant_id;
         $remitData['channel_app_id']      = $paymentChannelAccount->app_id;
         $remitData['created_at']          = time();
-        $remitData['plat_fee_amount']     = $paymentChannelAccount->remit_fee;
         $parentConfigModels = UserPaymentInfo::findAll(['app_id'=>$merchant->getAllParentAgentId()]);
         //把自己也存进去
         $parentConfigModels[] = $merchant->paymentInfo;
@@ -88,6 +87,17 @@ class LogicRemit
             ];
         }
         $remitData['all_parent_remit_config'] = json_encode($parentConfigs);
+
+        //上级代理列表第一个为最上级代理
+        $topestPrent = array_shift($parentConfigs);
+        unset($parentConfigs);
+        usset($parentConfigModels);
+        $remitData['plat_fee_amount']     = $paymentChannelAccount->remit_fee;
+        $orderData['plat_fee_profit']     = bcsub($topestPrent['fee'], $remitData['plat_fee_amount'],6);
+        if($topestPrent['fee']>$remitData['plat_fee_amount']){
+            throw new InValidRequestException('商户费率配置错误,小于渠道最低费率!');
+        }
+
         $hasRemit = Remit::findOne(['app_id' => $remitData['app_id'], 'merchant_order_no'=>$request['trade_no']]);
         if($hasRemit){
 //            throw new InValidRequestException('请不要重复下单');
