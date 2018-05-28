@@ -29,7 +29,7 @@ use Yii;
  * @property string $bank_code 银行代码
  * @property string $client_ip 订单终端用户IP
  * @property int $created_at 申请时间
- * @property int $withdrawal_at 提款结算时间
+ * @property int $remit_at 提款结算时间
  * @property int $updated_at 记录更新时间
  * @property string $bak 订单备注
  * @property string $fail_msg 失败描述

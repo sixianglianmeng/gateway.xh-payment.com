@@ -299,6 +299,7 @@ class LogicRemit
                     case Remit::BANK_STATUS_SUCCESS:
                         $remit->status = Remit::STATUS_SUCCESS;
                         $remit->bank_status =  Remit::BANK_STATUS_SUCCESS;
+                        $remit->remit_at =  time();
                     case  Remit::BANK_STATUS_FAIL:
                         $remit->status = Remit::STATUS_NOT_REFUND;
                         $remit->bank_status =  Remit::BANK_STATUS_FAIL;
@@ -342,6 +343,7 @@ class LogicRemit
                 case Remit::BANK_STATUS_SUCCESS:
                     $remit->status = Remit::STATUS_SUCCESS;
                     $remit->bank_status =  Remit::BANK_STATUS_SUCCESS;
+                    $remit->remit_at =  time();
                 case  Remit::BANK_STATUS_FAIL:
                     $remit->status = Remit::STATUS_NOT_REFUND;
                     $remit->bank_status =  Remit::BANK_STATUS_FAIL;
@@ -425,6 +427,7 @@ class LogicRemit
     {
         $remit->status = Remit::STATUS_SUCCESS;
         $remit->bank_status =  Remit::BANK_STATUS_SUCCESS;
+        $remit->remit_at =  time();
         if($opUsername) $bak.="{$opUsername} set success at ".date('Ymd H:i:s')."\n";
         $remit->bak .=$bak;
         $remit->save();
