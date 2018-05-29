@@ -18,7 +18,7 @@ class PaymentNotifyJob extends BaseObject implements RetryableJobInterface
 
     public function execute($queue)
     {
-        Yii::debug(['got PaymentNotifyJob ret',$this->orderNo]);
+        Yii::debug(['got PaymentNotifyJob ret',$this->orderNo,http_build_query($this->data)]);
         $ts = microtime(true);
         $orderNo = $this->orderNo;
 
@@ -26,7 +26,7 @@ class PaymentNotifyJob extends BaseObject implements RetryableJobInterface
             $client = new \GuzzleHttp\Client();
             $response = $client->request('POST', $this->url, [
                 'timeout' => 5,
-                'form_params' => $this->data
+                'body' => http_build_query($this->data)
             ]);
             $httpCode = $response->getStatusCode();
             $body = (string)$response->getBody();
