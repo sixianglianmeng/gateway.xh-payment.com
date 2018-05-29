@@ -9,6 +9,14 @@
       "max_memory_restart": "256M"
     },
     {
+      "name": "payment-notify-queue-producer",
+      "args": "order/notify-queue-producer",
+      "script": "./protected/yii",
+      "exec_interpreter": "php",
+      "exec_mode": "fork",
+      "max_memory_restart": "256M"
+    },
+    {
       "name": "check-status-queue-producer",
       "args": "remit/check-status-queue-producer",
       "script": "./protected/yii",
