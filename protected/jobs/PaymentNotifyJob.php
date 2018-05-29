@@ -25,7 +25,7 @@ class PaymentNotifyJob extends BaseObject implements RetryableJobInterface
         Yii::debug(['PaymentNotifyJob before post ',$this->orderNo,$urlInfo]);
         $headers = [];
         $client = new \GuzzleHttp\Client();
-        $request = new \GuzzleHttp\Request('POST', $this->url, $headers, $this->data);
+        $request = new \GuzzleHttp\Psr7\Request('POST', $this->url, $headers, $this->data);
         $response = $client->send($request, ['timeout' => 5]);
 
         $httpCode = $response->getStatusCode();

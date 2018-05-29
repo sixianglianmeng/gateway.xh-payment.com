@@ -193,7 +193,7 @@ class BasePayment
 
         $headers = [];
         $client = new \GuzzleHttp\Client();
-        $request = new \GuzzleHttp\Request('POST', $url, $headers, $postData);
+        $request = new \GuzzleHttp\Psr7\Request('POST', $url, $headers, $postData);
         $response = $client->send($request, ['timeout' => 5]);
 
         $code = $response->getStatusCode();
