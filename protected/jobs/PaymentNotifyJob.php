@@ -18,43 +18,72 @@ class PaymentNotifyJob extends BaseObject implements RetryableJobInterface
 
     public function execute($queue)
     {
-        $urlInfo = parse_url($this->url);
         Yii::debug(['got PaymentNotifyJob ret',$this->orderNo]);
         $ts = microtime(true);
         $orderNo = $this->orderNo;
-        \Swoole\Async::dnsLookup($urlInfo['host'], function ($domainName, $ip) use($urlInfo,$queue,$orderNo,$ts) {
-            $cli = new \swoole_http_client($ip, 80);
-            $cli->set([ 'timeout' => 10]);
-            $cli->setHeaders([
-                'Host' => $domainName,
-                "User-Agent" => 'Chrome/49.0.2587.3',
-                'Accept' => 'text/html,application/xhtml+xml,application/xml',
-                'Accept-Encoding' => 'gzip',
-            ]);
-            $urlInfo['path'] = $urlInfo['path']??'/';
-            $cli->post($urlInfo['path'], $this->data, function ($cli) use ($queue,$orderNo,$ts) {
-                Yii::debug(['PaymentNotifyJob ret',$this->orderNo,$cli->statusCode]);
-                $costTime = bcsub(microtime(true),$ts,4);
 
-                //接口日志埋点
-                Yii::$app->params['apiRequestLog'] = [];
-                Yii::$app->params['apiRequestLog']['event_id']=$orderNo;
-                Yii::$app->params['apiRequestLog']['event_type']=LogApiRequest::EVENT_TYPE_OUT_RECHARGE_NOTIFY;
-//                    Yii::$app->params['apiRequestLog']['merchant_id']=$order->merchant_id??$merchant->id;
-//                    Yii::$app->params['apiRequestLog']['merchant_name']=$order->merchant_account??$merchant->username;
-//                    Yii::$app->params['apiRequestLog']['channel_account_id']=$order->channelAccount->id;
-//                    Yii::$app->params['apiRequestLog']['channel_name']=$order->channelAccount->channel_name;
-                LogicApiRequestLog::outLog($this->url, 'POST', $cli->body, $cli->statusCode, $costTime, $this->data);
+        Yii::debug(['PaymentNotifyJob before post ',$this->orderNo,$urlInfo]);
+        $headers = [];
+        $client = new \GuzzleHttp\Client();
+        $request = new \GuzzleHttp\Request('POST', $this->url, $headers, $this->data);
+        $response = $client->send($request, ['timeout' => 5]);
 
-                $noticeOk = Order::NOTICE_STATUS_NONE;
-                if($cli->statusCode == 200){
-                    $noticeOk = Order::NOTICE_STATUS_SUCCESS;
-                }else{
-                    $noticeOk = Order::NOTICE_STATUS_FAIL;
-                }
-                LogicOrder::updateNotifyResult($this->orderNo,$noticeOk,$cli->body);
-            });
-        });
+        $httpCode = $response->getStatusCode();
+        $body = (string)$response->getBody();
+
+        Yii::debug(['PaymentNotifyJob ret',$this->orderNo,$cli->statusCode]);
+        $costTime = bcsub(microtime(true),$ts,4);
+
+        //接口日志埋点
+        Yii::$app->params['apiRequestLog'] = [];
+        Yii::$app->params['apiRequestLog']['event_id']=$orderNo;
+        Yii::$app->params['apiRequestLog']['event_type']=LogApiRequest::EVENT_TYPE_OUT_RECHARGE_NOTIFY;
+        LogicApiRequestLog::outLog($this->url, 'POST', $body, $httpCode, $costTime, $this->data);
+
+        $noticeOk = Order::NOTICE_STATUS_NONE;
+        if($httpCode == 200){
+            $noticeOk = Order::NOTICE_STATUS_SUCCESS;
+        }else{
+            $noticeOk = Order::NOTICE_STATUS_FAIL;
+        }
+        LogicOrder::updateNotifyResult($this->orderNo,$noticeOk,$body);
+
+        //        $urlInfo = parse_url($this->url);
+//        \Swoole\Async::dnsLookup($urlInfo['host'], function ($domainName, $ip) use($urlInfo,$queue,$orderNo,$ts) {
+//
+//            $cli = new \swoole_http_client($ip, 80);
+//            $cli->set([ 'timeout' => 10]);
+//            $cli->setHeaders([
+//                'Host' => $domainName,
+//                "User-Agent" => 'Chrome/49.0.2587.3',
+//                'Accept' => 'text/html,application/xhtml+xml,application/xml',
+//                'Accept-Encoding' => 'gzip',
+//            ]);
+//            $urlInfo['path'] = $urlInfo['path']??'/';
+//            Yii::debug(['PaymentNotifyJob before post ',$this->orderNo,$urlInfo]);
+//            $cli->post($urlInfo['path'], $this->data, function ($cli) use ($queue,$orderNo,$ts) {
+//                Yii::debug(['PaymentNotifyJob ret',$this->orderNo,$cli->statusCode]);
+//                $costTime = bcsub(microtime(true),$ts,4);
+//
+//                //接口日志埋点
+//                Yii::$app->params['apiRequestLog'] = [];
+//                Yii::$app->params['apiRequestLog']['event_id']=$orderNo;
+//                Yii::$app->params['apiRequestLog']['event_type']=LogApiRequest::EVENT_TYPE_OUT_RECHARGE_NOTIFY;
+////                    Yii::$app->params['apiRequestLog']['merchant_id']=$order->merchant_id??$merchant->id;
+////                    Yii::$app->params['apiRequestLog']['merchant_name']=$order->merchant_account??$merchant->username;
+////                    Yii::$app->params['apiRequestLog']['channel_account_id']=$order->channelAccount->id;
+////                    Yii::$app->params['apiRequestLog']['channel_name']=$order->channelAccount->channel_name;
+//                LogicApiRequestLog::outLog($this->url, 'POST', $cli->body, $cli->statusCode, $costTime, $this->data);
+//
+//                $noticeOk = Order::NOTICE_STATUS_NONE;
+//                if($cli->statusCode == 200){
+//                    $noticeOk = Order::NOTICE_STATUS_SUCCESS;
+//                }else{
+//                    $noticeOk = Order::NOTICE_STATUS_FAIL;
+//                }
+//                LogicOrder::updateNotifyResult($this->orderNo,$noticeOk,$cli->body);
+//            });
+//        });
 
         return true;
     }
