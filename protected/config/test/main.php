@@ -21,7 +21,11 @@ $config = \yii\helpers\ArrayHelper::merge(
                 'database' => 0,
             ],
         ],
-        'params'    => [],
+        'params' => [
+            'domain.cdn' => 't1.agent.huaruipay.com',
+            'domain.gateway.rpc' => 't1.gateway.huaruipay.com',
+            'corsOriginDomain' => ['*','t1.gateway.huaruipay.com'],
+        ],
     ]
 );
 

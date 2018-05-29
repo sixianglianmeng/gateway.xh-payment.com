@@ -39,12 +39,12 @@ class SiteConfig extends BaseModel
      */
     public static function cacheGetContent($key)
     {
-        $content = Yii::$app->cache->hget(Macro::CACHE_HSET_SITE_CONFIG,$key);
+        $content = Yii::$app->redis->hget(Macro::CACHE_HSET_SITE_CONFIG,$key);
         if(!$content){
             $config = self::findOne(['title'=>$key]);
             if($config){
                 $content = $config->content;
-                Yii::$app->cache->hset(Macro::CACHE_HSET_SITE_CONFIG,$key,$content);
+                Yii::$app->redis->hset(Macro::CACHE_HSET_SITE_CONFIG,$key,$content);
             }
         }
         $content=$content??'';
@@ -60,7 +60,7 @@ class SiteConfig extends BaseModel
      */
     public static function cacheGetAll()
     {
-        $redisContent = Yii::$app->cache->hgetall(Macro::CACHE_HSET_SITE_CONFIG);
+        $redisContent = Yii::$app->redis->hgetall(Macro::CACHE_HSET_SITE_CONFIG);
         $content = [];
         if($redisContent){
             foreach ($redisContent as $k=>$v){
@@ -76,6 +76,6 @@ class SiteConfig extends BaseModel
     public function setContent($content)
     {
         $this->content = $content;
-        Yii::$app->cache->hset(Macro::CACHE_HSET_SITE_CONFIG,$this->title,$content);
+        Yii::$app->redis->hset(Macro::CACHE_HSET_SITE_CONFIG,$this->title,$content);
     }
 }
