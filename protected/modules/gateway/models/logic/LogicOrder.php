@@ -48,7 +48,7 @@ class LogicOrder
         $orderData['op_uid']              = $request['op_uid'] ?? 0;
         $orderData['op_username']         = $request['op_username'] ?? '';
         $orderData['merchant_user_id']    = $request['user_id'] ?? '';
-        $orderData['merchant_order_time'] = strtotime($request['order_time'] ?? 'now');
+        $orderData['merchant_order_time'] = $request['order_time'];
         $orderData['description']         = '';
         $orderData['notify_ret']          = '';
         $orderData['client_ip']           = $request['client_ip'] ?? Yii::$app->request->userIP;
@@ -426,10 +426,10 @@ class LogicOrder
             'merchant_code'=>$order->merchant_id,
             'order_no'=>$order->merchant_order_no,
             'order_amount'=>$order->paid_amount,
-            'order_time'=>date('Y-m-d H:i:s',$order->created_at),
+            'order_time'=>$order->created_at,
             'return_params'=>$order->return_params,
             'trade_no'=>$order->order_no,
-            'trade_time'=>date('Y-m-d H:i:s',$order->paid_at),
+            'trade_time'=>$order->paid_at,
             'trade_status'=>$tradeStatus,
             'notify_type'=>$notifyType,//back_notify
         ];

@@ -35,7 +35,7 @@ class PaymentRequest
         'pay_type'             => [Macro::CONST_PARAM_TYPE_PAYTYPE, []],
         'bank_code'            => [Macro::CONST_PARAM_TYPE_BANKCODE, [], true],
         'order_amount'         => [Macro::CONST_PARAM_TYPE_DECIMAL, [1, 32]],
-        'order_time'           => [Macro::CONST_PARAM_TYPE_DATETIME],
+        'order_time'           => [Macro::CONST_PARAM_TYPE_INT],
         'req_referer'          => [Macro::CONST_PARAM_TYPE_STRING, [1, 255]],
         'customer_ip'          => [Macro::CONST_PARAM_TYPE_IPv4, [], true],
         'notify_url'           => [Macro::CONST_PARAM_TYPE_STRING, [1, 255]],
@@ -44,7 +44,7 @@ class PaymentRequest
         'sign'                 => [Macro::CONST_PARAM_TYPE_ALNUM, [32, 32]],
         'nonce'                => [Macro::CONST_PARAM_TYPE_ALNUM_DASH_UNDERLINE, [1, 64]],
         'trade_no'             => [Macro::CONST_PARAM_TYPE_ALNUM_DASH_UNDERLINE, [1, 32]],
-        'now_date'             => [Macro::CONST_PARAM_TYPE_DATETIME, [1, 32]],
+        'now_date'             => [Macro::CONST_PARAM_TYPE_INT],
         'account_name'         => [Macro::CONST_PARAM_TYPE_STRING, [1, 32]],
         'account_number'       => [Macro::CONST_PARAM_TYPE_NUMBERIC_STRING, [10, 32]],
     ];
