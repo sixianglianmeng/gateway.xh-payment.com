@@ -22,12 +22,14 @@ class PaymentNotifyJob extends BaseObject implements RetryableJobInterface
         $ts = microtime(true);
         $orderNo = $this->orderNo;
 
+        $url = $this->url.'?'.http_build_query($this->data);
         try{
             $client = new \GuzzleHttp\Client();
-            $response = $client->request('POST', $this->url, [
-                'timeout' => 5,
-                'body' => http_build_query($this->data)
-            ]);
+//            $response = $client->request('POST', $this->url, [
+//                'timeout' => 5,
+//                'body' => http_build_query($this->data)
+//            ]);
+            $response = $client->get($url);
             $httpCode = $response->getStatusCode();
             $body = (string)$response->getBody();
         }catch (\Exception $e){
@@ -43,7 +45,7 @@ class PaymentNotifyJob extends BaseObject implements RetryableJobInterface
         Yii::$app->params['apiRequestLog'] = [];
         Yii::$app->params['apiRequestLog']['event_id']=$orderNo;
         Yii::$app->params['apiRequestLog']['event_type']=LogApiRequest::EVENT_TYPE_OUT_RECHARGE_NOTIFY;
-        LogicApiRequestLog::outLog($this->url, 'POST', $body, $httpCode, $costTime, $this->data);
+        LogicApiRequestLog::outLog($url, 'POST', $body, $httpCode, $costTime, $this->data);
 
         $noticeOk = Order::NOTICE_STATUS_NONE;
         if($httpCode == 200){
