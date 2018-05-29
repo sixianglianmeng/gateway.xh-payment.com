@@ -33,7 +33,7 @@ class PaymentNotifyJob extends BaseObject implements RetryableJobInterface
         }catch (\Exception $e){
             $httpCode = $e->getCode();
             $body = $e->getMessage();
-            if($httpCode==200) $httpCode=-1;
+            if($httpCode==200 || empty($httpCode)) $httpCode=-1;
         }
 
         Yii::debug('PaymentNotifyJob ret: '.$this->orderNo.' '.$httpCode.' '.$body);
