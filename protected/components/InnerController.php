@@ -91,7 +91,7 @@ class InnerController extends \power\yii2\web\Controller
                     str_replace("\n", " ", $e->getTraceAsString())
                 )
             );
-var_dump([$errCode, $msg]);exit;
+
             if($errCode === Macro::SUCCESS) $errCode = Macro::FAIL;
             if (YII_DEBUG) {
 //                throw $e;
