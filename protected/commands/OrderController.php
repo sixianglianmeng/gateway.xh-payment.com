@@ -33,17 +33,22 @@ class OrderController extends BaseConsoleCommand
         $doCheck = true;
         $startTs = time()-3600;
         while ($doCheck) {
-            $query = Order::find(['status'=>Order::STATUS_PAID,'notice_status'=>[Order::NOTICE_STATUS_NONE,Order::NOTICE_STATUS_FAIL]]);
-            $query->andWhere(['>=', 'paid_at', $startTs]);
+            $query = Order::find(['status'=>Order::STATUS_PAID,'notice_status'=>[Order::NOTICE_STATUS_NONE,Order::NOTICE_STATUS_FAIL]])
+            //只通知一小时内的,一小时之前人工同步状态
+            ->andWhere(['>=', 'paid_at', $startTs])
+            //最多通知10次
+            ->andWhere(['<', 'notify_times', 10])
+            //已经到达通知时间
+            ->andWhere(['>=', 'next_notify_time', time()]);
 
-            $orders = $query->andWhere(['>=', 'next_notify_time', time()])->limit(100)->all();
+            $orders = $query->limit(100)->all();
             Yii::info('find order to notify: '.count($orders));
             foreach ($orders as $order){
                 Yii::info('order notify: '.$order->order_no);
                 LogicOrder::notify($order);
             }
 
-            sleep(mt_rand(30,60));
+            sleep(mt_rand(5,30));
         }
     }
 }

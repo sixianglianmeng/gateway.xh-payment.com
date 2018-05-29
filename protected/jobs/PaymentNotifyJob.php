@@ -71,6 +71,6 @@ class PaymentNotifyJob extends BaseObject implements RetryableJobInterface
 
     public function canRetry($attempt, $error)
     {
-        return ($attempt < 10);// && ($error instanceof TemporaryException)
+        return false;//($attempt < 10);// && ($error instanceof TemporaryException)
     }
 }
