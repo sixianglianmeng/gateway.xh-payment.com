@@ -93,14 +93,16 @@ class LogicOrder
 
         //上级代理列表第一个为最上级代理
         $topestPrent = array_shift($parentConfigs);
+
         unset($parentConfigs);
-        usset($parentConfigModels);
+        unset($parentConfigModels);
         $channelAccountRechargeConfig = $rechargeMethod->getChannelAccountMethodConfig();
         $orderData['plat_fee_rate']       = $channelAccountRechargeConfig->fee_rate;
         $orderData['plat_fee_amount']     = bcmul($orderData['plat_fee_rate'], $orderData['amount'], 6);
         $orderData['plat_fee_profit']     = bcmul(bcsub($topestPrent['fee_rate'],$orderData['plat_fee_rate'],6), $orderData['amount'], 6);
-        if($topestPrent['fee_rate']>$orderData['plat_fee_rate']){
-            throw new InValidRequestException('商户费率配置错误,小于渠道最低费率!');
+        if($topestPrent['fee_rate']<$orderData['plat_fee_rate']){
+            Yii::error("商户费率配置错误,小于渠道最低费率: 顶级商户ID:{$topestPrent['merchant_id']},商户渠道账户ID:{$topestPrent['channel_account_id']},商户费率:{$topestPrent['fee_rate']},渠道名:{$rechargeMethod->channel_account_name},渠道费率:{$orderData['plat_fee_rate']}");
+            throw new InValidRequestException("商户费率配置错误,小于渠道最低费率!");
         }
 
         $hasOrder = Order::findOne(['app_id' => $orderData['app_id'], 'merchant_order_no' => $orderData['merchant_order_no']]);

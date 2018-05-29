@@ -91,7 +91,7 @@ class LogicRemit
         //上级代理列表第一个为最上级代理
         $topestPrent = array_shift($parentConfigs);
         unset($parentConfigs);
-        usset($parentConfigModels);
+        unset($parentConfigModels);
         $remitData['plat_fee_amount']     = $paymentChannelAccount->remit_fee;
         $orderData['plat_fee_profit']     = bcsub($topestPrent['fee'], $remitData['plat_fee_amount'],6);
         if($topestPrent['fee']>$remitData['plat_fee_amount']){
