@@ -41,7 +41,6 @@ class LogicRemit
     {
         //        ['merchant_code', 'trade_no', 'order_amount', 'order_time', 'bank_code', ' account_name', 'account_number',
         $remitData                      = [];
-        $remitData['order_no']          = self::generateRemitNo();
         $remitData['bat_order_no']      = $request['bat_order_no'] ?? '';
         $remitData['bat_index']         = $request['bat_index'] ?? 0;
         $remitData['bat_count']         = $request['bat_count'] ?? 0;
@@ -73,6 +72,8 @@ class LogicRemit
         $remitData['channel_merchant_id'] = $paymentChannelAccount->merchant_id;
         $remitData['channel_app_id']      = $paymentChannelAccount->app_id;
         $remitData['created_at']          = time();
+        $remitData['order_no']          = self::generateRemitNo($remitData);
+
         $parentConfigModels = UserPaymentInfo::findAll(['app_id'=>$merchant->getAllParentAgentId()]);
         //把自己也存进去
         $parentConfigModels[] = $merchant->paymentInfo;
@@ -398,8 +399,8 @@ class LogicRemit
         }
     }
 
-    static public function generateRemitNo(){
-        return 'R'.date('ymdHis').mt_rand(10000,99999);
+    static public function generateRemitNo($remitData){
+        return '2'.date('ymdHis').mt_rand(10000,99999);
     }
 
     static public function generateMerchantRemitNo(){

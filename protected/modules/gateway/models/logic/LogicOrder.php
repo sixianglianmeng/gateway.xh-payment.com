@@ -37,7 +37,6 @@ class LogicOrder
     {
 
         $orderData                      = [];
-        $orderData['order_no']          = self::generateOrderNo();
         $orderData['pay_method_code']   = $request['pay_type'];
         $orderData['amount']            = $request['order_amount'];
         $orderData['merchant_order_no'] = $request['order_no'];
@@ -65,14 +64,15 @@ class LogicOrder
         $orderData['all_parent_agent_id'] = $merchant->all_parent_agent_id;
         $orderData['channel_id']          = $rechargeMethod->channel_id;
         $orderData['channel_account_id']  = $rechargeMethod->channel_account_id;
-        $orderData['method_config_id']    =   $rechargeMethod->id;
+        $orderData['method_config_id']    = $rechargeMethod->id;
 
-        $channelAccount = $rechargeMethod->channelAccount;
+        $channelAccount                   = $rechargeMethod->channelAccount;
         $orderData['channel_merchant_id'] = $channelAccount->merchant_id;
         $orderData['channel_app_id']      = $channelAccount->app_id;
 
-        $orderData['fee_rate']            = $rechargeMethod->fee_rate;
-        $orderData['fee_amount']          = bcmul($rechargeMethod->fee_rate, $orderData['amount'], 6);
+        $orderData['fee_rate']   = $rechargeMethod->fee_rate;
+        $orderData['fee_amount'] = bcmul($rechargeMethod->fee_rate, $orderData['amount'], 6);
+        $orderData['order_no']   = self::generateOrderNo($orderData);
 
         //所有上级代理UID
         $parentConfigModels = $rechargeMethod->getMethodAllParentAgentConfig($rechargeMethod->method_id);
@@ -187,8 +187,9 @@ class LogicOrder
         }
     }
 
-    static public function generateOrderNo(){
-        return 'P'.date('ymdHis').mt_rand(10000,99999);
+    static public function generateOrderNo($orderArr){
+        $payType = str_pad($orderArr['order_no'],2,'0',STR_PAD_LEFT);
+        return '1'.$payType.date('ymdHis').mt_rand(10000,99999);
     }
 
     static public function generateMerchantOrderNo(){
@@ -343,7 +344,7 @@ class LogicOrder
         $logicUser = new LogicUser($order->merchant);
         //冻结余额
         if(!$ip) $ip = Yii::$app->request->userIP;
-        $logicUser->changeUserFrozenBalance($order->amount, Financial::EVENT_TYPE_RECHARGE_UNFROZEN,
+        $logicUser->changeUserFrozenBalance((0-$order->amount), Financial::EVENT_TYPE_RECHARGE_UNFROZEN,
             $order->order_no, $order->amount, $ip, $bak, $opUid, $opUsername);
 
         //更改订单状态
