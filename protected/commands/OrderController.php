@@ -34,7 +34,9 @@ class OrderController extends BaseConsoleCommand
         $startTs = time()-3600;
         while ($doCheck) {
             $query = Order::find(['status'=>Order::STATUS_PAID,'notice_status'=>[Order::NOTICE_STATUS_NONE,Order::NOTICE_STATUS_FAIL]]);
-            $orders = $query->andWhere(['>=', 'paid_at', $startTs])->limit(100)->all();
+            $query->andWhere(['>=', 'paid_at', $startTs]);
+
+            $orders = $query->andWhere(['>=', 'next_notify_time', time()])->limit(100)->all();
             Yii::info('find order to notify: '.count($orders));
             foreach ($orders as $order){
                 Yii::info('order notify: '.$order->order_no);
