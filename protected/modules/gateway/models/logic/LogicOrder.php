@@ -188,7 +188,7 @@ class LogicOrder
     }
 
     static public function generateOrderNo($orderArr){
-        $payType = str_pad($orderArr['order_no'],2,'0',STR_PAD_LEFT);
+        $payType = str_pad($orderArr['pay_method_code'],2,'0',STR_PAD_LEFT);
         return '1'.$payType.date('ymdHis').mt_rand(10000,99999);
     }
 

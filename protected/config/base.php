@@ -79,7 +79,7 @@ $config = [
 
 //            'enableStrictParsing' => true,
             'rules' => [
-                '/pay.html' => '/gateway/v1/web/order/pay',
+                '/pay.html' => '/gateway/v1/web/order/web-bank',
                 '/order.html' => '/gateway/v1/web/order/order',
                 '/query.html' => '/gateway/v1/server/order/status',
                 '/remit.html' => '/gateway/v1/server/remit/single',

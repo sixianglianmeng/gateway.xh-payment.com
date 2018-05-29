@@ -27,9 +27,9 @@ class OrderController extends BaseWebSignedRequestController
     }
 
     /*
-     * 充值
+     * 网银充值
      */
-    public function actionPay()
+    public function actionWebBank()
     {
         $needParams = ['merchant_code', 'order_no', 'pay_type', 'bank_code', 'order_amount', 'order_time', 'req_referer', 'customer_ip', 'notify_url', 'return_url', 'return_params', 'sign'];
 

@@ -126,6 +126,44 @@ class HtBasePayment extends BasePayment
         return $ret;
     }
 
+    /*
+     * 支付宝-微信后台下单
+     */
+    public function alipayWechatOrder()
+    {
+        $banCode = BankCodes::getChannelBankCode($this->order['channel_id'],$this->order['bank_code']);
+        if(empty($banCode)){
+            throw new \Exception("银行代码配置错误:".get_class($this).':'.$this->order['bank_code'],Macro::ERR_PAYMENT_BANK_CODE);
+        }
+
+        $params = [
+            'notify_url'=>Yii::$app->request->hostInfo."/gateway/ht/notify",
+            'return_url'=>Yii::$app->request->hostInfo."/gateway/ht/return",
+            'bank_code'=>$banCode,
+            'merchant_code'=>$this->order['channel_merchant_id'],
+            'order_no'=>$this->order['order_no'],
+            'pay_type'=>$this->order['pay_method_code'],
+            'order_amount'=>$this->order['amount'],
+            'req_referer'=>Yii::$app->request->referrer?Yii::$app->request->referrer:Yii::$app->request->getHostInfo().Yii::$app->request->url,
+            'order_time'=>date("Y-m-d H:i:s"),
+            'customer_ip'=>Yii::$app->request->remoteIP,
+            'return_params'=>$this->order['order_no'],
+        ];
+
+        $params['sign'] = self::md5Sign($params,trim($this->paymentConfig['key']));
+
+        $requestUrl = $this->paymentConfig['base_gateway_url'].'/pay.html';
+
+        $ret = self::post($requestUrl,$params);
+
+        $ret = self::RECHARGE_WEBBANK_RESULT;
+        $ret['status'] = Macro::SUCCESS;
+        $ret['data']['url'] = '';
+
+        return $ret;
+    }
+
+
     /**
      * 提交出款请求
      *
