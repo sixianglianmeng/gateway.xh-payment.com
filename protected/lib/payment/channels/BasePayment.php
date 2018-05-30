@@ -191,7 +191,8 @@ class BasePayment
             $client = new \GuzzleHttp\Client();
             $response = $client->request('POST', $url, [
                 'timeout' => 5,
-                'body' => http_build_query($data)
+                'body' => http_build_query($postData),
+                'form_params' => ($postData),
             ]);
 //            $response = $client->get($url);
             $httpCode = $response->getStatusCode();
@@ -200,6 +201,7 @@ class BasePayment
             $httpCode = $e->getCode();
             $body = $e->getMessage();
         }
+
         Yii::debug('request to channel: '.$url.' '.$body);
 
         return $body;

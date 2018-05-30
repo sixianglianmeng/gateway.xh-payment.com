@@ -170,6 +170,9 @@ class HtBasePayment extends BasePayment
      * @return array ['code'=>'Macro::FAIL|Macro::SUCCESS','data'=>['channel_order_no'=>'三方订单号',bank_status=>'三方银行状态,需转换为Remit表状态']]
      */
     public function remit(){
+        if(empty($this->order)){
+            throw new \Exception('未传入出款订单对象',Macro::ERR_UNKNOWN);
+        }
         $params = [
             'merchant_code'=>$this->order['channel_merchant_id'],
             'order_no'=>$this->order['order_no'],
@@ -207,13 +210,15 @@ class HtBasePayment extends BasePayment
      * @return array ['code'=>'Macro::FAIL|Macro::SUCCESS','data'=>['channel_order_no'=>'三方订单号',bank_status=>'三方银行状态,需转换为Remit表状态']]
      */
     public function remitStatus(){
+        if(empty($this->remit)){
+            throw new \Exception('未传入出款订单对象',Macro::ERR_UNKNOWN);
+        }
         $params = [
-            'merchant_code'=>$this->order['channel_merchant_id'],
-            'trade_no'=>$this->order['order_no'],
+            'merchant_code'=>$this->remit['channel_merchant_id'],
+            'trade_no'=>$this->remit['order_no'],
             'now_date'=>date("Y-m-d H:i:s"),
         ];
         $params['sign'] = self::md5Sign($params,trim($this->paymentConfig['key']));
-
         $requestUrl = $this->paymentConfig['base_gateway_url'].'/remit_query.html';
         $resTxt = self::post($requestUrl, $params);
 
@@ -270,8 +275,7 @@ class HtBasePayment extends BasePayment
      */
     public function balance(){
         $params = [
-            'merchant_code'=>$this->order['channel_merchant_id'],
-            'trade_no'=>$this->order['order_no'],
+            'merchant_code'=>$this->paymentConfig['merchant_id'],
             'query_time'=>date("Y-m-d H:i:s"),
         ];
         $params['sign'] = self::md5Sign($params,trim($this->paymentConfig['key']));
