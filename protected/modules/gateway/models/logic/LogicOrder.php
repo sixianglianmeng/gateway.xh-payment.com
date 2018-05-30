@@ -14,6 +14,7 @@ use app\common\models\model\UserPaymentInfo;
 use app\components\Util;
 use app\jobs\PaymentNotifyJob;
 use app\lib\helpers\SignatureHelper;
+use app\lib\payment\ChannelPayment;
 use power\yii2\exceptions\ParameterValidationExpandException;
 use Yii;
 use app\common\models\model\User;
@@ -526,8 +527,9 @@ class LogicOrder
         //银行状态说明：00处理中，04成功，05失败或拒绝
         $payment = new ChannelPayment($order, $paymentChannelAccount);
         $ret = $payment->orderStatus();
+
         Yii::info('order status check: '.json_encode($ret,JSON_UNESCAPED_UNICODE));
-        if($ret['code'] === 0){
+        if($ret['status'] === 0){
             switch ($ret['data']['status']){
                 case '00':
                     $order->status = Order::STATUS_BANK_PROCESSING;

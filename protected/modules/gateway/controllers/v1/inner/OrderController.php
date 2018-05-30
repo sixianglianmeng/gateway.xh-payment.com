@@ -58,9 +58,44 @@ class OrderController extends BaseInnerController
     }
 
     /**
-     * 发送订单通知
+     * 到三方同步订单状态
      */
     public function actionSyncStatus()
+    {
+        $inSeconds = ControllerParameterValidator::getRequestParam($this->allParams, 'inSeconds', '',Macro::CONST_PARAM_TYPE_INT_GT_ZERO,'时间秒数错误');
+        $orderNoList = ControllerParameterValidator::getRequestParam($this->allParams, 'orderNoList', '',Macro::CONST_PARAM_TYPE_ARRAY,'订单号列表错误');
+
+        if(empty($inSeconds) && empty($orderNoList)){
+            Util::throwException(Macro::PARAMETER_VALIDATION_FAILED);
+        }
+
+        $filter = ['!=','status',Order::STATUS_PAID];
+        //最长一天
+        if($inSeconds>14400) $inSeconds = 14400;
+        if($inSeconds){
+            $filter[] = ['>=','created_at',time()-$inSeconds];
+        }
+        if($orderNoList){
+            foreach ($orderNoList as $k=>$on){
+                if(!Util::validate($on,Macro::CONST_PARAM_TYPE_ORDER_NO)){
+                    unset($orderNoList[$k]);
+                }
+            }
+
+            $filter[] = ['order_no',$orderNoList];
+        }
+        $orders = Order::find($filter)->all();
+        foreach ($orders as $order){
+            LogicOrder::queryChannelOrderStatus($order);
+        }
+
+        return ResponseHelper::formatOutput(Macro::SUCCESS,'');
+    }
+
+    /**
+     * 发送订单通知
+     */
+    public function actionSendNotify()
     {
         $inSeconds = ControllerParameterValidator::getRequestParam($this->allParams, 'inSeconds', '',Macro::CONST_PARAM_TYPE_INT_GT_ZERO,'时间秒数错误');
         $orderNoList = ControllerParameterValidator::getRequestParam($this->allParams, 'orderNoList', '',Macro::CONST_PARAM_TYPE_ARRAY,'订单号列表错误');
@@ -84,7 +119,7 @@ class OrderController extends BaseInnerController
 
             $filter[] = ['order_no',$orderNoList];
         }
-        $orders = Order::findAll($filter);
+        $orders = Order::find($filter)->all();
         foreach ($orders as $order){
             LogicOrder::notify($order);
         }
