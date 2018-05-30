@@ -31,6 +31,7 @@ class LogicUser
      *
      */
     public function changeUserBalance($amount, $eventType, $eventId, $eventAmount, $clientIp='', $bak='', $opUid=0, $opUsername=''){
+        bcscale(6);
         Yii::debug([__FUNCTION__.' '.$this->user->id.','.$amount.','.$eventType.','.$eventId]);
         if(empty($this->user) || $amount==0){
             Yii::debug('user or amount empty'.$this->user->id.','.$amount.','.$eventType.','.$eventId);
@@ -120,6 +121,7 @@ class LogicUser
      *
      */
     public function changeUserFrozenBalance($amount, $eventType, $eventId, $eventAmount, $clientIp='', $bak='', $opUid=0, $opUsername=''){
+        bcscale(6);
         Yii::debug([__FUNCTION__.' '.$this->user->id.','.$amount.','.$eventType.','.$eventId]);
         if(empty($this->user) || $amount==0){
             Yii::debug('user or amount empty'.$this->user->id.','.$amount.','.$eventType.','.$eventId);
