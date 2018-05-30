@@ -61,32 +61,32 @@ class BasePayment
     const RECHARGE_QUERY_RESULT = [
         'status' => Macro::FAIL,
         'data' => [
-            'channel_order_no' => '三方订单号',
-            'trade_status'       => "Macro::SUCCESS|Macro::FAIL",
+            'channel_order_no' => '',//三方订单号',
+            'trade_status'       => "",//Macro::SUCCESS|Macro::FAIL",
         ],
     ];
     //出款接口结果
     const REMIT_RESULT = [
         'status' => Macro::FAIL,
         'data' => [
-            'channel_order_no' => '三方订单号',
-            'bank_status'       => '三方银行状态,需转换为Remit表状态',
+            'channel_order_no' => '',//三方订单号',
+            'bank_status'       => '',//三方银行状态,需转换为Remit表状态',
         ],
     ];
     //出款订单查询接口结果
     const REMIT_QUERY_RESULT = [
         'status' => Macro::FAIL,
         'data' => [
-            'channel_order_no' => '三方订单号',
-            'bank_status'       => '三方银行状态,需转换为Remit表状态',
+            'channel_order_no' => '',//三方订单号'
+            'bank_status'       => '',//三方银行状态,需转换为Remit表状态',
         ],
     ];
     //余额查询接口结果
     const BALANCE_QUERY_RESULT = [
         'status' => Macro::FAIL,
         'data' => [
-            'balance'        => '三方账户可用余额',
-            'frozen_balance' => '三方账户冻结余额',
+            'balance'        => '',//三方账户可用余额',
+            'frozen_balance' => '',//三方账户冻结余额',
         ],
     ];
 
