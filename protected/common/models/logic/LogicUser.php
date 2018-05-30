@@ -151,7 +151,7 @@ class LogicUser
                 $financial->event_id              = $eventId;
                 $financial->event_type            = $eventType;
                 $financial->event_amount          = $eventAmount;
-                $financial->amount                = $amount;
+                $financial->amount                = $usableAmount;
                 $financial->frozen_balance        = bcadd($this->user->frozen_balance, $amount);
                 $financial->frozen_balance_before = $this->user->frozen_balance;
                 $financial->balance               = bcadd($this->user->balance, $usableAmount);
