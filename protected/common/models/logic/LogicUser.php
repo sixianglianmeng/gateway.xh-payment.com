@@ -72,6 +72,8 @@ class LogicUser
                 $financial->all_parent_agent_id   = $this->user->all_parent_agent_id;
                 $financial->save();
 
+                Yii::info("changeUserBalance: uid:{$this->user->id},{$amount},{$financial->balance_before},{$financial->balance}");
+
             }else{
                 Yii::warning("changeUserBalance already has record: uid:{$this->user->id},{$amount},{$eventType},{$eventId}");
             }
