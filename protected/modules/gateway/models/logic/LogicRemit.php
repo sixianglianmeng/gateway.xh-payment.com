@@ -95,7 +95,8 @@ class LogicRemit
         unset($parentConfigModels);
         $remitData['plat_fee_amount']     = $paymentChannelAccount->remit_fee;
         $orderData['plat_fee_profit']     = bcsub($topestPrent['fee'], $remitData['plat_fee_amount'],6);
-        if($topestPrent['fee']>$remitData['plat_fee_amount']){
+        if($topestPrent['fee']<$remitData['plat_fee_amount']){
+            Yii::error("商户出款费率配置错误,小于渠道最低费率: 顶级商户ID:{$topestPrent['merchant_id']},商户渠道账户ID:{$topestPrent['channel_account_id']},商户费率:{$topestPrent['fee']},渠道费率:{$remitData['plat_fee_amount']}");
             throw new InValidRequestException('商户费率配置错误,小于渠道最低费率!');
         }
 

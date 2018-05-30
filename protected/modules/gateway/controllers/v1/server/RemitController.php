@@ -1,6 +1,7 @@
 <?php
 namespace app\modules\gateway\controllers\v1\server;
 
+use app\common\exceptions\InValidRequestException;
 use app\common\models\model\ChannelAccount;
 use app\common\models\model\LogApiRequest;
 use app\common\models\model\Remit;
