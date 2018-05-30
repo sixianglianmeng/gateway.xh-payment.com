@@ -194,7 +194,8 @@ class BasePayment
                 'body' => http_build_query($postData),
                 'form_params' => ($postData),
             ]);
-//            $response = $client->get($url);
+
+//            $response = $client->get($url.'?'.http_build_query($postData));
             $httpCode = $response->getStatusCode();
             $body = (string)$response->getBody();
         }catch (\Exception $e){

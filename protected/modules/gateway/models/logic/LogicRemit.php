@@ -292,7 +292,7 @@ class LogicRemit
             $payment = new ChannelPayment($remit, $paymentChannelAccount);
             $ret = $payment->remit();
 
-            Yii::info('remit commitToBank: '.json_encode($ret,JSON_UNESCAPED_UNICODE));
+            Yii::info('remit commitToBank ret: '.json_encode($ret,JSON_UNESCAPED_UNICODE));
             if($ret['status'] === Macro::SUCCESS){
                 switch ($ret['data']['bank_status']){
                     case Remit::BANK_STATUS_PROCESSING:

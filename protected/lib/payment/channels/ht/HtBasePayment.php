@@ -175,10 +175,9 @@ class HtBasePayment extends BasePayment
         }
         $params = [
             'merchant_code'=>$this->remit['channel_merchant_id'],
-            'order_no'=>$this->remit['order_no'],
+            'trade_no'=>$this->remit['order_no'],
             'order_amount'=>$this->remit['amount'],
             'order_time'=>date("Y-m-d H:i:s"),
-            'customer_ip'=>Yii::$app->request->remoteIP,
             'account_name'=>$this->remit['bank_account'],
             'account_number'=>$this->remit['bank_no'],
             'bank_code'=>$this->remit['bank_code'],
