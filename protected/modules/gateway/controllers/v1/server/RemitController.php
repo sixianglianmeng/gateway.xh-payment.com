@@ -81,8 +81,8 @@ class RemitController extends BaseServerSignedRequestController
         $msg = '';
         $data = [];
         $ret = Macro::FAIL;
-        $orderNo = $this->allParams['trade_no']??'';
-        $merchantOrderNo = $this->allParams['order_no']??'';
+        $orderNo = $this->allParams['order_no']??'';
+        $merchantOrderNo = $this->allParams['trade_no']??'';
         if(empty($orderNo) && empty($merchantOrderNo)){
             throw new InValidRequestException('请求参数错误');
         }
