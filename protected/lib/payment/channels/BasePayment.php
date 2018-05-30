@@ -186,18 +186,21 @@ class BasePayment
      */
     public static function post($url, $postData)
     {
-        //        $client = new \GuzzleHttp\Client();
-        //        $response = $client->request('POST', $url, [
-        //            'form_params' => $postData
-        //        ]);
-
         $headers = [];
-        $client = new \GuzzleHttp\Client();
-        $request = new \GuzzleHttp\Psr7\Request('POST', $url, $headers, $postData);
-        $response = $client->send($request, ['timeout' => 5]);
+        try{
+            $client = new \GuzzleHttp\Client();
+            $response = $client->request('POST', $url, [
+                'timeout' => 5,
+                'body' => http_build_query($data)
+            ]);
+//            $response = $client->get($url);
+            $httpCode = $response->getStatusCode();
+            $body = (string)$response->getBody();
+        }catch (\Exception $e){
+            $httpCode = $e->getCode();
+            $body = $e->getMessage();
+        }
 
-        $code = $response->getStatusCode();
-        $body = (string)$response->getBody();
 
         return $body;
     }
