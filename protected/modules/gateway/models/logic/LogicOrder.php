@@ -315,7 +315,7 @@ class LogicOrder
         $logicUser = new LogicUser($order->merchant);
         if(!$ip) $ip = Yii::$app->request->userIP;
         //冻结余额
-        $logicUser->changeUserFrozenBalance($order->amount, Financial::EVENT_TYPE_RECHARGE_FROZEN, $order->order_no, $order->amount, $ip, $bak, $opUid, $opUsername);
+        $logicUser->changeUserFrozenBalance((0-$order->amount), Financial::EVENT_TYPE_RECHARGE_FROZEN, $order->order_no, $order->amount, $ip, $bak, $opUid, $opUsername);
 
         //更改订单状态
         $order->status = Order::STATUS_FREEZE;
@@ -344,7 +344,7 @@ class LogicOrder
         $logicUser = new LogicUser($order->merchant);
         //冻结余额
         if(!$ip) $ip = Yii::$app->request->userIP;
-        $logicUser->changeUserFrozenBalance((0-$order->amount), Financial::EVENT_TYPE_RECHARGE_UNFROZEN,
+        $logicUser->changeUserFrozenBalance($order->amount, Financial::EVENT_TYPE_RECHARGE_UNFROZEN,
             $order->order_no, $order->amount, $ip, $bak, $opUid, $opUsername);
 
         //更改订单状态
