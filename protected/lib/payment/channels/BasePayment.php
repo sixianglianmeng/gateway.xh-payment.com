@@ -200,7 +200,7 @@ class BasePayment
             $httpCode = $e->getCode();
             $body = $e->getMessage();
         }
-
+        Yii::debug('request to channel: '.$url.' '.$body);
 
         return $body;
     }
