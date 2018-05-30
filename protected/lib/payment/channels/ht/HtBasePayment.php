@@ -170,18 +170,18 @@ class HtBasePayment extends BasePayment
      * @return array ['code'=>'Macro::FAIL|Macro::SUCCESS','data'=>['channel_order_no'=>'三方订单号',bank_status=>'三方银行状态,需转换为Remit表状态']]
      */
     public function remit(){
-        if(empty($this->order)){
+        if(empty($this->remit)){
             throw new \Exception('未传入出款订单对象',Macro::ERR_UNKNOWN);
         }
         $params = [
-            'merchant_code'=>$this->order['channel_merchant_id'],
-            'order_no'=>$this->order['order_no'],
-            'order_amount'=>$this->order['amount'],
+            'merchant_code'=>$this->remit['channel_merchant_id'],
+            'order_no'=>$this->remit['order_no'],
+            'order_amount'=>$this->remit['amount'],
             'order_time'=>date("Y-m-d H:i:s"),
             'customer_ip'=>Yii::$app->request->remoteIP,
-            'account_name'=>$this->order['bank_account'],
-            'account_number'=>$this->order['bank_no'],
-            'bank_code'=>$this->order['bank_code'],
+            'account_name'=>$this->remit['bank_account'],
+            'account_number'=>$this->remit['bank_no'],
+            'bank_code'=>$this->remit['bank_code'],
         ];
         $params['sign'] = self::md5Sign($params, trim($this->paymentConfig['key']));
 
