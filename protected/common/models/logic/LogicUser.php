@@ -184,9 +184,10 @@ class LogicUser
                 if (!$financial->update()) {
                     $msg = '帐变记录更新失败: '.$eventType.':'.$eventId;
                     Yii::error($msg);
-                    throw new \Exception($msg);
+                    throw new \Exception($msg,Macro::ERR_UNKNOWN);
                 }
             }else{
+                throw new \Exception("已经有相同类型的帐变记录,无法更新账户余额!",Macro::ERR_UNKNOWN);
                 Yii::warning("changeUserFrozenBalance already done: uid:{$this->user->id},{$amount},{$eventType},{$eventId}");
             }
 

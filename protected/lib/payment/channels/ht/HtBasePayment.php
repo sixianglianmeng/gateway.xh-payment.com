@@ -190,7 +190,7 @@ class HtBasePayment extends BasePayment
         $ret = self::REMIT_RESULT;
         if (!empty($resTxt)) {
             $res = json_decode($resTxt, true);
-            if (isset($res['is_success']) && $res['is_success'] == 'TRUE') {
+            if (isset($res['is_success']) && strtoupper($res['is_success']) == 'TRUE') {
                 $ret['status']         = Macro::SUCCESS;
                 $ret['data']['channel_order_no'] = $res['order_id'];
                 //0 未处理，1 银行处理中 2 已打款 3 失败
@@ -224,7 +224,7 @@ class HtBasePayment extends BasePayment
         $ret = self::REMIT_QUERY_RESULT;
         if (!empty($resTxt)) {
             $res = json_decode($resTxt, true);
-            if (isset($res['is_success']) && $res['is_success'] == 'TRUE') {
+            if (isset($res['is_success']) && strtoupper($res['is_success']) == 'TRUE') {
                 $ret['status']         = Macro::SUCCESS;
                 $ret['data']['channel_order_no'] = $res['order_id'];
                 //0 未处理，1 银行处理中 2 已打款 3 失败
@@ -255,7 +255,7 @@ class HtBasePayment extends BasePayment
         $ret = self::REMIT_QUERY_RESULT;
         if (!empty($resTxt)) {
             $res = json_decode($resTxt, true);
-            if (isset($res['is_success']) && $res['is_success'] == 'TRUE') {
+            if (isset($res['is_success']) && strtoupper($res['is_success']) == 'TRUE') {
                 $ret['status']         = Macro::SUCCESS;
                 $ret['data']['channel_order_no'] = $res['order_id'];
                 $ret['data']['trade_status'] = $res['trade_status'];
@@ -274,18 +274,18 @@ class HtBasePayment extends BasePayment
      */
     public function balance(){
         $params = [
-            'merchant_code'=>$this->paymentConfig['merchant_id'],
+            'merchant_code'=>$this->paymentConfig['merchantId'],
             'query_time'=>date("Y-m-d H:i:s"),
         ];
         $params['sign'] = self::md5Sign($params,trim($this->paymentConfig['key']));
 
-        $requestUrl = $this->paymentConfig['base_gateway_url'].'/query.html';
+        $requestUrl = $this->paymentConfig['base_gateway_url'].'/balance.html';
         $resTxt = self::post($requestUrl, $params);
 
         $ret = self::BALANCE_QUERY_RESULT;
         if (!empty($resTxt)) {
             $res = json_decode($resTxt, true);
-            if (isset($res['is_success']) && $res['is_success'] == 'TRUE') {
+            if (isset($res['is_success']) && strtoupper($res['is_success'])== 'TRUE') {
                 $ret['status']         = Macro::SUCCESS;
                 $ret['data']['balance'] = $res['money'];
                 $ret['data']['frozen_balance'] = $res['freeze_money'];

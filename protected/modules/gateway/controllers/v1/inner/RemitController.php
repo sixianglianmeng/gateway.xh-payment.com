@@ -182,7 +182,11 @@ class RemitController extends BaseInnerController
         $orders = Remit::findAll($filter);
         foreach ($orders as $order){
             $bak = $opOrderList[$order->order_no]['bak']??'';
-            LogicRemit::setSuccess($order,$this->allParams['op_uid'],$this->allParams['op_username'],$bak);
+            try{
+                LogicRemit::setSuccess($order,$this->allParams['op_uid'],$this->allParams['op_username'],$bak);
+            }catch (\Exception $ex){
+
+            }
         }
 
         return ResponseHelper::formatOutput(Macro::SUCCESS);

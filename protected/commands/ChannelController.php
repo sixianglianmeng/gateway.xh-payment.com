@@ -29,7 +29,6 @@ class ChannelController extends BaseConsoleCommand
     public function actionUpdateAccountBalance(){
         $doCheck = true;
 
-        $ret = $payment->remit();
         while ($doCheck) {
             $accounts = ChannelAccount::findAll(['status'=>ChannelAccount::STATUS_ACTIVE]);
             Yii::info('find channel accounts to check balance: '.count($accounts));

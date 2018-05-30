@@ -140,9 +140,11 @@ class BasePayment
         if(empty($appSecrets) || empty($channelAccount->merchant_id)){
             throw new \Exception("收款渠道配置错误:channelAccountId:{$channelAccount->id}",Macro::ERR_PAYMENT_CHANNEL_CONFIG);
         }
-        $paymentConfig = \yii\helpers\ArrayHelper::merge($baseConfig,$envConfig);
-        $paymentConfig = \yii\helpers\ArrayHelper::merge($paymentConfig,$appSecrets);
-        $this->paymentConfig = $paymentConfig;
+        $paymentConfig                = \yii\helpers\ArrayHelper::merge($baseConfig, $envConfig);
+        $paymentConfig                = \yii\helpers\ArrayHelper::merge($paymentConfig, $appSecrets);
+        $paymentConfig['merchantId'] = $channelAccount->merchant_id;
+        $paymentConfig['appId']      = $channelAccount->app_id;
+        $this->paymentConfig          = $paymentConfig;
     }
 
 
