@@ -31,10 +31,12 @@ class OrderController extends BaseConsoleCommand
      */
     public function actionNotifyQueueProducer(){
         $doCheck = true;
-        $startTs = time()-3600;
         while ($doCheck) {
+            //获取配置:出款多少分钟之后不再自动查询状态,默认半小时
+            $expire = SiteConfig::cacheGetContent('order_notify_expire');
+            $startTs = time()-($expire?$expire*60:1800);
+
             $query = Order::find(['status'=>Order::STATUS_PAID,'notice_status'=>[Order::NOTICE_STATUS_NONE,Order::NOTICE_STATUS_FAIL]])
-            //只通知一小时内的,一小时之前人工同步状态
             ->andWhere(['>=', 'paid_at', $startTs])
             //最多通知10次
             ->andWhere(['<', 'notify_times', 10])

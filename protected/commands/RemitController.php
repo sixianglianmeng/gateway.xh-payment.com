@@ -1,6 +1,7 @@
 <?php
 namespace app\commands;
 use app\common\models\model\Remit;
+use app\common\models\model\SiteConfig;
 use app\jobs\RemitCommitJob;
 use app\jobs\RemitQueryJob;
 use app\modules\gateway\models\logic\LogicChannelAccount;
@@ -27,7 +28,14 @@ class RemitController extends BaseConsoleCommand
     public function actionCheckStatusQueueProducer(){
         $doCheck = true;
         while ($doCheck) {
-            $remits = Remit::find(['status'=>Remit::STATUS_BANK_PROCESSING])->limit(100)->all();
+            //获取配置:出款多少分钟之后不再自动查询状态,默认半小时
+            $expire = SiteConfig::cacheGetContent('remit_check_expire');
+            $startTs = time()-($expire?$expire*60:1800);
+
+            $remits = Remit::find(['status'=>Remit::STATUS_BANK_PROCESSING])
+            ->andWhere(['>=', 'paid_at', $startTs])
+            ->limit(100)->all();
+
             Yii::info('find remit to check status: '.count($remits));
             foreach ($remits as $remit){
                 Yii::info('remit status check: '.$remit->order_no);
