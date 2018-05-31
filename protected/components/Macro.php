@@ -112,6 +112,7 @@ class Macro
     const ERR_REMIT_CHANNEL_NOT_ENOUGH = 10316;
     const ERR_EXCEL_BATCH_REMIT_TOTAL_AMOUNT = 10317;
     const ERR_EXCEL_BATCH_REMIT_AMOUNT = 10318;
+    const ERR_ALLOW_MANUAL_REMIT = 10319;
 
 
     //调单记录
@@ -121,7 +122,7 @@ class Macro
     const CONST_JSON = 'json';
     const CONST_HTML = 'html';
     const CONST_PARAM_TYPE_STRING = 'string';
-    const CONST_PARAM_TYPE_NUMBERIC_STRING = 'numberic_string';
+    const CONST_PARAM_TYPE_NUMERIC_STRING = 'numberic_string';
     const CONST_PARAM_TYPE_ARRAY = 'array';
     const CONST_PARAM_TYPE_ARRAY_HAS_KEY = 'array_has_key';
     const CONST_PARAM_TYPE_EMAIL = 'email';

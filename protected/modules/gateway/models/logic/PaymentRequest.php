@@ -46,7 +46,7 @@ class PaymentRequest
         'trade_no'             => [Macro::CONST_PARAM_TYPE_ALNUM_DASH_UNDERLINE, [1, 32]],
         'now_date'             => [Macro::CONST_PARAM_TYPE_INT],
         'account_name'         => [Macro::CONST_PARAM_TYPE_STRING, [1, 32]],
-        'account_number'       => [Macro::CONST_PARAM_TYPE_NUMBERIC_STRING, [10, 32]],
+        'account_number'       => [Macro::CONST_PARAM_TYPE_NUMERIC_STRING, [10, 32]],
     ];
 
     public function __construct(User $merchant,UserPaymentInfo $merchantPayment)

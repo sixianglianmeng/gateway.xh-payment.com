@@ -1,0 +1,1 @@
+01 0 * * *  /www/wwwroot/gateway.payment.com/protected/yii account/reset-quota  2>&1

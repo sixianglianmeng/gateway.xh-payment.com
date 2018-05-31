@@ -160,4 +160,45 @@ class Remit extends BaseModel
         return $this->all_parent_remit_config?json_decode($this->all_parent_remit_config,true):[];
     }
 
+    /**
+     * 首页统计今天、昨天的代付 成功笔数、失败笔数、失败金额
+     * @param $group_id 商户类型 10 - 管理员 20 - 代理 30 - 商户
+     * @param $merchant_id 商户ID
+     * @param $type today 今天 Yesterday 昨天
+     */
+    public static function getYesterdayTodayRemit($group_id,$merchant_id,$type,$is_success)
+    {
+        $remit = [];
+        $remitQuery = self::find();
+        if($type == 'today'){
+            $remitQuery->andFilterCompare('created_at', '>='.strtotime(date("Y-m-d")));
+        }else{
+            $remitQuery->andFilterCompare('created_at', '>='.strtotime('-1 day',strtotime(date("Y-m-d"))));
+            $remitQuery->andFilterCompare('created_at', '<'.strtotime(date("Y-m-d")));
+        }
+        //$orderTodayQuery->andFilterCompare('created_at', '<'.strtotime($dateEnd));
+        if($group_id == 20){
+            $remitQuery->andWhere(['merchant_id'=>$merchant_id]);
+            $agentWhere = [
+                'or',
+                ['like','all_parent_agent_id',','.$merchant_id.','],
+                ['like','all_parent_agent_id','['.$merchant_id.']'],
+                ['like','all_parent_agent_id','['.$merchant_id.','],
+                ['like','all_parent_agent_id',','.$merchant_id.']']
+            ];
+            $remitQuery->andWhere($agentWhere);
+        }
+        if($group_id == 30){
+            $remitQuery->andWhere(['merchant_id'=>$merchant_id]);
+        }
+        if($is_success == 1 ){
+            $remitQuery->andWhere(['status'=>40]);
+            $remitQuery->select('sum(amount) as amount,count(id) as total');
+        }else{
+            $remitQuery->andWhere(['in','status',array(50,60,-10,-20)]);
+            $remitQuery->select('count(id) as total,sum(amount) as amount');
+        }
+        $order = $remitQuery->asArray()->all();
+        return $order;
+    }
 }

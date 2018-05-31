@@ -82,5 +82,32 @@ class MerchantRechargeMethod extends BaseModel
         $pids = $this->getAllParentAgentId();
         return self::findAll(['id'=>$pids,'method_id'=>$mid]);
     }
+    
+    /**
+     * 获取当前商户上下级收款费率区间
+     */
+    public static function getPayMethodsRateSectionAppId($parent_agent_id = '',$lower_level = array()){
+        $rateSection = [
+            'parent_rate' => [],
+            'lower_rate' => [],
+        ];
+        if($parent_agent_id){
+            $parentRate = self::find()->where(['merchant_id'=>$parent_agent_id])->select('method_id,fee_rate')->asArray()->all();
+            if($parentRate){
+                foreach ($parentRate as $key => $val){
+                    $rateSection['parent_rate'][$val['method_id']] = $val['fee_rate'];
+                }
+            }
+        }
+        if($lower_level){
+            $lowerRate = self::find()->where(['in','merchant_id',$lower_level])->select('method_id,min(fee_rate) as fee_rate')->groupBy('method_id')->asArray()->all();
+            if($lowerRate){
+                foreach ($lowerRate as $key => $val){
+                    $rateSection['lower_rate'][$val['method_id']] = $val['fee_rate'];
+                }
+            }
+        }
+        return $rateSection;
+    }
 
 }

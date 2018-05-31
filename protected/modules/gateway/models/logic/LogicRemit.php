@@ -363,6 +363,12 @@ class LogicRemit
 
         $remit->save();
 
+        if($remit->bank_status == Remit::BANK_STATUS_SUCCESS){
+            self::afterSuccess($remit);
+        }
+
+        self::updateToRedis($remit);
+
         return $remit;
     }
 
@@ -434,9 +440,34 @@ class LogicRemit
         $remit->bak .=$bak;
         $remit->save();
 
+        self::afterSuccess($remit);
+
         self::updateToRedis($remit);
 
         return $remit;
+    }
+
+    /*
+     * 订单成功后续处理事件
+     *
+     * @param Remit $remit 订单对象
+     */
+    public static function afterSuccess(Remit $remit)
+    {
+        //更新用户及渠道当天充值计数
+        self::updateTodayQuota($remit);
+
+    }
+
+
+    /*
+     * 更新订单对应商户及通道的当日金额计数
+     *
+     * @param Remit $remit 订单对象
+     */
+    static public function updateTodayQuota(Remit $remit){
+        $remit->merchant->paymentInfo->updateCounters(['remit_today' => $remit->amount]);
+        $remit->channelAccount->updateCounters(['remit_today' => $remit->amount]);
     }
 
     /*

@@ -70,7 +70,7 @@ class Util
         //根据不同的验证规则
         //$exp可以定义为布尔值，正则表达式，可调用进行判断的对象(is_callable: 函数，类方法等)。
         switch ($type) {
-            case Macro::CONST_PARAM_TYPE_NUMBERIC_STRING:
+            case Macro::CONST_PARAM_TYPE_NUMERIC_STRING:
                 preg_match("/^\d+$/",$val,$matched);
                 $exp = !empty($matched);
                 if($extRule){
@@ -753,7 +753,7 @@ class Util
             $msg = Macro::MSG_LIST[$code];
         }
 
-        throw new \Exception($msg);
+        throw new \Exception($msg, $code);
     }
 
     /**

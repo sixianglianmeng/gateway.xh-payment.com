@@ -230,4 +230,16 @@ class UserPaymentInfo extends BaseModel
         return true;
     }
 
+    /**
+     * 获取用户默认的支付配置
+     * 一个用户理论上可以有多个支付配置,目前每个用户只有一个.这个时候app_id=user_id
+     *
+     * @param int $userId 商户id
+     * @return ActiveRecord
+     */
+    public static function getUserDefaultPaymentInfo($userId)
+    {
+        return self::findOne(['user_id'=>$userId,'app_id'=>$userId]);
+    }
+
 }

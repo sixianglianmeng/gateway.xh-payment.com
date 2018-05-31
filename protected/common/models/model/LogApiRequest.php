@@ -70,4 +70,16 @@ class LogApiRequest extends BaseModel
     {
         return 'p_log_api_request';
     }
+
+    /*
+    * 获取事件类型描述
+    *
+    * @param int $groupId 分组ID
+    * @return string
+    * @author bootmall@gmail.com
+    */
+    public static function getEventTypeStr($eventType)
+    {
+        return self::ARR_EVENT_TYPE[$eventType]??'-';
+    }
 }

@@ -298,7 +298,20 @@ class LogicOrder
         //发放分润
         $order = self::bonus($order);
 
+        //更新用户及渠道当天充值计数
+        self::updateTodayQuota($order);
+
         return $order;
+    }
+
+    /*
+     * 更新订单对应商户及通道的当日金额计数
+     *
+     * @param Order $order 订单对象
+     */
+    static public function updateTodayQuota(Order $order){
+        $order->merchant->paymentInfo->updateCounters(['recharge_today' => $order->amount]);
+        $order->channelAccount->updateCounters(['recharge_today' => $order->amount]);
     }
 
     /*
