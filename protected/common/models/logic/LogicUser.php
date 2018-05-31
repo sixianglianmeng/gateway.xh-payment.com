@@ -39,7 +39,7 @@ class LogicUser
         }
         if($amount<0 && $this->user->balance<abs($amount)){
             Yii::warning("changeUserBalance balance not enough: uid:{$this->user->id},{$amount},{$eventType},{$eventId}");
-            throw new \Exception("余额不足",Macro::ERR_BALANCE_NOT_ENOUGH);
+            throw new \app\common\exceptions\OperationFailureException("余额不足",Macro::ERR_BALANCE_NOT_ENOUGH);
         }
 
         $db = Yii::$app->db;
@@ -49,7 +49,7 @@ class LogicUser
             if(!$financial){
                 Yii::info("changeUserBalance: uid:{$this->user->id},{$amount},{$eventType},{$eventId}");
 //                var_dump("changeUserBalance: uid:{$this->user->id},{$amount},{$eventType},{$eventId}");
-//                throw new \Exception('账户余额已经完成变动，请勿重复修改。');
+//                throw new \app\common\exceptions\OperationFailureException('账户余额已经完成变动，请勿重复修改。');
 
                 //写入账变日志
                 $financial                        = new Financial();
@@ -88,7 +88,7 @@ class LogicUser
                 if (!$financial->update()) {
                     $msg = '帐变记录更新失败: '.$eventType.':'.$eventId;
                     Yii::error($msg);
-                    throw new \Exception($msg);
+                    throw new \app\common\exceptions\OperationFailureException($msg);
                 }
             }else{
                 Yii::warning("changeUserFrozenBalance already done: uid:{$this->user->id},{$amount},{$eventType},{$eventId}");
@@ -130,12 +130,12 @@ class LogicUser
         //冻结金额，冻结字段+，余额字段-
         if($amount>0 && $this->user->balance<$amount){
             Yii::warning("changeUserFrozenBalance balance not enough: uid:{$this->user->id},{$amount},{$eventType},{$eventId}");
-            throw new \Exception("余额不足",Macro::ERR_BALANCE_NOT_ENOUGH);
+            throw new \app\common\exceptions\OperationFailureException("余额不足",Macro::ERR_BALANCE_NOT_ENOUGH);
         }
         //解冻金额，冻结字段-，余额字段+
         if($amount<0 && $this->user->frozen_balance<abs($amount)){
             Yii::warning("changeUserFrozenBalance balance not enough: uid:{$this->user->id},{$amount},{$eventType},{$eventId}");
-            throw new \Exception("冻结余额小余要解冻的金额",Macro::ERR_BALANCE_NOT_ENOUGH);
+            throw new \app\common\exceptions\OperationFailureException("冻结余额小余要解冻的金额",Macro::ERR_BALANCE_NOT_ENOUGH);
         }
         $usableAmount = 0-$amount;
 
@@ -146,7 +146,7 @@ class LogicUser
             if(!$financial){
                 Yii::info("changeUserFrozenBalance: uid:{$this->user->id},{$amount},{$eventType},{$eventId}");
                 //                var_dump("changeUserBalance: uid:{$this->user->id},{$amount},{$eventType},{$eventId}");
-                //                throw new \Exception('账户余额已经完成变动，请勿重复修改。');
+                //                throw new \app\common\exceptions\OperationFailureException('账户余额已经完成变动，请勿重复修改。');
 
                 //写入账变日志
                 $financial                        = new Financial();
@@ -184,10 +184,10 @@ class LogicUser
                 if (!$financial->update()) {
                     $msg = '帐变记录更新失败: '.$eventType.':'.$eventId;
                     Yii::error($msg);
-                    throw new \Exception($msg,Macro::ERR_UNKNOWN);
+                    throw new \app\common\exceptions\OperationFailureException($msg,Macro::ERR_UNKNOWN);
                 }
             }else{
-                throw new \Exception("已经有相同类型的帐变记录,无法更新账户余额!",Macro::ERR_UNKNOWN);
+                throw new \app\common\exceptions\OperationFailureException("已经有相同类型的帐变记录,无法更新账户余额!",Macro::ERR_UNKNOWN);
                 Yii::warning("changeUserFrozenBalance already done: uid:{$this->user->id},{$amount},{$eventType},{$eventId}");
             }
 

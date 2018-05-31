@@ -149,7 +149,7 @@ class UserPaymentInfo extends BaseModel
 
                     if ($pm['id'] == $cmr->method_id && $pm['status'] == '1') {
                         if ($pm['rate'] < $cmr->fee_rate) {
-                            throw new \Exception("收款渠道费率不能低于上级费率(" . Channel::ARR_METHOD[$pm['id']] . ":{$cmr->fee_rate})");
+                            throw new \app\common\exceptions\OperationFailureException("收款渠道费率不能低于上级费率(" . Channel::ARR_METHOD[$pm['id']] . ":{$cmr->fee_rate})");
                         }
                         //提前计算好需要给上级的分润比例
                         $allMids = [];

@@ -401,7 +401,7 @@ class AllscoreService {
                 }
             }
         } catch (\Exception $e) {
-            throw new \Exception($e->getMessage());
+            throw new \app\common\exceptions\OperationFailureException($e->getMessage());
 //           echo 'Caught exception: ',  $e->getMessage(), "\n";
            
         }

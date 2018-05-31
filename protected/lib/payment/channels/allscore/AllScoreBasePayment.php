@@ -246,7 +246,7 @@ class AllScoreBasePayment extends BasePayment
         if(!empty($resTxt)){
             $res = json_decode($resTxt,true);
             if(isset($res['retCode']) && $res['retCode']=='0000'){
-                throw new \Exception('订单查询返回: '.$resTxt);
+                throw new \app\common\exceptions\OperationFailureException('订单查询返回: '.$resTxt);
                 $ret = Macro::SUCCESS_MESSAGE;
                 if($res['trade_status'] == Macro::SUCCESS){
                     $ret['data']['trade_status'] = Order::STATUS_PAID;

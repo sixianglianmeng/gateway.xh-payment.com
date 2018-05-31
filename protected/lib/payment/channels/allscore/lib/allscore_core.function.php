@@ -377,7 +377,7 @@ function encryptForPrKey($privateKeyStr, $data)
 
         //logResult("加密处理:".$data);
     } else {
-        throw new Exception('Unable to encrypt data. Perhaps it is bigger than the key size?');
+        throw new \app\common\exceptions\OperationFailureException('Unable to encrypt data. Perhaps it is bigger than the key size?');
     }
 
     return $data;
@@ -401,7 +401,7 @@ function encryptForPuKey($pubKey, $data)
 
         logResult("加密处理:" . $data);
     } else {
-        throw new Exception('Unable to encrypt data. Perhaps it is bigger than the key size?');
+        throw new \app\common\exceptions\OperationFailureException('Unable to encrypt data. Perhaps it is bigger than the key size?');
     }
 
     return $data;

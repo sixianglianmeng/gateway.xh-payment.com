@@ -20,7 +20,7 @@ use Yii;
 use app\common\models\model\User;
 use app\common\models\model\Order;
 use app\components\Macro;
-use Exception;
+use app\common\exceptions\OperationFailureException;
 
 class LogicOrder
 {
@@ -148,43 +148,43 @@ class LogicOrder
 
         //账户费率检测
         if($rechargeMethod->fee_rate <= 0){
-            throw new Exception(Macro::ERR_MERCHANT_FEE_CONIFG);
+            throw new OperationFailureException(Macro::ERR_MERCHANT_FEE_CONIFG);
         }
 
         //账户支付方式开关检测
         if($rechargeMethod->status != MerchantRechargeMethod::STATUS_ACTIVE){
-            throw new Exception(null,Macro::ERR_PAYMENT_TYPE_NOT_ALLOWED);
+            throw new OperationFailureException(null,Macro::ERR_PAYMENT_TYPE_NOT_ALLOWED);
         }
 
         //检测账户单笔限额
         if($userPaymentConfig->recharge_quota_pertime && $order->amount > $userPaymentConfig->recharge_quota_pertime){
-            throw new Exception(null,Macro::ERR_PAYMENT_REACH_ACCOUNT_QUOTA_PER_TIME);
+            throw new OperationFailureException(null,Macro::ERR_PAYMENT_REACH_ACCOUNT_QUOTA_PER_TIME);
         }
         //检测账户日限额
         if($userPaymentConfig->recharge_quota_perday && $order->recharge_today > $userPaymentConfig->recharge_quota_perday){
-            throw new Exception(null,Macro::ERR_PAYMENT_REACH_ACCOUNT_QUOTA_PER_DAY);
+            throw new OperationFailureException(null,Macro::ERR_PAYMENT_REACH_ACCOUNT_QUOTA_PER_DAY);
         }
         //检测是否支持api充值
         if(empty($order->op_uid) && $userPaymentConfig->allow_api_recharge==UserPaymentInfo::ALLOW_API_RECHARGE_NO){
-            throw new Exception(null,Macro::ERR_PAYMENT_API_NOT_ALLOWED);
+            throw new OperationFailureException(null,Macro::ERR_PAYMENT_API_NOT_ALLOWED);
         }
         //检测是否支持手工充值
         elseif(!empty($order->op_uid) && $userPaymentConfig->allow_manual_recharge==UserPaymentInfo::ALLOW_MANUAL_RECHARGE_NO){
-            throw new Exception(null,Macro::ERR_PAYMENT_MANUAL_NOT_ALLOWED);
+            throw new OperationFailureException(null,Macro::ERR_PAYMENT_MANUAL_NOT_ALLOWED);
         }
 
         //渠道费率检测
         if($channelAccountRechargeMethod->fee_rate <= 0){
-            throw new Exception(Macro::ERR_CHANNEL_FEE_CONIFG);
+            throw new OperationFailureException(Macro::ERR_CHANNEL_FEE_CONIFG);
         }
 
         //检测渠道单笔限额
         if($paymentChannelAccount->recharge_quota_pertime && $order->amount > $paymentChannelAccount->recharge_quota_pertime){
-            throw new Exception(null,Macro::ERR_PAYMENT_REACH_CHANNEL_QUOTA_PER_TIME);
+            throw new OperationFailureException(null,Macro::ERR_PAYMENT_REACH_CHANNEL_QUOTA_PER_TIME);
         }
         //检测渠道日限额
         if($paymentChannelAccount->recharge_quota_perday && $paymentChannelAccount->recharge_today > $paymentChannelAccount->recharge_quota_perday){
-            throw new Exception(null,Macro::ERR_PAYMENT_REACH_CHANNEL_QUOTA_PER_DAY);
+            throw new OperationFailureException(null,Macro::ERR_PAYMENT_REACH_CHANNEL_QUOTA_PER_DAY);
         }
     }
 
@@ -523,7 +523,7 @@ class LogicOrder
         ];
 
         if(!$order){
-            throw new \Exception("订单不存在('platform_order_no:{$orderNo}','merchant_order_no:{$merchantOrderNo}')");
+            throw new \app\common\exceptions\OperationFailureException("订单不存在('platform_order_no:{$orderNo}','merchant_order_no:{$merchantOrderNo}')");
         }
 
         return $order;

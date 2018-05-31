@@ -9,7 +9,7 @@ $moduleName = getenv('MODULE_NAME');
 // $idcNum = @intval(getenv('IDC_NUM'));
 // $idcId = @intval(getenv('IDC_ID'));
 // if ($idcNum <= 0) {
-//     throw new \Exception("IDC_NUM is invalid! please export it in shell");
+//     throw new \app\common\exceptions\OperationFailureException("IDC_NUM is invalid! please export it in shell");
 // }
 // !defined('MODULE_NAME') && define('MODULE_NAME', $moduleName);
 // !defined('APPLICATION_ENV') && define('APPLICATION_ENV', $testEnv);

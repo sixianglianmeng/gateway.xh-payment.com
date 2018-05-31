@@ -94,7 +94,7 @@ class HtBasePayment extends BasePayment
 
         $banCode = BankCodes::getChannelBankCode($this->order['channel_id'],$this->order['bank_code']);
         if(empty($banCode)){
-            throw new \Exception("银行代码配置错误:".get_class($this).':'.$this->order['bank_code'],Macro::ERR_PAYMENT_BANK_CODE);
+            throw new \app\common\exceptions\OperationFailureException("银行代码配置错误:".get_class($this).':'.$this->order['bank_code'],Macro::ERR_PAYMENT_BANK_CODE);
         }
 
         $params = [
@@ -133,7 +133,7 @@ class HtBasePayment extends BasePayment
     {
         $banCode = BankCodes::getChannelBankCode($this->order['channel_id'],$this->order['bank_code']);
         if(empty($banCode)){
-            throw new \Exception("银行代码配置错误:".get_class($this).':'.$this->order['bank_code'],Macro::ERR_PAYMENT_BANK_CODE);
+            throw new \app\common\exceptions\OperationFailureException("银行代码配置错误:".get_class($this).':'.$this->order['bank_code'],Macro::ERR_PAYMENT_BANK_CODE);
         }
 
         $params = [
@@ -171,7 +171,7 @@ class HtBasePayment extends BasePayment
      */
     public function remit(){
         if(empty($this->remit)){
-            throw new \Exception('未传入出款订单对象',Macro::ERR_UNKNOWN);
+            throw new \app\common\exceptions\OperationFailureException('未传入出款订单对象',Macro::ERR_UNKNOWN);
         }
         $params = [
             'merchant_code'=>$this->remit['channel_merchant_id'],
@@ -210,7 +210,7 @@ class HtBasePayment extends BasePayment
      */
     public function remitStatus(){
         if(empty($this->remit)){
-            throw new \Exception('未传入出款订单对象',Macro::ERR_UNKNOWN);
+            throw new \app\common\exceptions\OperationFailureException('未传入出款订单对象',Macro::ERR_UNKNOWN);
         }
         $params = [
             'merchant_code'=>$this->remit['channel_merchant_id'],

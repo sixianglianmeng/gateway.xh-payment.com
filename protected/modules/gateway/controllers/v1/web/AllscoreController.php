@@ -38,13 +38,13 @@ class AllscoreController extends WebAppController
         Yii::debug("parseReturnRequest: ".\GuzzleHttp\json_encode($noticeResult));
 
         if(empty($noticeResult->order)){
-            throw new \Exception("无法解析订单信息：".$noticeResult->msg);
+            throw new \app\common\exceptions\OperationFailureException("无法解析订单信息：".$noticeResult->msg);
         }
 
 //        if($noticeResult->status === Macro::SUCCESS){
 //            LogicOrder::processChannelNotice($noticeResult);
 //        }else{
-//            throw new \Exception("支付失败：".$noticeResult->msg);
+//            throw new \app\common\exceptions\OperationFailureException("支付失败：".$noticeResult->msg);
 //        }
         //处理订单
         LogicOrder::processChannelNotice($noticeResult);
@@ -70,7 +70,7 @@ class AllscoreController extends WebAppController
         Yii::debug("parseReturnRequest: ".\GuzzleHttp\json_encode($noticeResult));
 
         if(empty($noticeResult->order)){
-            throw new \Exception("无法解析订单信息：".$noticeResult->msg);
+            throw new \app\common\exceptions\OperationFailureException("无法解析订单信息：".$noticeResult->msg);
         }
 
 
@@ -84,9 +84,9 @@ class AllscoreController extends WebAppController
             Yii::$app->response->redirect($url);
         } else {
             if ($noticeResult->status === Macro::SUCCESS) {
-                throw new \Exception("支付成功");
+                throw new \app\common\exceptions\OperationFailureException("支付成功");
             } else {
-                throw new \Exception("支付失败：" . $noticeResult->msg);
+                throw new \app\common\exceptions\OperationFailureException("支付失败：" . $noticeResult->msg);
             }
         }
 

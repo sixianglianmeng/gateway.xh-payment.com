@@ -31,7 +31,7 @@ class ChannelPayment
 
         $payMethod = $channel->remit_handle_class;
         if(empty($channel->remit_handle_class)){
-            throw new \Exception("渠道配置错误",Macro::ERR_PAYMENT_CHANNEL_ID);
+            throw new \app\common\exceptions\OperationFailureException("渠道配置错误",Macro::ERR_PAYMENT_CHANNEL_ID);
         }
 
         $handleClass = "app\\lib\\payment\\channels\\".str_replace('/','\\',$channel->remit_handle_class);
@@ -45,7 +45,7 @@ class ChannelPayment
 
         $payMethods = $channel->getPayMethods();
         if(empty($payMethods[intval($order->pay_method_code)])){
-            throw new \Exception("渠道配置错误",Macro::ERR_PAYMENT_CHANNEL_ID);
+            throw new \app\common\exceptions\OperationFailureException("渠道配置错误",Macro::ERR_PAYMENT_CHANNEL_ID);
         }
 
         $handleClass = "app\\lib\\payment\\channels\\".str_replace('/','\\',$payMethods[$order->pay_method_code]);
@@ -60,7 +60,7 @@ class ChannelPayment
 
         $payMethod = $channel->remit_handle_class;
         if(empty($channel->remit_handle_class)){
-            throw new \Exception("渠道配置错误",Macro::ERR_PAYMENT_CHANNEL_ID);
+            throw new \app\common\exceptions\OperationFailureException("渠道配置错误",Macro::ERR_PAYMENT_CHANNEL_ID);
         }
 
         $handleClass = "app\\lib\\payment\\channels\\".str_replace('/','\\',$channel->remit_handle_class);

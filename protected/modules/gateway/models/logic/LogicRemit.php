@@ -21,7 +21,7 @@ use power\yii2\exceptions\ParameterValidationExpandException;
 use Yii;
 use app\common\models\model\User;
 use app\components\Macro;
-use Exception;
+use app\common\exceptions\OperationFailureException;
 
 class LogicRemit
 {
@@ -145,37 +145,37 @@ class LogicRemit
 
         //账户费率检测
         if($userPaymentConfig->remit_fee <= 0){
-            throw new Exception(Macro::ERR_MERCHANT_FEE_CONIFG);
+            throw new OperationFailureException(Macro::ERR_MERCHANT_FEE_CONIFG);
         }
 
         //检测账户单笔限额
         if($userPaymentConfig->remit_quota_pertime && $remit->amount > $userPaymentConfig->remit_quota_pertime){
-            throw new Exception(null,Macro::ERR_REMIT_REACH_ACCOUNT_QUOTA_PER_TIME);
+            throw new OperationFailureException(null,Macro::ERR_REMIT_REACH_ACCOUNT_QUOTA_PER_TIME);
         }
         //检测账户日限额
         if($userPaymentConfig->remit_quota_perday && $remit->remit_today > $userPaymentConfig->remit_quota_perday){
-            throw new Exception(null,Macro::ERR_REMIT_REACH_ACCOUNT_QUOTA_PER_DAY);
+            throw new OperationFailureException(null,Macro::ERR_REMIT_REACH_ACCOUNT_QUOTA_PER_DAY);
         }
         //检测是否支持api出款
         if(empty($remit->op_uid) && $userPaymentConfig->allow_api_remit==UserPaymentInfo::ALLOW_API_REMIT_NO){
-            throw new Exception(null,Macro::ERR_PAYMENT_API_NOT_ALLOWED);
+            throw new OperationFailureException(null,Macro::ERR_PAYMENT_API_NOT_ALLOWED);
         }
         //检测是否支持手工出款
         elseif(!empty($remit->op_uid) && $userPaymentConfig->allow_manual_remit==UserPaymentInfo::ALLOW_MANUAL_REMIT_NO){
-            throw new Exception(null,Macro::ERR_PAYMENT_MANUAL_NOT_ALLOWED);
+            throw new OperationFailureException(null,Macro::ERR_PAYMENT_MANUAL_NOT_ALLOWED);
         }
 
         //渠道费率检测
         if($paymentChannelAccount->remit_fee <= 0){
-            throw new Exception(Macro::ERR_CHANNEL_FEE_CONIFG);
+            throw new OperationFailureException(Macro::ERR_CHANNEL_FEE_CONIFG);
         }
         //检测渠道单笔限额
         if($paymentChannelAccount->remit_quota_pertime && $remit->amount > $paymentChannelAccount->remit_quota_pertime){
-            throw new Exception(null,Macro::ERR_REMIT_REACH_CHANNEL_QUOTA_PER_TIME);
+            throw new OperationFailureException(null,Macro::ERR_REMIT_REACH_CHANNEL_QUOTA_PER_TIME);
         }
         //检测渠道日限额
         if($paymentChannelAccount->remit_quota_perday && $paymentChannelAccount->remit_today > $paymentChannelAccount->remit_quota_perday){
-            throw new Exception(null,Macro::ERR_REMIT_REACH_CHANNEL_QUOTA_PER_DAY);
+            throw new OperationFailureException(null,Macro::ERR_REMIT_REACH_CHANNEL_QUOTA_PER_DAY);
         }
     }
 
@@ -277,7 +277,7 @@ class LogicRemit
 
             return $remit;
         }else{
-            throw new \Exception('订单未审核，无法扣款');
+            throw new \app\common\exceptions\OperationFailureException('订单未审核，无法扣款');
         }
     }
 
@@ -323,7 +323,7 @@ class LogicRemit
 
         }else{
             Yii::error([__CLASS__.':'.__FUNCTION__,$remit->order_no,"订单状态错误，无法提交到银行:".$remit->status]);
-            throw new \Exception('订单状态错误，无法提交到银行');
+            throw new \app\common\exceptions\OperationFailureException('订单状态错误，无法提交到银行');
         }
     }
 
@@ -402,7 +402,7 @@ class LogicRemit
             return $remit;
         }else{
             Yii::error([__CLASS__.':'.__FUNCTION__,$remit->order_no,"订单状态错误，无法退款:".$remit->status]);
-            throw new \Exception('订单状态错误，无法退款:'.$remit->status);
+            throw new \app\common\exceptions\OperationFailureException('订单状态错误，无法退款:'.$remit->status);
         }
     }
 

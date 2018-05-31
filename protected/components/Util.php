@@ -46,7 +46,7 @@ class Util
         if($paramType){
             if($val === null || false === self::validate($val,$paramType,$extParamRule)){
                 if($errMsg !== null){
-                    throw new \Exception($errMsg.":{$param}",Macro::ERR_PARAM_FORMAT);
+                    throw new \app\common\exceptions\OperationFailureException($errMsg.":{$param}",Macro::ERR_PARAM_FORMAT);
                 }
             }
         }
@@ -753,7 +753,7 @@ class Util
             $msg = Macro::MSG_LIST[$code];
         }
 
-        throw new \Exception($msg, $code);
+        throw new \app\common\exceptions\OperationFailureException($msg, $code);
     }
 
     /**

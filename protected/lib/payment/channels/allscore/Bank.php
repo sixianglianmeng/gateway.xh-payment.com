@@ -40,7 +40,7 @@ class Bank extends AllScoreBasePayment
 
         $bankList = require Yii::getAlias("@app/config/payment/allscore/banks.php");
         if(empty($bankList[$this->order['bank_code']])){
-            throw new \Exception('银行代码配置错误:'.__LINE__,Macro::ERR_PAYMENT_BANK_CODE);
+            throw new \app\common\exceptions\OperationFailureException('银行代码配置错误:'.__LINE__,Macro::ERR_PAYMENT_BANK_CODE);
         }
         $defaultBank = $bankList[$this->order['bank_code']]['code'];//$this->order['bank_code'];
 
