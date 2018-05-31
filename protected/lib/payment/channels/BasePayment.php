@@ -32,6 +32,7 @@ class BasePayment
     //网银支付跳转接口结果
     const RECHARGE_WEBBANK_RESULT = [
         'status' => Macro::FAIL,
+        'message'=>'',
         'data' => [
             'url'      => 'get跳转链接',
             'formHtml' => '自动提交的form表单HTML',
@@ -40,6 +41,7 @@ class BasePayment
     //支付通知解析结果
     const RECHARGE_NOTIFY_RESULT = [
         'status' => Macro::FAIL,
+        'message'=>'',
         'data' => [
             //订单对象 app\common\models\model\Order
             'order' => null,
@@ -60,6 +62,7 @@ class BasePayment
     //收款订单查询接口结果
     const RECHARGE_QUERY_RESULT = [
         'status' => Macro::FAIL,
+        'message'=>'',
         'data' => [
             'channel_order_no' => '',//三方订单号',
             'trade_status'       => "",//Macro::SUCCESS|Macro::FAIL",
@@ -68,6 +71,7 @@ class BasePayment
     //出款接口结果
     const REMIT_RESULT = [
         'status' => Macro::FAIL,
+        'message'=>'',
         'data' => [
             'channel_order_no' => '',//三方订单号',
             'bank_status'       => '',//三方银行状态,需转换为Remit表状态',
@@ -76,6 +80,7 @@ class BasePayment
     //出款订单查询接口结果
     const REMIT_QUERY_RESULT = [
         'status' => Macro::FAIL,
+        'message'=>'',
         'data' => [
             'channel_order_no' => '',//三方订单号'
             'bank_status'       => '',//三方银行状态,需转换为Remit表状态',
@@ -84,6 +89,7 @@ class BasePayment
     //余额查询接口结果
     const BALANCE_QUERY_RESULT = [
         'status' => Macro::FAIL,
+        'message'=>'',
         'data' => [
             'balance'        => '',//三方账户可用余额',
             'frozen_balance' => '',//三方账户冻结余额',

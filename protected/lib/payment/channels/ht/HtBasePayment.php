@@ -190,8 +190,9 @@ class HtBasePayment extends BasePayment
         $ret = self::REMIT_RESULT;
         if (!empty($resTxt)) {
             $res = json_decode($resTxt, true);
+            //仅代表请求成功,不代表业务成功
+            if (isset($res['is_success'])) $ret['status'] = Macro::SUCCESS;
             if (isset($res['is_success']) && strtoupper($res['is_success']) == 'TRUE') {
-                $ret['status']         = Macro::SUCCESS;
                 $ret['data']['channel_order_no'] = $res['order_id'];
                 //0 未处理，1 银行处理中 2 已打款 3 失败
                 $ret['data']['bank_status'] = $res['bank_status'];
@@ -224,11 +225,15 @@ class HtBasePayment extends BasePayment
         $ret = self::REMIT_QUERY_RESULT;
         if (!empty($resTxt)) {
             $res = json_decode($resTxt, true);
+            //仅代表请求成功,不代表业务成功
+            if (isset($res['is_success'])) $ret['status'] = Macro::SUCCESS;
             if (isset($res['is_success']) && strtoupper($res['is_success']) == 'TRUE') {
-                $ret['status']         = Macro::SUCCESS;
                 $ret['data']['channel_order_no'] = $res['order_id'];
                 //0 未处理，1 银行处理中 2 已打款 3 失败
                 $ret['data']['bank_status'] = $res['bank_status'];
+                if($res['bank_status']==3){
+                    $ret['message'] = $res['errror_msg']??'银行处理失败';
+                }
             } else {
                 $ret['message'] = $res['errror_msg']??'出款查询失败';
             }
@@ -260,7 +265,7 @@ class HtBasePayment extends BasePayment
                 $ret['data']['channel_order_no'] = $res['order_id'];
                 $ret['data']['trade_status'] = $res['trade_status'];
             } else {
-                $ret['message'] = $res['errror_msg']??'出款查询失败';
+                $ret['message'] = $res['errror_msg']??'收款订单查询失败';
             }
         }
 

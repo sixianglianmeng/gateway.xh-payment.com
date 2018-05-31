@@ -310,16 +310,16 @@ class LogicRemit
                 if(!empty($ret['data']['channel_order_no']) && empty($remit->channel_order_no)){
                     $remit->channel_order_no = $ret['data']['channel_order_no'];
                 }
+
+                $remit->save();
+
+                return $remit;
             }
-            //失败或者银行拒绝
+            //提交失败暂不处理,等待重新提交
             else{
-                $remit->status = Remit::STATUS_NOT_REFUND;
-                $remit->bank_status =  Remit::BANK_STATUS_FAIL;
+
             }
 
-            $remit->save();
-
-            return $remit;
 
         }else{
             Yii::error([__CLASS__.':'.__FUNCTION__,$remit->order_no,"订单状态错误，无法提交到银行:".$remit->status]);
@@ -349,25 +349,26 @@ class LogicRemit
                 case  Remit::BANK_STATUS_FAIL:
                     $remit->status = Remit::STATUS_NOT_REFUND;
                     $remit->bank_status =  Remit::BANK_STATUS_FAIL;
+                    if($ret['message']) $remit->bak = date('Y-md H:i:s').''.$ret['message']."\n";
             }
 
             if(!empty($ret['data']['channel_order_no']) && empty($remit->channel_order_no)){
                 $remit->channel_order_no = $ret['data']['channel_order_no'];
             }
+
+            $remit->save();
+
+            if($remit->bank_status == Remit::BANK_STATUS_SUCCESS){
+                self::afterSuccess($remit);
+            }
+
+            self::updateToRedis($remit);
         }
-        //失败或者银行拒绝
+        //查询执行失败暂不处理,等待下一次查询
         else{
-            $remit->status = Remit::STATUS_NOT_REFUND;
-            $remit->bank_status =  Remit::BANK_STATUS_FAIL;
+
         }
 
-        $remit->save();
-
-        if($remit->bank_status == Remit::BANK_STATUS_SUCCESS){
-            self::afterSuccess($remit);
-        }
-
-        self::updateToRedis($remit);
 
         return $remit;
     }
@@ -481,8 +482,8 @@ class LogicRemit
         if($failMsg) $remit->fail_msg = $remit->fail_msg.$failMsg.date('Ymd H:i:s')."\n";
         $remit->status = Remit::STATUS_BANK_PROCESS_FAIL;
         $remit->bank_status =  Remit::BANK_STATUS_FAIL;
-        if($opUsername) $bak="{$opUsername} set fail at ".date('Ymd H:i:s')."\n";
-        $remit->bak .=$bak;
+        if($opUsername) $failMsg="{$opUsername} set fail at ".date('Ymd H:i:s')."\n";
+        $remit->bak .=$failMsg;
         $remit->save();
 
         self::updateToRedis($remit);
