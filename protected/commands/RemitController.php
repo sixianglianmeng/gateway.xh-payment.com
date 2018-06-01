@@ -33,7 +33,7 @@ class RemitController extends BaseConsoleCommand
             $startTs = time()-($expire?$expire*60:1800);
 
             $remits = Remit::find(['status'=>Remit::STATUS_BANK_PROCESSING])
-            ->andWhere(['>=', 'paid_at', $startTs])
+            ->andWhere(['>=', 'remit_at', $startTs])
             ->limit(100)->all();
 
             Yii::info('find remit to check status: '.count($remits));
