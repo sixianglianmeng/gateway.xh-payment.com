@@ -2,6 +2,7 @@
 namespace app\commands;
 use app\common\models\model\Order;
 use app\common\models\model\Remit;
+use app\common\models\model\SiteConfig;
 use app\jobs\PaymentNotifyJob;
 use app\jobs\RemitCommitJob;
 use app\jobs\RemitQueryJob;
