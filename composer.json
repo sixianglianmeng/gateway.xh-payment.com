@@ -26,7 +26,8 @@
         "yiisoft/yii2-redis": "^2.0",
         "paragonie/random_compat": "~1.4",
         "yiisoft/yii2-swiftmailer": "^2.1",
-        "yiisoft/yii2-queue": "^2.0"
+        "yiisoft/yii2-queue": "^2.0",
+        "symfony/dom-crawler": "^4.1"
     },
     "require-dev": {
         "codeception/codeception": "*",

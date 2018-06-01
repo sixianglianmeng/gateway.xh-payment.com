@@ -11,6 +11,7 @@ use app\lib\helpers\ControllerParameterValidator;
 use app\lib\payment\channels\BasePayment;
 use app\modules\gateway\models\logic\LogicOrder;
 use power\yii2\net\exceptions\SignatureNotMatchException;
+use Symfony\Component\DomCrawler\Crawler;
 
 class HtBasePayment extends BasePayment
 {
@@ -65,7 +66,6 @@ class HtBasePayment extends BasePayment
             throw new SignatureNotMatchException("签名验证失败");
         }
 
-
         $ret = self::RECHARGE_NOTIFY_RESULT;
         if(!empty($request['trade_status']) && $request['tradeStatus'] == self::TRADE_STATUS_SUCCESS) {
             $ret['order'] = $order;
@@ -102,7 +102,7 @@ class HtBasePayment extends BasePayment
             'return_url'=>Yii::$app->request->hostInfo."/gateway/ht/return",
             'bank_code'=>$banCode,
             'merchant_code'=>$this->order['channel_merchant_id'],
-            'order_no'=>$this->order['order_no'],
+            'order_no'=>$this->order['order_no'].'_'.mt_rand(1,1000),
             'pay_type'=>$this->order['pay_method_code'],
             'order_amount'=>$this->order['amount'],
             'req_referer'=>Yii::$app->request->referrer?Yii::$app->request->referrer:Yii::$app->request->getHostInfo().Yii::$app->request->url,
@@ -114,9 +114,45 @@ class HtBasePayment extends BasePayment
         $params['sign'] = self::md5Sign($params,trim($this->paymentConfig['key']));
 
         $requestUrl = $this->paymentConfig['base_gateway_url'].'/pay.html';
-
         $getUrl = $requestUrl.'?'.http_build_query($params);
-        $form = self::buildForm($params, $requestUrl);
+
+        //跳过上游第一个地址,达到隐藏上游目的.
+        $htmlTxt = file_get_contents($getUrl);
+//        $htmlTxt = '<form id="allscoresubmit" name="allscoresubmit" action="https://paymenta.allscore.com/olgateway/serviceDirect.htm" method="post"><input type="hidden"
+//name="subject" value="在线支付"/><input type="hidden" name="channel" value="B2C"/><input type="hidden" name="sign" value="TWZSeUttekFsYXZGRDJBYkNhVHZCVXg2ZFFTaklWYm9FKzFPSDBGY3JLZFk1SmVvL2cyNTlJMzg5ZDQzNGRqQ2h2MTdFUXdJcURPdWk3N2lDZVNVMmh5TmJBM1M0L3F0V1lreGIwL3hmTVN0ME5EZ1VRdzJrdFdwUnd1dE5pYy9XQThJZmtoYUxjYWdiSXUvRzNTMDkrWURjWnppUyt3ZkRrV1VnY2FZeFVjPQ=="/><input type="hidden" name="body" value="在线支付"/><input type="hidden" name="defaultBank" value="CMB"/><input type="hidden" name="merchantId" value="001018050404891"/><input type="hidden" name="service" value="directPay"/><input type="hidden" name="payMethod" value="bankPay"/><input type="hidden" name="outOrderId" value="1090520601796603"/><input type="hidden" name="transAmt" value="10.00"/><input type="hidden" name="cardAttr" value="01"/><input type="hidden" name="signType" value="RSA"/><input type="hidden" name="notifyUrl" value="https://sync.huitongvip.com/shangyinxin/notify_url.html"/><input type="hidden" name="inputCharset" value="UTF-8"/><input type="hidden" name="detailUrl" value=""/><input type="hidden" name="returnUrl" value="https://api.huitongvip.com/shangyinxin/notify_page.html"/><input type="submit" value="确认" style="display:none;"></form><script>document.forms[\'allscoresubmit\'].submit();</script>';
+
+        $crawler = new Crawler($htmlTxt);
+        $jumpUrl = '';
+        foreach ($crawler->filter('form') as $n){
+            $jumpUrl = $n->getAttribute('action');
+        }
+        $jumpParams = [];
+        foreach ($crawler->filter('form > input') as $input) {
+            $field = $input->getAttribute('name');
+            if(!$field) continue;
+            $jumpParams[$field] = $input->getAttribute('value');
+
+        }
+
+        //第二跳
+        $retTxt2 = self::post($jumpUrl,$jumpParams);
+//        $retTxt2 = "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\"> <html xmlns=\"http://www.w3.org/1999/xhtml\"> <head> <meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\"/> <title>网上支付系统</title> </head> <body> <body><form id = \"sform\" action=\"https://netpay.cmbchina.com/netpayment/BaseHttp.dll?PrePayC2?\" method=\"post\"><input type=\"hidden\" name=\"BranchID\" id=\"BranchID\" value=\"0010\"/><input type=\"hidden\" name=\"CoNo\" id=\"CoNo\" value=\"000254\"/><input type=\"hidden\" name=\"BillNo\" id=\"BillNo\" value=\"4204657401\"/><input type=\"hidden\" name=\"Amount\" id=\"Amount\" value=\"10.00\"/><input type=\"hidden\" name=\"Date\" id=\"Date\" value=\"20180601\"/><input type=\"hidden\" name=\"MerchantUrl\" id=\"MerchantUrl\" value=\"https://notice.allscore.com/ebank/cmb/pay/return\"/><input type=\"hidden\" name=\"MerchantPara\" id=\"MerchantPara\" value=\"\"/><input type=\"hidden\" name=\"MerchantCode\" id=\"MerchantCode\" value=\"|ApVquWqQM*mKe/BHWs7ZusA9jI/jw2CVpl8Bcv*weVMTPj9EfhM6bmPKcCaWKmdaMR3cqI8ZvamDl3g3GZjkG6Yysrt/lZQvVznw7zag9zN3hQa14p8Bnj*CBiFk7nkj8bge6FqWNz3H2tmgkZHbJUQxzz1wh6Yjq6rov6l825/h4uYAdA9Nf0SLT3Fj1fCMR0Bw*x8dYMlHQY8/Eebw9UDAEO373o*4fyM/7mdktAXwS8gMKLQB0toa4iSnbM6wNzbHhbptCjz1TxEz8CXcVr5OefvnTn1EN3bH6BdGahjdafLL18TM1KGgOc8cDimMXnbhsOI6neGaNK81eigzyjgI72XQvjduQAio/w==|5feddeb609c08f2ed7aa06ce00783a0d1d7e9f30\"/></form></body><script type=\"text/javascript\">document.getElementById(\"sform\").submit(); </script> </body> </html>";
+
+        $crawler = new Crawler($retTxt2);
+        $jumpUrl = '';
+        foreach ($crawler->filter('form') as $n){
+            $jumpUrl = $n->getAttribute('action');
+        }
+        $jumpParams = [];
+        foreach ($crawler->filter('form > input') as $input) {
+            $field = $input->getAttribute('name');
+            if(!$field) continue;
+            $jumpParams[$field] = $input->getAttribute('value');
+
+        }
+        $form = self::buildForm( $jumpParams, $jumpUrl);
+
+//        $form = self::buildForm($params, $requestUrl);
 
         $ret = self::RECHARGE_WEBBANK_RESULT;
         $ret['status'] = Macro::SUCCESS;
