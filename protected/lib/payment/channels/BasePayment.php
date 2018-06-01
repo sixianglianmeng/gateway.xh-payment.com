@@ -237,6 +237,32 @@ class BasePayment
     }
 
     /**
+     *
+     * 发送http get 请求
+     *
+     * @param sttring $url 请求地址
+     * @param array $headers http header
+     *
+     * @return bool|string
+     */
+    public static function httpGet($url, $headers=[])
+    {
+        try{
+            $client = new \GuzzleHttp\Client();
+            $response = $client->get($url.'?'.http_build_query($postData));
+            $httpCode = $response->getStatusCode();
+            $body = (string)$response->getBody();
+        }catch (\Exception $e){
+            $httpCode = $e->getCode();
+            $body = $e->getMessage();
+        }
+
+        Yii::debug('request to channel: '.$url.' '.$httpCode.' '.$body);
+
+        return $body;
+    }
+
+    /**
      * 构造提交表单HTML数据
      * @param array $params 请求参数数组
      * @param string $url 网关地址
