@@ -133,26 +133,30 @@ class HtBasePayment extends BasePayment
             $jumpParams[$field] = $input->getAttribute('value');
 
         }
+        Yii::info([$jumpUrl,$jumpParams]);
+        if($jumpUrl && $jumpParams){
+            //第二跳
+            $retTxt2 = self::post($jumpUrl,$jumpParams);
+            //        $retTxt2 = "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\"> <html xmlns=\"http://www.w3.org/1999/xhtml\"> <head> <meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\"/> <title>网上支付系统</title> </head> <body> <body><form id = \"sform\" action=\"https://netpay.cmbchina.com/netpayment/BaseHttp.dll?PrePayC2?\" method=\"post\"><input type=\"hidden\" name=\"BranchID\" id=\"BranchID\" value=\"0010\"/><input type=\"hidden\" name=\"CoNo\" id=\"CoNo\" value=\"000254\"/><input type=\"hidden\" name=\"BillNo\" id=\"BillNo\" value=\"4204657401\"/><input type=\"hidden\" name=\"Amount\" id=\"Amount\" value=\"10.00\"/><input type=\"hidden\" name=\"Date\" id=\"Date\" value=\"20180601\"/><input type=\"hidden\" name=\"MerchantUrl\" id=\"MerchantUrl\" value=\"https://notice.allscore.com/ebank/cmb/pay/return\"/><input type=\"hidden\" name=\"MerchantPara\" id=\"MerchantPara\" value=\"\"/><input type=\"hidden\" name=\"MerchantCode\" id=\"MerchantCode\" value=\"|ApVquWqQM*mKe/BHWs7ZusA9jI/jw2CVpl8Bcv*weVMTPj9EfhM6bmPKcCaWKmdaMR3cqI8ZvamDl3g3GZjkG6Yysrt/lZQvVznw7zag9zN3hQa14p8Bnj*CBiFk7nkj8bge6FqWNz3H2tmgkZHbJUQxzz1wh6Yjq6rov6l825/h4uYAdA9Nf0SLT3Fj1fCMR0Bw*x8dYMlHQY8/Eebw9UDAEO373o*4fyM/7mdktAXwS8gMKLQB0toa4iSnbM6wNzbHhbptCjz1TxEz8CXcVr5OefvnTn1EN3bH6BdGahjdafLL18TM1KGgOc8cDimMXnbhsOI6neGaNK81eigzyjgI72XQvjduQAio/w==|5feddeb609c08f2ed7aa06ce00783a0d1d7e9f30\"/></form></body><script type=\"text/javascript\">document.getElementById(\"sform\").submit(); </script> </body> </html>";
 
-        //第二跳
-        $retTxt2 = self::post($jumpUrl,$jumpParams);
-//        $retTxt2 = "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\"> <html xmlns=\"http://www.w3.org/1999/xhtml\"> <head> <meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\"/> <title>网上支付系统</title> </head> <body> <body><form id = \"sform\" action=\"https://netpay.cmbchina.com/netpayment/BaseHttp.dll?PrePayC2?\" method=\"post\"><input type=\"hidden\" name=\"BranchID\" id=\"BranchID\" value=\"0010\"/><input type=\"hidden\" name=\"CoNo\" id=\"CoNo\" value=\"000254\"/><input type=\"hidden\" name=\"BillNo\" id=\"BillNo\" value=\"4204657401\"/><input type=\"hidden\" name=\"Amount\" id=\"Amount\" value=\"10.00\"/><input type=\"hidden\" name=\"Date\" id=\"Date\" value=\"20180601\"/><input type=\"hidden\" name=\"MerchantUrl\" id=\"MerchantUrl\" value=\"https://notice.allscore.com/ebank/cmb/pay/return\"/><input type=\"hidden\" name=\"MerchantPara\" id=\"MerchantPara\" value=\"\"/><input type=\"hidden\" name=\"MerchantCode\" id=\"MerchantCode\" value=\"|ApVquWqQM*mKe/BHWs7ZusA9jI/jw2CVpl8Bcv*weVMTPj9EfhM6bmPKcCaWKmdaMR3cqI8ZvamDl3g3GZjkG6Yysrt/lZQvVznw7zag9zN3hQa14p8Bnj*CBiFk7nkj8bge6FqWNz3H2tmgkZHbJUQxzz1wh6Yjq6rov6l825/h4uYAdA9Nf0SLT3Fj1fCMR0Bw*x8dYMlHQY8/Eebw9UDAEO373o*4fyM/7mdktAXwS8gMKLQB0toa4iSnbM6wNzbHhbptCjz1TxEz8CXcVr5OefvnTn1EN3bH6BdGahjdafLL18TM1KGgOc8cDimMXnbhsOI6neGaNK81eigzyjgI72XQvjduQAio/w==|5feddeb609c08f2ed7aa06ce00783a0d1d7e9f30\"/></form></body><script type=\"text/javascript\">document.getElementById(\"sform\").submit(); </script> </body> </html>";
+            $crawler = new Crawler($retTxt2);
+            $jumpUrl = '';
+            foreach ($crawler->filter('form') as $n){
+                $jumpUrl = $n->getAttribute('action');
+            }
+            $jumpParams = [];
+            foreach ($crawler->filter('form > input') as $input) {
+                $field = $input->getAttribute('name');
+                if(!$field) continue;
+                $jumpParams[$field] = $input->getAttribute('value');
 
-        $crawler = new Crawler($retTxt2);
-        $jumpUrl = '';
-        foreach ($crawler->filter('form') as $n){
-            $jumpUrl = $n->getAttribute('action');
+            }
+            Yii::info([$jumpUrl,$jumpParams]);
+            $form = self::buildForm( $jumpParams, $jumpUrl);
+        }else{
+            Yii::info("can not skip ht payment redirect");
+            $form = self::buildForm($params, $requestUrl);
         }
-        $jumpParams = [];
-        foreach ($crawler->filter('form > input') as $input) {
-            $field = $input->getAttribute('name');
-            if(!$field) continue;
-            $jumpParams[$field] = $input->getAttribute('value');
-
-        }
-        $form = self::buildForm( $jumpParams, $jumpUrl);
-
-//        $form = self::buildForm($params, $requestUrl);
 
         $ret = self::RECHARGE_WEBBANK_RESULT;
         $ret['status'] = Macro::SUCCESS;

@@ -249,7 +249,7 @@ class BasePayment
     {
         try{
             $client = new \GuzzleHttp\Client();
-            $response = $client->get($url.'?'.http_build_query($postData));
+            $response = $client->get($url);
             $httpCode = $response->getStatusCode();
             $body = (string)$response->getBody();
         }catch (\Exception $e){
