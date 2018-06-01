@@ -57,7 +57,14 @@ class RemitController extends BaseConsoleCommand
         $doCheck = true;
         while ($doCheck) {
             if(LogicRemit::canCommitToBank()){
-                $remits = Remit::find(['status'=>Remit::STATUS_DEDUCT])->limit(100)->all();
+                //获取配置:出款多少分钟之后不再自动查询状态,默认半小时
+                $expire = SiteConfig::cacheGetContent('remit_check_expire');
+                $startTs = time()-($expire?$expire*60:1800);
+
+                $remits = Remit::find(['status'=>Remit::STATUS_DEDUCT])
+                    ->andWhere(['>=', 'remit_at', $startTs])
+                    ->limit(100)->all();
+
                 Yii::info('find remit to commit bank: '.count($remits));
                 foreach ($remits as $remit){
                     Yii::info('BankCommitQueueProducer: '.$remit->order_no);
@@ -81,7 +88,15 @@ class RemitController extends BaseConsoleCommand
     public function actionReCheckFailQueueProducer(){
         $doCheck = true;
         while ($doCheck) {
-            $remits = Remit::find(['status'=>Remit::STATUS_BANK_PROCESS_FAIL])->limit(10)->all();
+            //获取配置:出款多少分钟之后不再自动查询状态,默认半小时
+            $expire = SiteConfig::cacheGetContent('remit_check_expire');
+            $startTs = time()-($expire?$expire*60:1800);
+
+            $remits = Remit::find(['status'=>Remit::STATUS_BANK_PROCESS_FAIL])
+                ->andWhere(['>=', 'remit_at', $startTs])
+                ->limit(100)->all();
+
+
             foreach ($remits as $remit){
                 Yii::info('job remit ReCheckFail: '.$remit->order_no);
 
