@@ -89,7 +89,7 @@ class HtBasePayment extends BasePayment
      *
      * return array ['url'=>'get跳转链接','formHtml'=>'自动提交的form表单HTML']
      */
-    public function createPaymentRedirectParams()
+    public function webBank()
     {
 
         $banCode = BankCodes::getChannelBankCode($this->order['channel_id'],$this->order['bank_code']);
@@ -120,6 +120,7 @@ class HtBasePayment extends BasePayment
 
         $ret = self::RECHARGE_WEBBANK_RESULT;
         $ret['status'] = Macro::SUCCESS;
+        $ret['data']['type'] = self::RENDER_TYPE_REDIRECT;
         $ret['data']['url'] = $getUrl;
         $ret['data']['formHtml'] = $form;
 

@@ -3,15 +3,16 @@ namespace app\modules\gateway\controllers\v1\web;
 
 use app\components\Macro;
 use app\components\WebAppController;
-use app\lib\payment\channels\allscore\AllScoreBasePayment;
+use app\lib\payment\channels\ht\HtBasePayment;
 use app\modules\gateway\models\logic\LogicOrder;
 use Yii;
 use app\modules\gateway\controllers\BaseController;
 use app\common\exceptions\OperationFailureException;
+
 /*
- * 商银信充值回调
+ * 汇通充值回调
  */
-class AllscoreController extends WebAppController
+class HtController extends WebAppController
 {
     /**
      * 前置action
@@ -28,7 +29,7 @@ class AllscoreController extends WebAppController
     public function actionNotify()
     {
         //解析订单回调，获取统一的订单id，金额等信息
-        $payment = new AllScoreBasePayment();
+        $payment = new HtBasePayment();
         $noticeResult = $payment->parseReturnRequest($this->allParams);
         Yii::debug("parseReturnRequest: ".\GuzzleHttp\json_encode($noticeResult));
 
@@ -37,8 +38,8 @@ class AllscoreController extends WebAppController
         }
 
         LogicOrder::processChannelNotice($noticeResult);
-
-        $responseStr = AllScoreBasePayment::createdResponse(true);
+        
+        $responseStr = HtBasePayment::createdResponse(true);
         return $responseStr;
     }
 
@@ -50,14 +51,13 @@ class AllscoreController extends WebAppController
 //        \Yii::$app->response->format = \yii\web\Response::FORMAT_RAW;
 
         //解析订单回调，获取统一的订单id，金额等信息
-        $payment = new AllScoreBasePayment();
+        $payment = new HtBasePayment();
         $noticeResult = $payment->parseReturnRequest($this->allParams);
         Yii::debug("parseReturnRequest: ".\GuzzleHttp\json_encode($noticeResult));
 
         if(empty($noticeResult->order)){
             throw new OperationFailureException("无法解析订单信息：".$noticeResult->msg);
         }
-
 
         //处理订单
         LogicOrder::processChannelNotice($noticeResult);

@@ -1,11 +1,15 @@
 <?php
 namespace app\modules\gateway\controllers\v1\web;
 
+use app\common\exceptions\OperationFailureException;
+use app\common\models\model\Channel;
 use app\common\models\model\ChannelAccount;
 use app\common\models\model\User;
 use app\components\Macro;
 use app\components\Util;
+use app\lib\helpers\ResponseHelper;
 use app\lib\payment\ChannelPayment;
+use app\lib\payment\channels\BasePayment;
 use app\modules\gateway\controllers\v1\BaseWebSignedRequestController;
 use app\modules\gateway\models\logic\LogicOrder;
 use app\modules\gateway\models\logic\PaymentRequest;
@@ -17,6 +21,8 @@ use app\modules\gateway\controllers\BaseController;
  */
 class OrderController extends BaseWebSignedRequestController
 {
+    private $_randRedirectSecretKey = "5c3865c23722f49247096d24c5de0e2a";
+
     /**
      * 前置action
      *
@@ -50,7 +56,7 @@ class OrderController extends BaseWebSignedRequestController
 
         //生成跳转连接
         $payment = new ChannelPayment($order, $payMethod->channelAccount);
-        $redirect = $payment->createPaymentRedirectParams();
+        $redirect = $payment->webBank();
 
         //设置客户端唯一id
         $paymentRequest->setClientIdCookie();
@@ -60,5 +66,46 @@ class OrderController extends BaseWebSignedRequestController
         }
 
         return $redirect['data']['formHtml'];
+    }
+
+    /*
+     * 收银台
+     * 根据用户选择的通道自动跳转或展示支付二维码
+     */
+    public function actionCashier()
+    {
+        $needParams = ['merchant_code', 'order_no', 'pay_type', 'bank_code', 'order_amount', 'order_time', 'req_referer', 'customer_ip', 'notify_url', 'return_url', 'return_params', 'sign'];
+
+        $paymentRequest = new  PaymentRequest($this->merchant, $this->merchantPayment);
+        //检测参数合法性，判断用户合法性
+        $paymentRequest->validate($this->allParams, $needParams);
+
+        $payMethod = $this->merchantPayment->getPayMethodById($this->allParams['pay_type']);
+        if(empty($payMethod) || empty($payMethod->channelAccount)){
+            Util::throwException(Macro::ERR_PAYMENT_TYPE_NOT_ALLOWED);
+        }
+        if($payMethod->channelAccount->status!=ChannelAccount::STATUS_ACTIVE && $payMethod->channelAccount->status!=ChannelAccount::STATUS_REMIT_BANED){
+            Util::throwException(Macro::ERR_PAYMENT_TYPE_NOT_ALLOWED,"支付渠道状态不正确:".$payMethod->channelAccount->getStatusStr());
+        }
+
+        //生成订单
+        $order = LogicOrder::addOrder($this->allParams, $this->merchant, $payMethod);
+
+        //生成订单之后进行多次随机跳转,最后再到三方支付
+        $url = $this->generateRandRedirectUrl($order->order_no,mt_rand(2,5));
+        return $this->redirect($url, 302);
+    }
+
+
+    protected function generateRandRedirectUrl($orderNo, $leftRedirectTimes=1)
+    {
+        $data = [
+            'orderNo'=>$orderNo,
+            'leftRedirectTimes'=>$leftRedirectTimes,
+        ];
+        $encryptedData = Yii::$app->getSecurity()->encryptByPassword(json_encode($data), $this->_randRedirectSecretKey);
+
+        $encryptedData = urlencode(base64_encode($encryptedData));
+        return Yii::$app->request->hostInfo.'/order/go.html?sign='.$encryptedData;
     }
 }

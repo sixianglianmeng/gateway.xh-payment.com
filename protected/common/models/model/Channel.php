@@ -34,6 +34,19 @@ class Channel extends BaseModel
         self::METHOD_ALIPAY_H5 => '支付宝H5',
     ];
 
+    const ARR_METHOD_EN = [
+        self::METHOD_WEBBANK => 'webBank',
+        self::METHOD_WECHAT => 'wechatQr',
+        self::METHOD_WECHAT_H5 => 'wechatH5',
+        self::METHOD_ALIPAY => 'alipay',
+        self::METHOD_ALIPAY_H5 => 'alipayH5',
+        self::METHOD_QQWALLET => 'qqQr',
+        self::METHOD_QQ_H5 => 'qqH5',
+        self::METHOD_JDWALLET => 'jdWallet',
+        self::METHOD_UNIONPAY => 'unoinPay',
+        self::METHOD_QUICK => 'quick',
+    ];
+
     public static function tableName()
     {
         return '{{%channels}}';
@@ -69,6 +82,10 @@ class Channel extends BaseModel
 
     public static function getPayMethodsStr($methodId){
         return self::ARR_METHOD[$methodId]??'';
+    }
+
+    public static function getPayMethodEnStr($methodId){
+        return self::ARR_METHOD_EN[$methodId]??'';
     }
 
     public function getPayMethodsArr()

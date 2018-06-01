@@ -13,6 +13,13 @@ use yii\base\Request;
 
 class BasePayment
 {
+    //充值响应方式:页面直接往上游跳转
+    const RENDER_TYPE_REDIRECT = 'redirect';
+    //充值响应方式:显示二维码/条码
+    const RENDER_TYPE_QR = 'qr';
+    //充值响应方式:唤起客户端
+    const RENDER_TYPE_NATIVE = 'native';
+
     //订单信息
     protected $order = null;
     //提款代付信息
@@ -29,13 +36,26 @@ class BasePayment
     protected $paymentHandle = null;
 
     /**********各接口操作结果数据结构,每种三方渠道必须返回统一的结构,上层才能处理***********/
+    //收银台接口响应结果
+    const RECHARGE_CASHIER_RESULT = [
+        'status' => Macro::FAIL,
+        'message'=>'',
+        'data' => [
+            'type'=>self::RENDER_TYPE_REDIRECT,
+            'url'      => '',//get跳转链接
+            'formHtml' => '',//自动提交的form表单HTML
+            'qr' => '',//自动提交的form表单HTML
+            'scheme' => '',//唤醒客户端的scheme
+        ],
+    ];
+
     //网银支付跳转接口结果
     const RECHARGE_WEBBANK_RESULT = [
         'status' => Macro::FAIL,
         'message'=>'',
         'data' => [
-            'url'      => 'get跳转链接',
-            'formHtml' => '自动提交的form表单HTML',
+            'url'      => '',//get跳转链接
+            'formHtml' => '',//自动提交的form表单HTML
         ],
     ];
     //支付通知解析结果
@@ -278,7 +298,7 @@ class BasePayment
      *
      * return array ['url'=>'','htmlForm'=>'']
      */
-//    public function createPaymentRedirectParams()
+//    public function webBank()
 //    {
 ////        $this->setPaymentConfig($order, $channelAccount);
 //        //具体不同支付方式生成支付参数业务逻辑

@@ -71,6 +71,7 @@ class ChannelPayment
 
     /**
      * 魔术代理方法，如果调用的函数本类中有，者调用本类，否则调用对应的支付类方法。
+     * 不同的支付方式对应到paymentHandle类中对应支付方式(Channel::ARR_METHOD_EN)的处理方法
      *
      * @param $name
      * @param $arguments

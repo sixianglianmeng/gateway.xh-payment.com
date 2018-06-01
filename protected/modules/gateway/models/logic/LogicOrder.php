@@ -38,10 +38,16 @@ class LogicOrder
     {
 
         $orderData                      = [];
+        $orderData['app_id']              = $request['app_id'] ?? $merchant->id;
+        $orderData['merchant_order_no'] = $request['order_no'];
+        $hasOrder = Order::findOne(['app_id' => $orderData['app_id'], 'merchant_order_no' => $orderData['merchant_order_no']]);
+        if ($hasOrder) {
+            //            throw new InValidRequestException('请不要重复下单');
+            return $hasOrder;
+        }
+
         $orderData['pay_method_code']   = $request['pay_type'];
         $orderData['amount']            = $request['order_amount'];
-        $orderData['merchant_order_no'] = $request['order_no'];
-
         $orderData['notify_url']          = $request['notify_url'] ?? '';
         $orderData['return_url']          = $request['return_url'] ?? '';
         $orderData['bank_code']           = $request['bank_code'] ?? '';
@@ -53,20 +59,16 @@ class LogicOrder
         $orderData['notify_ret']          = '';
         $orderData['client_ip']           = $request['client_ip'] ?? Yii::$app->request->userIP;
         $orderData['return_params']       = $request['return_params'] ?? '';
-
         $orderData['status']           = Order::STATUS_NOTPAY;
         $orderData['financial_status'] = Order::FINANCIAL_STATUS_NONE;
         $orderData['notify_status']    = Order::NOTICE_STATUS_NONE;
         $orderData['created_at']       = time();
-
-        $orderData['app_id']              = $request['app_id'] ?? $merchant->id;
         $orderData['merchant_id']         = $merchant->id;
         $orderData['merchant_account']    = $merchant->username;
         $orderData['all_parent_agent_id'] = $merchant->all_parent_agent_id;
         $orderData['channel_id']          = $rechargeMethod->channel_id;
         $orderData['channel_account_id']  = $rechargeMethod->channel_account_id;
         $orderData['method_config_id']    = $rechargeMethod->id;
-
         $channelAccount                   = $rechargeMethod->channelAccount;
         $orderData['channel_merchant_id'] = $channelAccount->merchant_id;
         $orderData['channel_app_id']      = $channelAccount->app_id;
@@ -104,12 +106,6 @@ class LogicOrder
         if($topestPrent['fee_rate']<$orderData['plat_fee_rate']){
             Yii::error("商户费率配置错误,小于渠道最低费率: 顶级商户ID:{$topestPrent['merchant_id']},商户渠道账户ID:{$topestPrent['channel_account_id']},商户费率:{$topestPrent['fee_rate']},渠道名:{$rechargeMethod->channel_account_name},渠道费率:{$orderData['plat_fee_rate']}");
             throw new InValidRequestException("商户费率配置错误,小于渠道最低费率!");
-        }
-
-        $hasOrder = Order::findOne(['app_id' => $orderData['app_id'], 'merchant_order_no' => $orderData['merchant_order_no']]);
-        if ($hasOrder) {
-            //            throw new InValidRequestException('请不要重复下单');
-            return $hasOrder;
         }
 
         $newOrder = new Order();

@@ -79,12 +79,26 @@ $config = [
 
 //            'enableStrictParsing' => true,
             'rules' => [
+                /********商户接口URL重写开始*******/
+                //收银台
+                '/cashier.html' => '/gateway/v1/web/order/cashier',
+                //订单付款
+                '/order/pay.html' => '/gateway/v1/web/order-pay/pay',
+                //下单后随机跳转多次再到上游
+                '/order/go.html' => '/gateway/v1/web/order-pay/rand-redirect',
+                //v1支付接口
                 '/pay.html' => '/gateway/v1/web/order/web-bank',
+                //v1 支付宝微信下单接口
                 '/order.html' => '/gateway/v1/web/order/order',
+                //收款查询
                 '/query.html' => '/gateway/v1/server/order/status',
+                //出款
                 '/remit.html' => '/gateway/v1/server/remit/single',
+                //出款查询
                 '/remit_query.html' => '/gateway/v1/server/remit/status',
+                //余额查询
                 '/balance.html' => '/gateway/v1/server/account/balance',
+                /********商户接口URL重写结束*******/
 
                 [
                     'class' => 'yii\rest\UrlRule',

@@ -18,7 +18,7 @@ class Bank extends AllScoreBasePayment
      *
      * return array ['url'=>'','formHtml'=>'']
      */
-    public function createPaymentRedirectParams()
+    public function webBank()
     {
         require_once (Yii::getAlias("@app/lib/payment/channels/allscore/lib/allscore_service.class.php"));
         $service = "directPay"; // 快速付款交易服务（不可以修改）
@@ -108,7 +108,11 @@ class Bank extends AllScoreBasePayment
             $ItemUrl = $allscoreService->createQuickUrl($parameter);
         }
 
-        return ['url'=>$ItemUrl,'formHtml'=>$html_text];
+        $ret = self::RECHARGE_WEBBANK_RESULT;
+        $ret['status'] = Macro::SUCCESS;
+        $ret['data']['type'] = self::RENDER_TYPE_REDIRECT;
+        $ret['data']['url'] = $ItemUrl;
+        $ret['data']['formHtml'] = $html_text;
 
     }
 

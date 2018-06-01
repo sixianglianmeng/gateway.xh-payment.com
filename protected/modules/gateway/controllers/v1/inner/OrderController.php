@@ -52,7 +52,7 @@ class OrderController extends BaseInnerController
 
         //生成跳转连接
         $payment = new ChannelPayment($order, $payMethod->channelAccount);
-        $redirect = $payment->createPaymentRedirectParams();
+        $redirect = $payment->webBank();
 
         return ResponseHelper::formatOutput(Macro::SUCCESS,'',$redirect);
     }
