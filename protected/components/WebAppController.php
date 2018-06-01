@@ -1,6 +1,7 @@
 <?php
 namespace app\components;
 
+use app\common\exceptions\OperationFailureException;
 use Yii;
 use yii\filters\Cors;
 use yii\filters\RateLimiter;
@@ -68,7 +69,9 @@ class WebAppController extends Controller
             return ResponseHelper::formatOutput( Macro::ERR_PARAM_SIGN, $e->getMessage());
         } catch (UnauthorizedHttpException $e) {
             return ResponseHelper::formatOutput( $e->statusCode, $e->getMessage());
-        } catch (\Exception $e) {
+        } catch (OperationFailureException $e) {
+            return ResponseHelper::formatOutput( $e->statusCode, $e->getMessage());
+        }catch (\Exception $e) {
             LogHelper::error(
                 sprintf(
                     'unkown exception occurred. %s:%s trace: %s',

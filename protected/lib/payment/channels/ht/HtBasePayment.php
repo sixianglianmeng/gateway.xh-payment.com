@@ -94,7 +94,7 @@ class HtBasePayment extends BasePayment
 
         $banCode = BankCodes::getChannelBankCode($this->order['channel_id'],$this->order['bank_code']);
         if(empty($banCode)){
-            throw new \app\common\exceptions\OperationFailureException("银行代码配置错误:".get_class($this).':'.$this->order['bank_code'],Macro::ERR_PAYMENT_BANK_CODE);
+            throw new \app\common\exceptions\OperationFailureException("银行代码配置错误:".$this->order['channel_id'].':'.$this->order['bank_code'],Macro::ERR_PAYMENT_BANK_CODE);
         }
 
         $params = [
@@ -117,7 +117,8 @@ class HtBasePayment extends BasePayment
         $getUrl = $requestUrl.'?'.http_build_query($params);
 
         //跳过上游第一个地址,达到隐藏上游目的.
-        $htmlTxt = file_get_contents($getUrl);
+//        $htmlTxt = file_get_contents($getUrl);
+        $htmlTxt = self::httpGet($getUrl);
 //        $htmlTxt = '<form id="allscoresubmit" name="allscoresubmit" action="https://paymenta.allscore.com/olgateway/serviceDirect.htm" method="post"><input type="hidden"
 //name="subject" value="在线支付"/><input type="hidden" name="channel" value="B2C"/><input type="hidden" name="sign" value="TWZSeUttekFsYXZGRDJBYkNhVHZCVXg2ZFFTaklWYm9FKzFPSDBGY3JLZFk1SmVvL2cyNTlJMzg5ZDQzNGRqQ2h2MTdFUXdJcURPdWk3N2lDZVNVMmh5TmJBM1M0L3F0V1lreGIwL3hmTVN0ME5EZ1VRdzJrdFdwUnd1dE5pYy9XQThJZmtoYUxjYWdiSXUvRzNTMDkrWURjWnppUyt3ZkRrV1VnY2FZeFVjPQ=="/><input type="hidden" name="body" value="在线支付"/><input type="hidden" name="defaultBank" value="CMB"/><input type="hidden" name="merchantId" value="001018050404891"/><input type="hidden" name="service" value="directPay"/><input type="hidden" name="payMethod" value="bankPay"/><input type="hidden" name="outOrderId" value="1090520601796603"/><input type="hidden" name="transAmt" value="10.00"/><input type="hidden" name="cardAttr" value="01"/><input type="hidden" name="signType" value="RSA"/><input type="hidden" name="notifyUrl" value="https://sync.huitongvip.com/shangyinxin/notify_url.html"/><input type="hidden" name="inputCharset" value="UTF-8"/><input type="hidden" name="detailUrl" value=""/><input type="hidden" name="returnUrl" value="https://api.huitongvip.com/shangyinxin/notify_page.html"/><input type="submit" value="确认" style="display:none;"></form><script>document.forms[\'allscoresubmit\'].submit();</script>';
 
