@@ -10,6 +10,8 @@ use app\lib\helpers\ControllerParameterValidator;
 use app\lib\helpers\ResponseHelper;
 use app\lib\payment\ChannelPayment;
 use app\lib\payment\channels\BasePayment;
+use app\modules\gateway\models\logic\LogicOrder;
+use app\modules\gateway\models\logic\PaymentRequest;
 use Yii;
 use app\modules\gateway\controllers\BaseController;
 
@@ -40,6 +42,11 @@ class OrderPayController extends WebAppController
         if (!$order) {
             return ResponseHelper::formatOutput(Macro::ERR_UNKNOWN,'订单不存在');
         }
+        //设置客户端唯一id
+        PaymentRequest::setClientIdCookie();
+
+        //更新客户端信息
+        LogicOrder::updateClientInfo($order);
 
         //生成跳转连接
         $payment = new ChannelPayment($order, $order->channelAccount);

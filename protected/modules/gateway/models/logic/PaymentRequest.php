@@ -103,18 +103,16 @@ class PaymentRequest
 
 
     static public function checkBlackListUser(){
-        $ip = Yii::$app->request->userIP;
+        $ip = Util::getClientIp();
 
-
-        //['OR', 'type=1', ['AND', 'id=1', 'id=2']]
-//        $where  = ' OR (type=1 AND val='.$cookies[self::CLIENT_ID_IN_COOKIE].')';
         $query = (new Query())->select('id')->from(UserBlacklist::tableName())
             ->where(['and','type=1',"val='".$ip."'"]);
 
         $cookies = Yii::$app->request->cookies;
-        if (isset($cookies[self::CLIENT_ID_IN_COOKIE])){
-            $where[] = ' OR (type=1 AND val='.$cookies[self::CLIENT_ID_IN_COOKIE].')';
-            $query->orWhere(['and','type=2',"val='{$cookies[self::CLIENT_ID_IN_COOKIE]}'"]);
+        $clientId = self::getClientId();
+        if ($clientId){
+            $where[] = ' OR (type=1 AND val='.$clientId.')';
+            $query->orWhere(['and','type=2',"val='{$clientId}'"]);
         }
 
         $black = $query->one();
@@ -123,6 +121,12 @@ class PaymentRequest
         }
 
         return true;
+    }
+
+    static public function getClientId(){
+        $cookies = Yii::$app->request->cookies;
+
+        return $cookies[self::CLIENT_ID_IN_COOKIE]??'';
     }
 
     public function checkReferrer(){
@@ -137,7 +141,7 @@ class PaymentRequest
         return true;
     }
 
-    public function setClientIdCookie(){
+    public static function setClientIdCookie(){
         $cookies = Yii::$app->request->cookies;
         if(empty($cookies[self::CLIENT_ID_IN_COOKIE])){
             $resCookies = Yii::$app->response->cookies;

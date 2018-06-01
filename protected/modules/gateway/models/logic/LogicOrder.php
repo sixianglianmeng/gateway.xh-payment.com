@@ -566,4 +566,19 @@ class LogicOrder
 
         return $order;
     }
+
+    /*
+     * 更新订单的客户端信息,如Ip
+     */
+    public static function updateClientInfo($order)
+    {
+        $order->client_ip          = Util::getClientIp();
+
+        $clientId = PaymentRequest::getClientId();
+        if ($clientId){
+            $order->client_id = $clientId;
+        }
+
+        $order->save();
+    }
 }

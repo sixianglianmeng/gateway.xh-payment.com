@@ -354,26 +354,31 @@ class Util
      */
     public static function getClientIp($type = 0)
     {
-        $type    = $type ? 1 : 0;
         static $ip = null;
+        $type = $type ? 1 : 0;
+
         if ($ip !== null) {
             return $ip[$type];
         }
-        if (isset($_SERVER['HTTP_X_FORWARDED_FOR'])) {
-            $arr    =   explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']);
-            $pos = array_search('unknown', $arr);
-            if (false !== $pos) {
-                unset($arr[$pos]);
+
+        foreach (['HTTP_X_FORWARDED_FOR', 'HTTP_X_FORWARDED', 'HTTP_X_CLUSTER_CLIENT_IP', 'HTTP_FORWARDED_FOR', 'HTTP_FORWARDED',  'REMOTE_ADDR', 'HTTP_CLIENT_IP'] as $key) {
+            if (array_key_exists($key, $_SERVER) === true) {
+                foreach (explode(',', $_SERVER[$key]) as $ip) {
+                    $ip = trim($ip); // just to be safe
+
+                    if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false) {
+                        $ip = null;
+                    }
+                }
             }
-            $ip     =   trim($arr[0]);
-        } elseif (isset($_SERVER['HTTP_CLIENT_IP'])) {
-            $ip     =   $_SERVER['HTTP_CLIENT_IP'];
-        } elseif (isset($_SERVER['REMOTE_ADDR'])) {
-            $ip     =   $_SERVER['REMOTE_ADDR'];
         }
+
+        if (!$ip) return $ip;
+
         // IP地址合法验证
         $long = sprintf("%u", ip2long($ip));
-        $ip   = $long ? array($ip, $long) : array('0.0.0.0', 0);
+        $ip   = $long ? [$ip, $long] : ['0.0.0.0', 0];
+
         return $ip[$type];
     }
 

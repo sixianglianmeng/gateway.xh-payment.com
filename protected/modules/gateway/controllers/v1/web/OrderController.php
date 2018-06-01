@@ -59,7 +59,7 @@ class OrderController extends BaseWebSignedRequestController
         $redirect = $payment->webBank();
 
         //设置客户端唯一id
-        $paymentRequest->setClientIdCookie();
+        PaymentRequest::setClientIdCookie();
 
         if($redirect['status'] != Macro::SUCCESS || empty($redirect['data']['formHtml'])){
             Util::throwException(Macro::ERR_UNKNOWN,"支付表单生成失败");
