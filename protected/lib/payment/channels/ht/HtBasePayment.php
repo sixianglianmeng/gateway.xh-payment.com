@@ -209,7 +209,7 @@ class HtBasePayment extends BasePayment
                 $ret['data']['channel_order_no'] = $res['transId'];
 
                 if(!empty($res['qrCodeUrl'])){
-                    if(Util::isMobileDevice()){
+                    if(Util::isMobileDevice() && substr($res['qrCodeUrl'],0,4)=='http'){
                         $ret['data']['type'] = self::RENDER_TYPE_REDIRECT;
                         $ret['data']['url'] = $res['qrCodeUrl'];
                     }else{
