@@ -66,31 +66,30 @@ class OrderPayController extends WebAppController
         switch ($ret['data']['type']){
             case BasePayment::RENDER_TYPE_REDIRECT:
                 if(!empty($ret['data']['formHtml'])){
-                    return $ret['data']['formHtml'];
+                    $response = $ret['data']['formHtml'];
                 }
                 elseif(!empty($ret['data']['url'])){
-                    return $this->redirect($ret['data']['url'], 302);
+                    $response = $this->redirect($ret['data']['url'], 302);
                 }
                 break;
             case BasePayment::RENDER_TYPE_QR:
-                // 渲染一个名称为"view"的视图并使用布局
-                $ret['order'] = $order;
-                return $this->render('@app/modules/gateway/views/cashier/qr', [
+                $ret['order'] = $order->toArray();
+                $ret['order']['pay_method_str'] = Channel::getPayMethodsStr($order['pay_method_code']);
+                $response = $this->render('@app/modules/gateway/views/cashier/qr', [
                     'data' => $ret,
                 ]);
                 break;
             case BasePayment::RENDER_TYPE_NATIVE:
-                // 渲染一个名称为"view"的视图并使用布局
                 $ret['order'] = $order;
-                return $this->render('cashier/native', [
+                $response = $this->render('cashier/native', [
                     'data' => $ret,
                 ]);
                 break;
             default:
-                $ret =  ResponseHelper::formatOutput(Macro::ERR_UNKNOWN,"无法找到支付表单渲染方式:".$ret['data']['type']);
+                $response =  ResponseHelper::formatOutput(Macro::ERR_UNKNOWN,"无法找到支付表单渲染方式:".$ret['data']['type']);
         }
 
-        return $ret;
+        return $response;
     }
 
     /*

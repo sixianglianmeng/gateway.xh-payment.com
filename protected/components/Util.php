@@ -770,4 +770,26 @@ class Util
         list($t1, $t2) = explode(' ', microtime());
         return (float)sprintf('%.0f',(floatval($t1)+floatval($t2))*1000);
     }
+
+    /**
+     * 检测是否是移动类型终端访问
+     * @return string
+     */
+    public static function isMobileDevice()
+    {
+        //全部变成小写字母
+        $agent = strtolower($_SERVER['HTTP_USER_AGENT']);
+        //分别进行判断
+        if (strpos($agent, 'iphone')!==false
+            || strpos($agent, 'ipad')!==false
+            || strpos($agent, 'android')!==false
+            || strpos($agent, 'micromessenger')!==false
+            || strpos($agent, 'alipay')!==false
+        ) {
+            return true;
+        }
+
+        return false;
+
+    }
 }

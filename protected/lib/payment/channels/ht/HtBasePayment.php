@@ -4,6 +4,7 @@ namespace app\lib\payment\channels\ht;
 
 use app\common\models\model\BankCodes;
 use app\common\models\model\Remit;
+use app\components\Util;
 use Yii;
 use app\common\models\model\Order;
 use app\components\Macro;
@@ -186,7 +187,7 @@ class HtBasePayment extends BasePayment
             'bank_code'=>'',
             'merchant_code'=>$this->order['channel_merchant_id'],
             'order_no'=>$this->order['order_no'],
-//            'order_no'=>$this->order['order_no'].'-'.mt_rand(1,1000),
+            'order_no'=>$this->order['order_no'].'-'.mt_rand(1,1000),
             'pay_type'=>$this->order['pay_method_code'],
             'order_amount'=>$this->order['amount'],
             'req_referer'=>Yii::$app->request->referrer?Yii::$app->request->referrer:Yii::$app->request->getHostInfo().Yii::$app->request->url,
@@ -199,7 +200,6 @@ class HtBasePayment extends BasePayment
         $requestUrl = $this->paymentConfig['base_gateway_url'].'/order.html';
         $resTxt = self::post($requestUrl,$params);
         //"{"flag":"00","msg":"下单成功","orderId":"106030602907794","payType":"2","qrCodeUrl":"https://api.huitongvip.com/wf2/order.html?id=8a0c808663b537fd0163c03d4a8a2377","sign":"88d1b6ac0c708b386ab4a5af9f75574f","transId":"10218060219213554285555"}"
-
         $ret = self::RECHARGE_WEBBANK_RESULT;
         if (!empty($resTxt)) {
             $res = json_decode($resTxt, true);
@@ -209,8 +209,14 @@ class HtBasePayment extends BasePayment
                 $ret['data']['channel_order_no'] = $res['transId'];
 
                 if(!empty($res['qrCodeUrl'])){
-                    $ret['data']['type'] = self::RENDER_TYPE_REDIRECT;
-                    $ret['data']['url'] = $res['qrCodeUrl'];
+                    if(Util::isMobileDevice()){
+                        $ret['data']['type'] = self::RENDER_TYPE_REDIRECT;
+                        $ret['data']['url'] = $res['qrCodeUrl'];
+                    }else{
+                        $ret['data']['type'] = self::RENDER_TYPE_QR;
+                        $ret['data']['qr'] = $res['qrCodeUrl'];
+                    }
+
                 }
             } else {
                 $ret['message'] = $res['msg']??'付款提交失败';
@@ -388,5 +394,35 @@ class HtBasePayment extends BasePayment
             $str = 'success';
         }
         return $str;
+    }
+
+    /**
+     * 获取支付下一跳的地址/post表单
+     *
+     * @param string $url
+     * @param $postParams
+     * return array ['url'=>'','params'=>[]]
+     */
+    public function getNextPaymentForm($url, $postParams=null)
+    {
+        if($postParams){
+            $htmlTxt = self::post($url,$postParams);
+        }
+        $htmlTxt = self::httpGet($url);
+
+        $crawler = new Crawler($htmlTxt);
+        $jumpUrl = '';
+        foreach ($crawler->filter('form') as $n){
+            $jumpUrl = $n->getAttribute('action');
+        }
+        $jumpParams = [];
+        foreach ($crawler->filter('form > input') as $input) {
+            $field = $input->getAttribute('name');
+            if(!$field) continue;
+            $jumpParams[$field] = $input->getAttribute('value');
+
+        }
+
+        return ['url'=>$jumpUrl,'params'=>$jumpParams];
     }
 }

@@ -35,11 +35,6 @@ $config = \yii\helpers\ArrayHelper::merge(
 );
 
 if(YII_ENV_DEV) {
-    if(php_sapi_name()!=='cli') {
-        $config['bootstrap'][]      = 'debug';
-        $config['modules']['debug'] = 'yii\debug\Module';
-    }
-
     $config['bootstrap'][] = 'gii';
     $config['modules']['gii'] = [
         'class' => 'yii\gii\Module',
