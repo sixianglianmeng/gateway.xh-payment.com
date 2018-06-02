@@ -145,7 +145,7 @@ class LogicRemit
 
         //账户费率检测
         if($userPaymentConfig->remit_fee <= 0){
-            throw new OperationFailureException(Macro::ERR_MERCHANT_FEE_CONIFG);
+            throw new OperationFailureException(Macro::ERR_MERCHANT_FEE_CONFIG);
         }
 
         //检测账户单笔限额
@@ -167,7 +167,7 @@ class LogicRemit
 
         //渠道费率检测
         if($paymentChannelAccount->remit_fee <= 0){
-            throw new OperationFailureException(Macro::ERR_CHANNEL_FEE_CONIFG);
+            throw new OperationFailureException(Macro::ERR_CHANNEL_FEE_CONFIG);
         }
         //检测渠道单笔限额
         if($paymentChannelAccount->remit_quota_pertime && $remit->amount > $paymentChannelAccount->remit_quota_pertime){

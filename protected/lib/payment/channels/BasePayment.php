@@ -141,7 +141,7 @@ class BasePayment
         $this->channelAccount = $channelAccount;
     }
 
-    /*
+    /**
      * 根据订单和渠道账户配置设置支付配置
      *
      */
@@ -150,23 +150,24 @@ class BasePayment
         $this->setChannelAccount($channelAccount);
 
         $channel = $channelAccount->channel;
+        $baseConfig = $envConfig = [];
+
         //渠道代码(英文)，用于配置文件目录名等。配置文件真实地址为/config/payment/目录名/config.php,且payment目录可放置于不同环境目录下。
         $baseConfigFile = Yii::getAlias("@app/config/payment/{$channel->channel_code}/config.php");
-        if(!file_exists(Yii::getAlias("@app/config/payment/{$channel->channel_code}/config.php"))){
-            throw new \app\common\exceptions\OperationFailureException("找不到渠道配置文件",Macro::ERR_PAYMENT_CHANNEL_ID);
+        if(file_exists(Yii::getAlias("@app/config/payment/{$channel->channel_code}/config.php"))){
+            $baseConfig = require $baseConfigFile;
         }
-        $baseConfig = require $baseConfigFile;
-        $envConfig = [];
-        $envFile = Yii::getAlias('@app/config/').strtolower(APPLICATION_ENV) .'/payment/allscore/config.php';
+        $envFile = Yii::getAlias("@app/config/payment/{$channel->channel_code}/config_").strtolower(APPLICATION_ENV) .".php";
         if(file_exists($envFile)){
             $envConfig = require $envFile;
         }
 
         $appSecrets = $channelAccount->getAppSectets();
-        if(empty($appSecrets) || empty($channelAccount->merchant_id)){
+        if(empty($appSecrets) || !is_array($appSecrets) || empty($channelAccount->merchant_id)){
             throw new \app\common\exceptions\OperationFailureException("收款渠道配置错误:channelAccountId:{$channelAccount->id}",Macro::ERR_PAYMENT_CHANNEL_CONFIG);
         }
         $paymentConfig                = \yii\helpers\ArrayHelper::merge($baseConfig, $envConfig);
+
         $paymentConfig                = \yii\helpers\ArrayHelper::merge($paymentConfig, $appSecrets);
         $paymentConfig['merchantId'] = $channelAccount->merchant_id;
         $paymentConfig['appId']      = $channelAccount->app_id;
@@ -207,7 +208,7 @@ class BasePayment
      *
      * 发送post请求
      *
-     * @param sttring $url 请求地址
+     * @param string $url 请求地址
      * @param array $postData 请求数据
      *
      * @return bool|string
@@ -289,64 +290,158 @@ class BasePayment
         return $sHtml;
     }
 
-    /*
+    /**
      * 解析异步通知请求，返回订单
      *
-     * return app\common\models\model\Order
+     * return array BasePayment::RECHARGE_NOTIFY_RESULT
      */
-//    public function parseNotifyRequest(array $request){
-//        //check sign
-//
-//        //get order id from request
-////        $orderId = $_REQUEST['orderId'];
-////        //get order object and set order
-////        $order = Order::findOne(['order_no'=>$orderId]);
-////        $this->setOrder($order);
-//    }
+    public function parseNotifyRequest(array $request){
+        //check sign
 
-    /*
+        //get order id and result from request
+
+        throw new OperationFailureException("通道暂不支持解析异步通知", Macro::ERR_UNKNOWN);
+    }
+
+    /**
      * 解析同步通知请求，返回订单
      *
-     * return app\common\models\model\Order
+     * return array BasePayment::RECHARGE_NOTIFY_RESULT
      */
-//    public function parseReturnRequest(array $request){
-//        //check sign
-//
-////        //get order id from request
-////        $orderId = $_REQUEST['orderId'];
-////        //get order object and set order
-////        $order = Order::findOne(['order_no'=>$orderId]);
-////        $this->setOrder($order);
-//    }
+    public function parseReturnRequest(array $request){
+        //check sign
 
-    /*
-     * 生成支付跳转参数连接
-     *
-     * return array ['url'=>'','htmlForm'=>'']
-     */
-//    public function webBank()
-//    {
-////        $this->setPaymentConfig($order, $channelAccount);
-//        //具体不同支付方式生成支付参数业务逻辑
-//    }
+        //get order id and result from request
 
-    /*
-      * 提款待付
+        throw new OperationFailureException("通道暂不支持解析同步通知", Macro::ERR_UNKNOWN);
+    }
+
+     /**
+      * 出款
       *
-      * return array
+      * return array BasePayment::REMIT_RESULT
       */
-//    public function remit()
-//    {
-//    }
-    //
-    /*
+    public function remit()
+    {
+        throw new OperationFailureException("通道暂不支持出款", Macro::ERR_UNKNOWN);
+    }
+
+    /**
+     * 出款状态查询
+     *
+     * @return array BasePayment::REMIT_QUERY_RESULT
+     */
+    public function remitStatus(){
+
+    }
+
+    /**
       * 余额查询
       *
-      * return array
+      * return  array BasePayment::BALANCE_QUERY_RESULT
       */
-//    public function remit()
-//    {
-//            return $ret['data']['balance']
-//    }
+    public function balance()
+    {
+        throw new OperationFailureException("通道暂不支持查询余额", Macro::ERR_UNKNOWN);
+    }
+
+
+    /**
+     * 网银支付
+     */
+    public function webBank()
+    {
+        throw new OperationFailureException("通道暂不支持此支付方式:".__FUNCTION__, Macro::ERR_UNKNOWN);
+    }
+
+    /**
+     * 网银快捷支付
+     */
+    public function bankQuickPay()
+    {
+        throw new OperationFailureException("通道暂不支持此支付方式:".__FUNCTION__, Macro::ERR_UNKNOWN);
+    }
+
+    /**
+     * 微信扫码支付
+     */
+    public function wechatQr()
+    {
+        throw new OperationFailureException("通道暂不支持此支付方式:".__FUNCTION__, Macro::ERR_UNKNOWN);
+    }
+
+    /**
+     * 微信快捷扫码支付
+     */
+    public function wechatQuickQr()
+    {
+        throw new OperationFailureException("通道暂不支持此支付方式:".__FUNCTION__, Macro::ERR_UNKNOWN);
+    }
+
+    /**
+     * 微信H5支付
+     */
+    public function wechatH5()
+    {
+        throw new OperationFailureException("通道暂不支持此支付方式:".__FUNCTION__, Macro::ERR_UNKNOWN);
+
+    }
+
+    /**
+     * 支付宝扫码支付
+     */
+    public function alipayQr()
+    {
+        throw new OperationFailureException("通道暂不支持此支付方式:".__FUNCTION__, Macro::ERR_UNKNOWN);
+    }
+
+    /**
+     * 支付宝H5支付
+     */
+    public function alipayH5()
+    {
+        throw new OperationFailureException("通道暂不支持此支付方式:".__FUNCTION__, Macro::ERR_UNKNOWN);
+    }
+
+    /**
+     * QQ扫码支付
+     */
+    public function qqQr()
+    {
+        throw new OperationFailureException("通道暂不支持此支付方式:".__FUNCTION__, Macro::ERR_UNKNOWN);
+    }
+
+    /**
+     * QQ H5支付
+     */
+    public function qqH5()
+    {
+        throw new OperationFailureException("通道暂不支持此支付方式:".__FUNCTION__, Macro::ERR_UNKNOWN);
+    }
+
+    /**
+     * 京东钱包支付
+     */
+    public function jdWallet()
+    {
+        throw new OperationFailureException("通道暂不支持此支付方式:".__FUNCTION__, Macro::ERR_UNKNOWN);
+    }
+
+    /**
+     * 银联微信扫码支付
+     */
+    public function unoinPayQr()
+    {
+        throw new OperationFailureException("通道暂不支持此支付方式:".__FUNCTION__, Macro::ERR_UNKNOWN);
+    }
+
+
+    /**
+     * 京东H5支付
+     */
+    public function jdh5()
+    {
+        throw new OperationFailureException("通道暂不支持此支付方式:".__FUNCTION__, Macro::ERR_UNKNOWN);
+    }
 
 }

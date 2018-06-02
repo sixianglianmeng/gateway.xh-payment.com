@@ -12,4 +12,5 @@ $config['return_url']   = '';
 $config['notify_url']   = '';
 
 $config['base_gateway_url']='https://api.huitongvip.com';//快捷支付PAI接口
+
 return $config;

@@ -76,6 +76,8 @@ class LogicOrder
         $orderData['fee_rate']   = $rechargeMethod->fee_rate;
         $orderData['fee_amount'] = bcmul($rechargeMethod->fee_rate, $orderData['amount'], 6);
         $orderData['order_no']   = self::generateOrderNo($orderData);
+        $channelAccountRechargeConfig = $rechargeMethod->getChannelAccountMethodConfig();
+        $orderData['plat_fee_rate']       = $channelAccountRechargeConfig->fee_rate;
 
         //所有上级代理UID
         $parentConfigModels = $rechargeMethod->getMethodAllParentAgentConfig($rechargeMethod->method_id);
@@ -83,6 +85,14 @@ class LogicOrder
         $parentConfigModels[] = $rechargeMethod;
         $parentConfigs = [];
         foreach ($parentConfigModels as $pc){
+            //跳过未设置费率或小于自身费率或小于渠道费率的上级
+            if($pc->fee_rate<=0
+                || $pc->fee_rate<$orderData['plat_fee_rate']
+                || $orderData['fee_rate']
+
+            ){
+                continue;
+            }
             $parentConfigs[] = [
                 'config_id'=>$pc->id,
                 'fee_rate'=>$pc->fee_rate,
@@ -92,21 +102,25 @@ class LogicOrder
                 'channel_account_id'=>$rechargeMethod->channel_account_id,
             ];
         }
-        $orderData['all_parent_recharge_config'] = json_encode($parentConfigs);
+        $orderData['plat_fee_amount'] = 0;
+        $orderData['plat_fee_profit'] = 0;
+        //如果上级列表不仅有自己
+        if(count($parentConfigs)>1){
+            $orderData['all_parent_recharge_config'] = json_encode($parentConfigs);
+            var_dump($parentConfigs);exit;
+            //上级代理列表第一个为最上级代理
+            $topestPrent = array_shift($parentConfigs);
 
-        //上级代理列表第一个为最上级代理
-        $topestPrent = array_shift($parentConfigs);
+            $orderData['plat_fee_amount']     = bcmul($orderData['plat_fee_rate'], $orderData['amount'], 6);
+            $orderData['plat_fee_profit']     = bcmul(bcsub($topestPrent['fee_rate'],$orderData['plat_fee_rate'],6), $orderData['amount'], 6);
 
+            if($topestPrent['fee_rate']<$orderData['plat_fee_rate']){
+                Yii::error("商户费率配置错误,小于渠道最低费率: 顶级商户ID:{$topestPrent['merchant_id']},商户渠道账户ID:{$topestPrent['channel_account_id']},商户费率:{$topestPrent['fee_rate']},渠道名:{$rechargeMethod->channel_account_name},渠道费率:{$orderData['plat_fee_rate']}");
+                throw new InValidRequestException("商户费率配置错误,小于渠道最低费率!");
+            }
+        }
         unset($parentConfigs);
         unset($parentConfigModels);
-        $channelAccountRechargeConfig = $rechargeMethod->getChannelAccountMethodConfig();
-        $orderData['plat_fee_rate']       = $channelAccountRechargeConfig->fee_rate;
-        $orderData['plat_fee_amount']     = bcmul($orderData['plat_fee_rate'], $orderData['amount'], 6);
-        $orderData['plat_fee_profit']     = bcmul(bcsub($topestPrent['fee_rate'],$orderData['plat_fee_rate'],6), $orderData['amount'], 6);
-        if($topestPrent['fee_rate']<$orderData['plat_fee_rate']){
-            Yii::error("商户费率配置错误,小于渠道最低费率: 顶级商户ID:{$topestPrent['merchant_id']},商户渠道账户ID:{$topestPrent['channel_account_id']},商户费率:{$topestPrent['fee_rate']},渠道名:{$rechargeMethod->channel_account_name},渠道费率:{$orderData['plat_fee_rate']}");
-            throw new InValidRequestException("商户费率配置错误,小于渠道最低费率!");
-        }
 
         $newOrder = new Order();
         $newOrder->setAttributes($orderData, false);
@@ -144,7 +158,7 @@ class LogicOrder
 
         //账户费率检测
         if($rechargeMethod->fee_rate <= 0){
-            throw new OperationFailureException(Macro::ERR_MERCHANT_FEE_CONIFG);
+            throw new OperationFailureException(Macro::ERR_MERCHANT_FEE_CONFIG);
         }
 
         //账户支付方式开关检测
@@ -171,7 +185,7 @@ class LogicOrder
 
         //渠道费率检测
         if($channelAccountRechargeMethod->fee_rate <= 0){
-            throw new OperationFailureException(Macro::ERR_CHANNEL_FEE_CONIFG);
+            throw new OperationFailureException(Macro::ERR_CHANNEL_FEE_CONFIG);
         }
 
         //检测渠道单笔限额

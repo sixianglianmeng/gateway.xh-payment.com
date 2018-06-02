@@ -34,7 +34,7 @@ class ChannelPayment
             throw new \app\common\exceptions\OperationFailureException("渠道配置错误",Macro::ERR_PAYMENT_CHANNEL_ID);
         }
 
-        $handleClass = "app\\lib\\payment\\channels\\".str_replace('/','\\',$channel->remit_handle_class);
+        $handleClass = "app\\lib\\payment\\channels\\".str_replace('/','\\',$channel->common_handle_class);
         $this->paymentHandle = new $handleClass();
         $this->paymentHandle->setPaymentConfig($channelAccount);
     }

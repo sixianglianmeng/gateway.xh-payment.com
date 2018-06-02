@@ -59,7 +59,6 @@ class OrderPayController extends WebAppController
         //由各方法自行处理响应
         //return redirect|QrCode view|h5 call native
         $ret = $payment->$methodFnc();
-
         if(empty($ret['data']['type'])){
             return ResponseHelper::formatOutput(Macro::ERR_UNKNOWN,"无法找到支付表单渲染方式");
         }
@@ -73,10 +72,10 @@ class OrderPayController extends WebAppController
                     return $this->redirect($ret['data']['url'], 302);
                 }
                 break;
-            case BasePayment::RENDER_TYPE_REDIRECT:
+            case BasePayment::RENDER_TYPE_QR:
                 // 渲染一个名称为"view"的视图并使用布局
                 $ret['order'] = $order;
-                return $this->render('cashier/qr', [
+                return $this->render('@app/modules/gateway/views/cashier/qr', [
                     'data' => $ret,
                 ]);
                 break;
@@ -87,6 +86,8 @@ class OrderPayController extends WebAppController
                     'data' => $ret,
                 ]);
                 break;
+            default:
+                $ret =  ResponseHelper::formatOutput(Macro::ERR_UNKNOWN,"无法找到支付表单渲染方式:".$ret['data']['type']);
         }
 
         return $ret;
