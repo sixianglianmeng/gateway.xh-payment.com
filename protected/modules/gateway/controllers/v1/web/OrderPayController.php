@@ -22,8 +22,6 @@
 
     class OrderPayController extends WebAppController
     {
-        private static $_randRedirectSecretKey = "5c3865c23722f49247096d24c5de0e2a";
-
         /**
          * 前置action
          *
@@ -63,6 +61,9 @@
             //由各方法自行处理响应
             //return redirect|QrCode view|h5 call native
             $ret = $payment->$methodFnc();
+            if ($ret['status']!==Macro::SUCCESS) {
+                return ResponseHelper::formatOutput(Macro::ERR_UNKNOWN, "订单生成失败:".$ret['message']);
+            }
             if (empty($ret['data']['type'])) {
                 return ResponseHelper::formatOutput(Macro::ERR_UNKNOWN, "无法找到支付表单渲染方式");
             }
@@ -109,7 +110,7 @@
         {
             $sign = ControllerParameterValidator::getRequestParam($this->allParams, 'sign', null, Macro::CONST_PARAM_TYPE_STRING, '签名错误', [10]);
 
-            $data = Yii::$app->getSecurity()->decryptByPassword(base64_decode($sign), self::$_randRedirectSecretKey);
+            $data = Yii::$app->getSecurity()->decryptByPassword(base64_decode($sign), LogicOrder::RAND_REDIRECT_SECRET_KEY);
             $data = json_decode($data, true);
             if (empty($data['orderNo'])) {
                 ResponseHelper::formatOutput(Macro::ERR_UNKNOWN, '订单号不存在');
@@ -118,7 +119,7 @@
             //还需要跳转
             if ($data['leftRedirectTimes'] > 0) {
                 $data['leftRedirectTimes']--;
-                return $this->redirect(self::generateRandRedirectUrl($data['orderNo'], $data['leftRedirectTimes']), 302);
+                return $this->redirect(LogicOrder::generateRandRedirectUrl($data['orderNo'], $data['leftRedirectTimes']), 302);
             }
 
             return $this->redirect('/order/pay.html?orderNo=' . $data['orderNo'], 302);
@@ -153,17 +154,6 @@
             }
 
             return ResponseHelper::formatOutput($ret,$lastTs.' '.time());
-        }
-
-        public static function generateRandRedirectUrl($orderNo, $leftRedirectTimes = 1)
-        {
-            $data          = [
-                'orderNo'           => $orderNo,
-                'leftRedirectTimes' => $leftRedirectTimes,
-            ];
-            $encryptedData = Yii::$app->getSecurity()->encryptByPassword(json_encode($data), self::$_randRedirectSecretKey);
-            $encryptedData = urlencode(base64_encode($encryptedData));
-            return Yii::$app->request->hostInfo . '/order/go.html?sign=' . $encryptedData;
         }
 
         /**

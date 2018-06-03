@@ -64,42 +64,55 @@ class WebAppController extends Controller
         try {
             return parent::runAction($id, $params);
         } catch (ParameterValidationExpandException $e) {
-            return ResponseHelper::formatOutput( Macro::ERR_PARAM_FORMAT, $e->getMessage());
+            return ResponseHelper::formatOutput(Macro::ERR_PARAM_FORMAT, $e->getMessage());
         } catch (SignatureNotMatchException $e) {
-            return ResponseHelper::formatOutput( Macro::ERR_PARAM_SIGN, $e->getMessage());
+            return ResponseHelper::formatOutput(Macro::ERR_PARAM_SIGN, $e->getMessage());
         } catch (UnauthorizedHttpException $e) {
-            return ResponseHelper::formatOutput( $e->statusCode, $e->getMessage());
+            return ResponseHelper::formatOutput(Macro::ERR_PERMISSION, $e->getMessage());
         } catch (OperationFailureException $e) {
-            return ResponseHelper::formatOutput( $e->statusCode, $e->getMessage());
-        }catch (\Exception $e) {
+            return $this->handleException($e);
+        } catch (\Exception $e) {
             LogHelper::error(
                 sprintf(
                     'unkown exception occurred. %s:%s trace: %s',
-                    get_class($e), 
+                    get_class($e),
                     $e->getMessage(),
                     str_replace("\n", " ", $e->getTraceAsString())
                 )
             );
-            $errCode = $e->getCode();
-            if($errCode === Macro::SUCCESS) $errCode = Macro::FAIL;
-            if (YII_DEBUG) {
-                throw $e;
-//                return ResponseHelper::formatOutput($errCode, $e->getMessage());
-            } else {
-                $code = Macro::INTERNAL_SERVER_ERROR;
-                if(property_exists($e,'statusCode')){
-                    $code = $e->statusCode;
-                    Yii::$app->response->statusCode=$code;
-                }
-                return ResponseHelper::formatOutput($errCode, $e->getMessage());
-            }
+
+            return $this->handleException($e);
         }
     }
 
-    protected function getAllParams(){
-        $arrQueryParams = Yii::$app->getRequest()->getQueryParams();
-        $arrBodyParams  = Yii::$app->getRequest()->getBodyParams();
-        $this->allParams   = $arrQueryParams + $arrBodyParams;
+    protected function handleException($e)
+    {
+        $errCode = $e->getCode();
+        $msg     = $e->getMessage();
+        if (empty($msg) && !empty(Macro::MSG_LIST[$errCode])) {
+            $msg = Macro::MSG_LIST[$errCode];
+        }
+
+        if ($errCode === Macro::SUCCESS) $errCode = Macro::FAIL;
+        if (YII_DEBUG) {
+            throw $e;
+            //                return ResponseHelper::formatOutput($errCode, $e->getMessage());
+        } else {
+            $code = Macro::INTERNAL_SERVER_ERROR;
+            if (property_exists($e, 'statusCode')) {
+                $code                           = $e->statusCode;
+                Yii::$app->response->statusCode = $code;
+            }
+            return ResponseHelper::formatOutput($errCode, $e->getMessage());
+        }
+    }
+
+
+    protected function getAllParams()
+    {
+        $arrQueryParams  = Yii::$app->getRequest()->getQueryParams();
+        $arrBodyParams   = Yii::$app->getRequest()->getBodyParams();
+        $this->allParams = $arrQueryParams + $arrBodyParams;
 
         return $this->allParams;
     }

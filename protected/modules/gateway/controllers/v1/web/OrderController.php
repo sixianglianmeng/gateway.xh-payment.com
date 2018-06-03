@@ -21,8 +21,6 @@ use app\modules\gateway\controllers\BaseController;
  */
 class OrderController extends BaseWebSignedRequestController
 {
-    private $_randRedirectSecretKey = "5c3865c23722f49247096d24c5de0e2a";
-
     /**
      * 前置action
      *
@@ -92,20 +90,8 @@ class OrderController extends BaseWebSignedRequestController
         $order = LogicOrder::addOrder($this->allParams, $this->merchant, $payMethod);
 
         //生成订单之后进行多次随机跳转,最后再到三方支付
-        $url = $this->generateRandRedirectUrl($order->order_no,mt_rand(2,5));
+        $url = LogicOrder::generateRandRedirectUrl($order->order_no,mt_rand(2,5));
+
         return $this->redirect($url, 302);
-    }
-
-
-    protected function generateRandRedirectUrl($orderNo, $leftRedirectTimes=1)
-    {
-        $data = [
-            'orderNo'=>$orderNo,
-            'leftRedirectTimes'=>$leftRedirectTimes,
-        ];
-        $encryptedData = Yii::$app->getSecurity()->encryptByPassword(json_encode($data), $this->_randRedirectSecretKey);
-
-        $encryptedData = urlencode(base64_encode($encryptedData));
-        return Yii::$app->request->hostInfo.'/order/go.html?sign='.$encryptedData;
     }
 }

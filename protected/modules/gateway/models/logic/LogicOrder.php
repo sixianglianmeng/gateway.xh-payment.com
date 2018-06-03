@@ -26,6 +26,7 @@ class LogicOrder
 {
     //通知失败后间隔通知时间
     const NOTICE_DELAY = 300;
+    const RAND_REDIRECT_SECRET_KEY = "5c3865c23722f49247096d24c5de0e2a";
 
     /*
      * 添加充值记录
@@ -594,5 +595,18 @@ class LogicOrder
         }
 
         $order->save();
+    }
+
+
+    public static function generateRandRedirectUrl($orderNo, $leftRedirectTimes = 1)
+    {
+        $data          = [
+            'orderNo'           => $orderNo,
+            'leftRedirectTimes' => $leftRedirectTimes,
+        ];
+        $encryptedData = Yii::$app->getSecurity()->encryptByPassword(json_encode($data), self::RAND_REDIRECT_SECRET_KEY);
+        $encryptedData = urlencode(base64_encode($encryptedData));
+
+        return Yii::$app->request->hostInfo . "/order/go/{$encryptedData}.html";//'/order/go.html?sign=' . $encryptedData;
     }
 }

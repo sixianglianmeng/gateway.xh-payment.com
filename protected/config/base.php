@@ -86,6 +86,7 @@ $config = [
                 '/order/pay.html' => '/gateway/v1/web/order-pay/pay',
                 //下单后随机跳转多次再到上游
                 '/order/go.html' => '/gateway/v1/web/order-pay/rand-redirect',
+                '/order/go/<sign:\S+>.html' => '/gateway/v1/web/order-pay/rand-redirect',
                 //扫码界面循环检测订单状态
                 '/order/check_status.html' => '/gateway/v1/web/order-pay/check-status',
                 //v1支付接口
