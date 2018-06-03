@@ -22,7 +22,7 @@
 
     class OrderPayController extends WebAppController
     {
-        private $_randRedirectSecretKey = "5c3865c23722f49247096d24c5de0e2a";
+        private static $_randRedirectSecretKey = "5c3865c23722f49247096d24c5de0e2a";
 
         /**
          * 前置action
@@ -45,6 +45,7 @@
             if (!$order) {
                 return ResponseHelper::formatOutput(Macro::ERR_UNKNOWN, '订单不存在');
             }
+
             //设置客户端唯一id
             PaymentRequest::setClientIdCookie();
 
@@ -75,8 +76,12 @@
                     }
                     break;
                 case BasePayment::RENDER_TYPE_QR:
+                    $this->view->title = '订单付款';
+
+                    $ret['token'] = $this->setOrderStatusQueryCsrfToken($orderNo);
                     $ret['order']                   = $order->toArray();
                     $ret['order']['pay_method_str'] = Channel::getPayMethodsStr($order['pay_method_code']);
+
                     $response                       = $this->render('@app/modules/gateway/views/cashier/qr', [
                         'data' => $ret,
                     ]);
@@ -104,7 +109,7 @@
         {
             $sign = ControllerParameterValidator::getRequestParam($this->allParams, 'sign', null, Macro::CONST_PARAM_TYPE_STRING, '签名错误', [10]);
 
-            $data = Yii::$app->getSecurity()->decryptByPassword(base64_decode($sign), $this->_randRedirectSecretKey);
+            $data = Yii::$app->getSecurity()->decryptByPassword(base64_decode($sign), self::$_randRedirectSecretKey);
             $data = json_decode($data, true);
             if (empty($data['orderNo'])) {
                 ResponseHelper::formatOutput(Macro::ERR_UNKNOWN, '订单号不存在');
@@ -113,7 +118,7 @@
             //还需要跳转
             if ($data['leftRedirectTimes'] > 0) {
                 $data['leftRedirectTimes']--;
-                return $this->redirect($this->generateRandRedirectUrl($data['orderNo'], $data['leftRedirectTimes']), 302);
+                return $this->redirect(self::generateRandRedirectUrl($data['orderNo'], $data['leftRedirectTimes']), 302);
             }
 
             return $this->redirect('/order/pay.html?orderNo=' . $data['orderNo'], 302);
@@ -124,18 +129,21 @@
          */
         public function actionCheckStatus()
         {
+            \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
 
             $no = ControllerParameterValidator::getRequestParam($this->allParams, 'no', null, Macro::CONST_PARAM_TYPE_ORDER_NO, '订单号错误');
+            $token = ControllerParameterValidator::getRequestParam($this->allParams, 'token', null, Macro::CONST_PARAM_TYPE_STRING, 'token错误-404',[10]);
 
+            //最低频率为2秒
             $key = 'qr_recharge_status:'.md5(Util::getClientIp());
             $lastTs = Yii::$app->cache->get($key);
-            if(!$lastTs){
-                $lastTs = time();
-                Yii::$app->cache->set($key,$lastTs);
-            }else{
-                if((time()-$lastTs)<5){
-                    return ResponseHelper::formatOutput(Macro::ERR_UNKNOWN,'频率受限');
-                }
+            if($lastTs && (time()-$lastTs)<2){
+                return ResponseHelper::formatOutput(Macro::ERR_UNKNOWN,'频率受限');
+            }
+            Yii::$app->cache->set($key,time(),30);
+
+            if(!$this->checkOrderStatusQueryCsrfToken($no,$token)){
+                return ResponseHelper::formatOutput(Macro::ERR_UNKNOWN,'token校验失败');
             }
 
             $order = Order::findOne(['order_no'=>$no]);
@@ -144,17 +152,47 @@
                 $ret = Macro::SUCCESS;
             }
 
-            ResponseHelper::formatOutput($ret);
+            return ResponseHelper::formatOutput($ret,$lastTs.' '.time());
         }
 
-        protected function generateRandRedirectUrl($orderNo, $leftRedirectTimes = 1)
+        public static function generateRandRedirectUrl($orderNo, $leftRedirectTimes = 1)
         {
             $data          = [
                 'orderNo'           => $orderNo,
                 'leftRedirectTimes' => $leftRedirectTimes,
             ];
-            $encryptedData = Yii::$app->getSecurity()->encryptByPassword(json_encode($data), $this->_randRedirectSecretKey);
+            $encryptedData = Yii::$app->getSecurity()->encryptByPassword(json_encode($data), self::$_randRedirectSecretKey);
             $encryptedData = urlencode(base64_encode($encryptedData));
             return Yii::$app->request->hostInfo . '/order/go.html?sign=' . $encryptedData;
+        }
+
+        /**
+         * 生成csrf token
+         * @param $orderNo
+         *
+         * @return string
+         * @throws \yii\base\Exception
+         */
+        protected function setOrderStatusQueryCsrfToken($orderNo)
+        {
+            $key = 'qr_recharge_status_crsf:'.$orderNo;
+            $token = Yii::$app->security->maskToken(Yii::$app->getSecurity()->generateRandomString());
+            Yii::$app->cache->set($key,$token,300);
+
+            return $token;
+        }
+
+        /**
+         * 检测csrf token
+         * @param $orderNo
+         * @param $token
+         *
+         * @return bool
+         */
+        protected function checkOrderStatusQueryCsrfToken($orderNo, $token)
+        {
+            $key = 'qr_recharge_status_crsf:'.$orderNo;
+
+            return Yii::$app->cache->get($key) == $token;
         }
     }

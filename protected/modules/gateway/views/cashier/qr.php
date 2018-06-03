@@ -1,17 +1,9 @@
-<!doctype html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <link rel="stylesheet" href="/assets/css/bootstrap.min.css" >
-    <title>订单付款</title>
-</head>
-<body>
-<body class="bg-light">
-
 <div class="container">
     <div class="py-5 text-center">
         <h2>订单付款</h2>
+        <div class="alert alert-success pay-ok pay-ok-alert" role="alert" style="display: none">
+            <a href="#" class="alert-link">付款已成功</a>
+        </div>
     </div>
 
     <div class="row">
@@ -35,8 +27,8 @@
                     </div>
                     <span class="text-muted">￥<span><?php echo $data['order']['amount']; ?>元</span>
                 </li>
-                <li class="list-group-item d-flex justify-content-between lh-condensed">
-                    <button class="btn btn-primary btn-lg btn-block" type="submit">已付款成功</button>
+                <li class="list-group-item d-flex justify-content-between lh-condensed pay-ok pay-ok-li">
+                    <button class="btn btn-primary btn-lg btn-block pay-btn " type="submit">付款中...</button>
                 </li>
             </ul>
         </div>
@@ -55,14 +47,23 @@
         <p class="mb-1">&copy; <?php echo date('Y') ?> 版权所有</p>
     </footer>
 </div>
-</body>
-<script src="/assets/js/jquery.min.js"></script>
-<script src="/assets/js/bootstrap.min.js"></script>
-<script src="/assets/js/jquery.qrcode.min.js"></script>
 <script>
-    let qrString = "<?php echo $data['data']['qr']; ?>";
+  let qrString = "<?php echo $data['data']['qr']; ?>";
+  let data = {
+    token: "<?php echo $data['token']; ?>",
+    no: "<?php echo $data['order']['order_no']; ?>",
+  }
   $(document).ready(function(){
     $('#qrcode').qrcode({width: 300,height: 300,text:qrString});
+
+    setInterval(function () {
+      $.post("/order/check_status.html",data,function(result){
+        console.log(result);
+        if(result.code == 0){
+            // $('.pay-ok').show();
+            $('.pay-btn').removeClass('btn-primary').addClass('btn-success').text('付款已成功');
+        }
+      });
+    },2000)
   });
 </script>
-</html>
