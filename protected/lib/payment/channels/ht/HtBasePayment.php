@@ -187,7 +187,6 @@ class HtBasePayment extends BasePayment
             'bank_code'=>'',
             'merchant_code'=>$this->order['channel_merchant_id'],
             'order_no'=>$this->order['order_no'],
-            'order_no'=>$this->order['order_no'].'-'.mt_rand(1,1000),
             'pay_type'=>$this->order['pay_method_code'],
             'order_amount'=>$this->order['amount'],
             'req_referer'=>Yii::$app->request->referrer?Yii::$app->request->referrer:Yii::$app->request->getHostInfo().Yii::$app->request->url,

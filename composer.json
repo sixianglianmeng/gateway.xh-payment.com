@@ -16,8 +16,7 @@
     },
     "require": {
         "guzzlehttp/guzzle": "~6.0",
-        "php": ">=7.0",
-        "ext-swoole": "2.1.*",
+        "php": ">=7.2",
         "ext-redis": "4.*",
         "yiisoft/yii2": "2.*",
         "symfony/console": "2.*",
