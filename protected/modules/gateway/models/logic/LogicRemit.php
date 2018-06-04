@@ -286,6 +286,9 @@ class LogicRemit
      */
     static public function commitToBank(Remit $remit, ChannelAccount $paymentChannelAccount){
         Yii::info([__CLASS__.':'.__FUNCTION__,$remit->order_no]);
+        if($remit->status == Remit::STATUS_CHECKED){
+            $remit = self::deduct($remit);
+        }
         if($remit->status == Remit::STATUS_DEDUCT){
             //提交到银行
             //银行状态说明：00处理中，04成功，05失败或拒绝
@@ -325,7 +328,7 @@ class LogicRemit
 
 
         }else{
-            Yii::error([__CLASS__.':'.__FUNCTION__,$remit->order_no,"订单状态错误，无法提交到银行:".$remit->status]);
+            Yii::error(__CLASS__.':'.__FUNCTION__.' '.$remit->order_no." 订单状态错误，无法提交到银行:".$remit->status);
             throw new \app\common\exceptions\OperationFailureException('订单状态错误，无法提交到银行');
         }
     }
