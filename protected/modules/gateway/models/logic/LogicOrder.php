@@ -218,12 +218,12 @@ class LogicOrder
 
     static public function processChannelNotice($noticeResult){
         if(
-        !$noticeResult['order']
+        !$noticeResult['data']['order']
         ){
             throw new InValidRequestException('支付结果对象错误',Macro::ERR_PAYMENT_NOTICE_RESULT_OBJECT);
         }
 
-        $order = $noticeResult['order'];
+        $order = $noticeResult['data']['order'];
 
         //接口日志埋点
         $eventType = LogApiRequest::EVENT_TYPE_IN_RECHARGE_RETURN;
@@ -241,11 +241,11 @@ class LogicOrder
 
         //未处理
         if( $noticeResult['status'] === Macro::SUCCESS && $order->status !== Order::STATUS_PAID){
-            $order = self::paySuccess($order,$noticeResult['amount'],$noticeResult['channel_order_no']);
+            $order = self::paySuccess($order,$noticeResult['data']['amount'],$noticeResult['data']['channel_order_no']);
         }
         elseif( $noticeResult['status'] === Macro::FAIL){
                 $order = self::payFail($order,$noticeResult['msg']);
-            Yii::debug(__FUNCTION__.' order not paid: '.$noticeResult['order_no']);
+            Yii::debug(__FUNCTION__.' order not paid: '.$noticeResult['data']['order_no']);
         }
 
         if($order->notify_status != Order::NOTICE_STATUS_SUCCESS){

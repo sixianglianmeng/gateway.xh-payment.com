@@ -33,8 +33,8 @@ class HtController extends WebAppController
         $noticeResult = $payment->parseReturnRequest($this->allParams);
         Yii::debug("parseReturnRequest: ".\GuzzleHttp\json_encode($noticeResult));
 
-        if(empty($noticeResult->order)){
-            throw new OperationFailureException("无法解析订单信息：".$noticeResult->msg);
+        if(empty($noticeResult['data']['order'])){
+            throw new OperationFailureException("无法解析订单信息：".$noticeResult['msg']);
         }
 
         LogicOrder::processChannelNotice($noticeResult);
