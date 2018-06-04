@@ -37,7 +37,8 @@ class OrderController extends BaseConsoleCommand
             $expire = SiteConfig::cacheGetContent('order_notify_expire');
             $startTs = time()-($expire?$expire*60:1800);
 
-            $query = Order::find(['status'=>Order::STATUS_PAID,'notice_status'=>[Order::NOTICE_STATUS_NONE,Order::NOTICE_STATUS_FAIL]])
+            $query = Order::find()
+            ->where(['status'=>Order::STATUS_PAID,'notify_status'=>[Order::NOTICE_STATUS_NONE,Order::NOTICE_STATUS_FAIL]])
             ->andWhere(['>=', 'paid_at', $startTs])
             //最多通知10次
             ->andWhere(['<', 'notify_times', 10])

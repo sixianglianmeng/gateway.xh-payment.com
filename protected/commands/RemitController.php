@@ -33,14 +33,14 @@ class RemitController extends BaseConsoleCommand
             $expire = SiteConfig::cacheGetContent('remit_check_expire');
             $startTs = time()-($expire?$expire*60:1800);
 
-            $remits = Remit::find(['status'=>Remit::STATUS_BANK_PROCESSING])
+            $remits = Remit::find()
+            ->andWhere(['status'=>Remit::STATUS_BANK_PROCESSING])
             ->andWhere(['>=', 'created_at', $startTs])
             ->limit(100)->all();
 
             Yii::info('find remit to check status: '.count($remits));
             foreach ($remits as $remit){
                 Yii::info('remit status check: '.$remit->order_no);
-//                LogicRemit::queryChannelRemitStatus($remit);
                 $job = new RemitQueryJob([
                     'orderNo'=>$remit->order_no,
                 ]);
@@ -63,7 +63,8 @@ class RemitController extends BaseConsoleCommand
                 $expire = SiteConfig::cacheGetContent('remit_check_expire');
                 $startTs = time()-($expire?$expire*60:1800);
 
-                $remits = Remit::find(['status'=>[Remit::STATUS_DEDUCT,Remit::STATUS_CHECKED]])
+                $remits = Remit::find()
+                    ->andWhere(['status'=>[Remit::STATUS_DEDUCT,Remit::STATUS_CHECKED]])
                     ->andWhere(['>=', 'updated_at', $startTs])
                     ->limit(100)->all();
 
@@ -96,7 +97,8 @@ class RemitController extends BaseConsoleCommand
             $expire = SiteConfig::cacheGetContent('remit_check_expire');
             $startTs = time()-($expire?$expire*60:1800);
 
-            $remits = Remit::find(['status'=>Remit::STATUS_BANK_PROCESS_FAIL])
+            $remits = Remit::find()
+                ->where(['status'=>Remit::STATUS_BANK_PROCESS_FAIL])
                 ->andWhere(['>=', 'remit_at', $startTs])
                 ->limit(100)->all();
 

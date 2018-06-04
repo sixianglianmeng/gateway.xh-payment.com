@@ -208,9 +208,9 @@ class LogicRemit
      */
     static public function bonus(Remit $remit)
     {
-        Yii::info([__CLASS__ . ':' . __FUNCTION__ . ' ' . $remit->order_no]);
+        Yii::info(__CLASS__ . ':' . __FUNCTION__ . ' ' . $remit->order_no);
         if ($remit->financial_status === Remit::FINANCIAL_STATUS_SUCCESS) {
-            Yii::warning([__FUNCTION__ . ' remit has been bonus,will return, ' . $remit->order_no]);
+            Yii::warning(__FUNCTION__ . ' remit has been bonus,will return, ' . $remit->order_no);
             return $remit;
         }
 
@@ -244,7 +244,7 @@ class LogicRemit
             Yii::info(["remit bonus parent", $pUser->id, $pUser->username, $remitConfig['fee_rebate'],$pUser->parentAgent->id, $pUser->parentAgent->username]);
             $logicUser   = new LogicUser($pUser->parentAgent);
             $logicUser->changeUserBalance($remitConfig['fee_rebate'], Financial::EVENT_TYPE_REMIT_BONUS, $remit->order_no, $remit->amount,
-                Yii::$app->request->userIP);
+                Yii::$app->request->userIP??'');
         }
 
         //更新订单账户处理状态
@@ -258,16 +258,17 @@ class LogicRemit
      * 提款扣款
      */
     static public function deduct(Remit $remit){
-        Yii::info([__CLASS__.':'.__FUNCTION__,$remit->order_no]);
+        Yii::info(__CLASS__.':'.__FUNCTION__.' '.$remit->order_no);
         //账户余额扣款
         if($remit->status == Remit::STATUS_CHECKED){
             //账户扣款
             $logicUser = new LogicUser($remit->merchant);
             $amount =  0-$remit->amount;
-            $logicUser->changeUserBalance($amount, Financial::EVENT_TYPE_REMIT, $remit->order_no, $remit->amount, Yii::$app->request->userIP);
+            $ip = Yii::$app->request->userIP??'';
+            $logicUser->changeUserBalance($amount, Financial::EVENT_TYPE_REMIT, $remit->order_no, $remit->amount, $ip);
             //手续费
             $amount =  0-$remit->remit_fee;
-            $logicUser->changeUserBalance($amount, Financial::EVENT_TYPE_REMIT_FEE, $remit->order_no, $remit->amount, Yii::$app->request->userIP);
+            $logicUser->changeUserBalance($amount, Financial::EVENT_TYPE_REMIT_FEE, $remit->order_no, $remit->amount, $ip);
 
             //出款分润
             self::bonus($remit);
@@ -277,7 +278,7 @@ class LogicRemit
 
             return $remit;
         }else{
-            throw new \app\common\exceptions\OperationFailureException('订单未审核，无法扣款');
+            throw new \app\common\exceptions\OperationFailureException('订单未审核，无法扣款 '.$remit->order_no);
         }
     }
 
@@ -285,17 +286,18 @@ class LogicRemit
      * 提交提款请求到银行
      */
     static public function commitToBank(Remit $remit, ChannelAccount $paymentChannelAccount){
-        Yii::info([__CLASS__.':'.__FUNCTION__,$remit->order_no]);
+        Yii::info(__CLASS__.':'.__FUNCTION__.' '.$remit->order_no);
         if($remit->status == Remit::STATUS_CHECKED){
             $remit = self::deduct($remit);
         }
+
         if($remit->status == Remit::STATUS_DEDUCT){
             //提交到银行
             //银行状态说明：00处理中，04成功，05失败或拒绝
             $payment = new ChannelPayment($remit, $paymentChannelAccount);
             $ret = $payment->remit();
 
-            Yii::info('remit commitToBank ret: '.json_encode($ret,JSON_UNESCAPED_UNICODE));
+            Yii::info('remit commitToBank ret: '.$remit->order_no.' '.json_encode($ret,JSON_UNESCAPED_UNICODE));
             if($ret['status'] === Macro::SUCCESS){
                 switch ($ret['data']['bank_status']){
                     case Remit::BANK_STATUS_PROCESSING:
@@ -334,7 +336,7 @@ class LogicRemit
     }
 
     static public function queryChannelRemitStatus(Remit $remit){
-        Yii::info([__CLASS__.':'.__FUNCTION__,$remit->order_no]);
+        Yii::info(__CLASS__ . ':' . __FUNCTION__ . ' ' . $remit->order_no);
 
         $paymentChannelAccount = $remit->channelAccount;
         //提交到银行
@@ -383,7 +385,7 @@ class LogicRemit
     }
 
     static public function refund($remit, $reason = ''){
-        Yii::info([__CLASS__.':'.__FUNCTION__,$remit->order_no]);
+        Yii::info(__CLASS__ . ':' . __FUNCTION__ . ' ' . $remit->order_no);
         if(
             $remit->status == Remit::STATUS_BANK_PROCESS_FAIL
             || $remit->status == Remit::STATUS_BANK_NET_FAIL
@@ -443,6 +445,8 @@ class LogicRemit
      */
     public static function setSuccess(Remit $remit, $opUid=0, $opUsername='',$bak='')
     {
+        Yii::info(__CLASS__ . ':' . __FUNCTION__ . ' ' . $remit->order_no);
+
         $remit->status = Remit::STATUS_SUCCESS;
         $remit->bank_status =  Remit::BANK_STATUS_SUCCESS;
         $remit->remit_at =  time();
@@ -488,6 +492,8 @@ class LogicRemit
      */
     public static function setFail(Remit $remit, $failMsg='', $opUid=0, $opUsername='')
     {
+        Yii::info(__CLASS__ . ':' . __FUNCTION__ . ' ' . $remit->order_no);
+
         if($failMsg) $remit->fail_msg = $remit->fail_msg.$failMsg.date('Ymd H:i:s')."\n";
         $remit->status = Remit::STATUS_BANK_PROCESS_FAIL;
         $remit->bank_status =  Remit::BANK_STATUS_FAIL;
@@ -510,6 +516,8 @@ class LogicRemit
      */
     public static function setChecked(Remit $remit, $opUid=0, $opUsername='')
     {
+        Yii::info(__CLASS__ . ':' . __FUNCTION__ . ' ' . $remit->order_no);
+
         $remit->status = Remit::STATUS_CHECKED;
         if($opUsername) $bak="{$opUsername} set checked at ".date('Ymd H:i:s')."\n";
         $remit->bak .=$bak;
