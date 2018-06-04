@@ -105,6 +105,7 @@ class OrderController extends BaseInnerController
         }
 
         $filter = ['!=','notify_status',Order::NOTICE_STATUS_SUCCESS];
+        $filter[] = ['status',Order::STATUS_PAID];
         //最长一天
         if($inSeconds>14400) $inSeconds = 14400;
         if($inSeconds){
