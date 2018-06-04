@@ -28,12 +28,13 @@ class RemitController extends BaseConsoleCommand
     public function actionCheckStatusQueueProducer(){
         $doCheck = true;
         while ($doCheck) {
+            Yii::info('actionCheckStatusQueueProducer');
             //获取配置:出款多少分钟之后不再自动查询状态,默认半小时
             $expire = SiteConfig::cacheGetContent('remit_check_expire');
             $startTs = time()-($expire?$expire*60:1800);
 
             $remits = Remit::find(['status'=>Remit::STATUS_BANK_PROCESSING])
-            ->andWhere(['>=', 'remit_at', $startTs])
+            ->andWhere(['>=', 'created_at', $startTs])
             ->limit(100)->all();
 
             Yii::info('find remit to check status: '.count($remits));
@@ -56,6 +57,7 @@ class RemitController extends BaseConsoleCommand
     public function actionBankCommitQueueProducer(){
         $doCheck = true;
         while ($doCheck) {
+            Yii::info('actionBankCommitQueueProducer');
             if(LogicRemit::canCommitToBank()){
                 //获取配置:出款多少分钟之后不再自动查询状态,默认半小时
                 $expire = SiteConfig::cacheGetContent('remit_check_expire');
