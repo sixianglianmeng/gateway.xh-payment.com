@@ -442,6 +442,7 @@ class LogicOrder
                 break;
             default:
                 $tradeStatus = 'failed';
+                break;
         }
 
         $notifyType = 'back_notify';
@@ -560,12 +561,15 @@ class LogicOrder
                     $order->status = Order::STATUS_BANK_PROCESSING;
                     $order->bank_status =  Order::BANK_STATUS_PROCESSING;
                     $order->channel_order_no = $ret['order_id'];
+                    break;
                 case '04':
                     $order->status = Order::STATUS_SUCCESS;
                     $order->bank_status =  Order::BANK_STATUS_SUCCESS;
+                    break;
                 case '05':
                     $order->status = Order::STATUS_NOT_REFUND;
                     $order->bank_status =  Order::BANK_STATUS_FAIL;
+                    break;
             }
 
             if(!empty($ret['order_id']) && empty($order->channel_order_no)){

@@ -161,12 +161,15 @@ class AllScoreBasePayment extends BasePayment
                     case '00':
                         $ret['status']         = Macro::SUCCESS;
                         $ret['data']['bank_status'] =  Remit::BANK_STATUS_PROCESSING;
+                        break;
                     case '04':
                         $ret['status']         = Macro::SUCCESS;
                         $ret['data']['bank_status'] =  Remit::BANK_STATUS_SUCCESS;
+                        break;
                     case '05':
                         $ret['status'] = Macro::SUCCESS;
                         $ret['data']['bank_status'] =  Remit::BANK_STATUS_FAIL;
+                        break;
                 }
 
                 if(!empty($res['orderId'])){

@@ -95,6 +95,7 @@
                     break;
                 default:
                     $response = ResponseHelper::formatOutput(Macro::ERR_UNKNOWN, "无法找到支付表单渲染方式:" . $ret['data']['type']);
+                    break;
             }
 
             return $response;
