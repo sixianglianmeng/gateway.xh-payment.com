@@ -55,6 +55,7 @@ class HtBasePayment extends BasePayment
         $data['trade_status'] = ControllerParameterValidator::getRequestParam($request, 'trade_status',null,Macro::CONST_PARAM_TYPE_STRING, '状态错误！',[3]);
         $data['notify_type'] = ControllerParameterValidator::getRequestParam($request, 'notify_type',null,Macro::CONST_PARAM_TYPE_STRING, '通知类型错误！',[3]);
         $data['merchant_code'] = ControllerParameterValidator::getRequestParam($request, 'merchant_code',null,Macro::CONST_PARAM_TYPE_STRING, 'merchantId错误！',[3]);
+        $data['return_params'] = ControllerParameterValidator::getRequestParam($request, 'return_params','',Macro::CONST_PARAM_TYPE_STRING, 'return_params错误！');
 
         $sign = ControllerParameterValidator::getRequestParam($request, 'sign',null,Macro::CONST_PARAM_TYPE_STRING, 'sign错误！',[3]);
         //修复某段时间订单号携带_的bug
@@ -74,7 +75,7 @@ class HtBasePayment extends BasePayment
         }
 
         $ret = self::RECHARGE_NOTIFY_RESULT;
-        if(!empty($request['trade_status']) && $request['tradeStatus'] == self::TRADE_STATUS_SUCCESS) {
+        if(!empty($request['trade_status']) && $request['trade_status'] == self::TRADE_STATUS_SUCCESS) {
             $ret['order'] = $order;
             $ret['order_no'] = $order->order_no;
             $ret['amount'] = $data['order_amount'];
