@@ -298,13 +298,16 @@ class LogicRemit
                     case Remit::BANK_STATUS_PROCESSING:
                         $remit->status = Remit::STATUS_BANK_PROCESSING;
                         $remit->bank_status =  Remit::BANK_STATUS_PROCESSING;
+                        break;
                     case Remit::BANK_STATUS_SUCCESS:
                         $remit->status = Remit::STATUS_SUCCESS;
                         $remit->bank_status =  Remit::BANK_STATUS_SUCCESS;
                         $remit->remit_at =  time();
+                        break;
                     case  Remit::BANK_STATUS_FAIL:
                         $remit->status = Remit::STATUS_NOT_REFUND;
                         $remit->bank_status =  Remit::BANK_STATUS_FAIL;
+                        break;
                 }
 
                 if(!empty($ret['data']['channel_order_no']) && empty($remit->channel_order_no)){
