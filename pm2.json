@@ -32,6 +32,7 @@
       "exec_mode": "fork",
       "max_memory_restart": "256M"
     },
+
     {
       "name": "payment-notify-queue",
       "args": "payment-notify-queue/listen --verbose",
@@ -43,6 +44,14 @@
     {
       "name": "remit-query-queue",
       "args": "remit-query-queue/listen --verbose",
+      "script": "./protected/yii",
+      "exec_interpreter": "php",
+      "exec_mode": "fork",
+      "max_memory_restart": "256M"
+    },
+    {
+      "name": "remit-bank-commit-queue",
+      "args": "remit-bank-commit-queue/listen --verbose",
       "script": "./protected/yii",
       "exec_interpreter": "php",
       "exec_mode": "fork",
