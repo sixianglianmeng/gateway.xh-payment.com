@@ -281,8 +281,6 @@ class LogicOrder
      * @param String $channelOrderNo 第三方流水号
      */
     static public function paySuccess(Order $order,$paidAmount,$channelOrderNo, $opUid=0, $opUsername='',$bak=''){
-        var_dump($paidAmount);exit;
-        var_dump($paidAmount);exit;
         Yii::info([__FUNCTION__.' '.$order->order_no.','.$paidAmount.','.$channelOrderNo]);
         if($order->status != Order::STATUS_PAID){
             //更改订单状态
