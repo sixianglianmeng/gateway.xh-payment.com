@@ -58,12 +58,13 @@ class HtBasePayment extends BasePayment
 
         $sign = ControllerParameterValidator::getRequestParam($request, 'sign',null,Macro::CONST_PARAM_TYPE_STRING, 'sign错误！',[3]);
         //修复某段时间订单号携带_的bug
+        $orderNo = $data['order_no'];
         if(strpos($data['order_no'],'_')!==false){
             $orderNoArr = explode('_',$data['order_no']);
-            $data['order_no'] = $orderNoArr[0];
+            $orderNo = $orderNoArr[0];
         }
 
-        $order = LogicOrder::getOrderByOrderNo($data['order_no']);
+        $order = LogicOrder::getOrderByOrderNo($orderNo);
         $this->setPaymentConfig($order->channelAccount);
         $this->setOrder($order);
 
