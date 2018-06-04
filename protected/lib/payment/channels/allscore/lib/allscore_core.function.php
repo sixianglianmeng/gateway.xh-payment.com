@@ -171,7 +171,7 @@ function logResult($word = '')
 //        fwrite($fp,"执行日期：".strftime("%Y%m%d%H%M%S",time())."=========".$word."\n");
 //        flock($fp, LOCK_UN);
 //        fclose($fp);
-    //Yii::debug($word);
+    //Yii::info($word);
 }
 
 /**

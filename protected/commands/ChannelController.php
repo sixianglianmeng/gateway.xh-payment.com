@@ -19,7 +19,7 @@ class ChannelController extends BaseConsoleCommand
 
     public function beforeAction($event)
     {
-        Yii::debug('console process: '.implode(' ',$_SERVER['argv']));
+        Yii::info('console process: '.implode(' ',$_SERVER['argv']));
         return parent::beforeAction($event);
     }
 

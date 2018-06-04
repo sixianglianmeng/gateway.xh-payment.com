@@ -180,7 +180,7 @@ class LogicRemit
     }
 
     static public function processRemit($remit, ChannelAccount $paymentChannelAccount){
-        Yii::debug([__CLASS__.':'.__FUNCTION__,$remit->order_no,$remit->status]);
+        Yii::info([__CLASS__.':'.__FUNCTION__,$remit->order_no,$remit->status]);
         switch ($remit->status){
             case Remit::STATUS_CHECKED:
                 $remit = self::deduct($remit);
@@ -208,7 +208,7 @@ class LogicRemit
      */
     static public function bonus(Remit $remit)
     {
-        Yii::debug([__CLASS__ . ':' . __FUNCTION__ . ' ' . $remit->order_no]);
+        Yii::info([__CLASS__ . ':' . __FUNCTION__ . ' ' . $remit->order_no]);
         if ($remit->financial_status === Remit::FINANCIAL_STATUS_SUCCESS) {
             Yii::warning([__FUNCTION__ . ' remit has been bonus,will return, ' . $remit->order_no]);
             return $remit;
@@ -224,24 +224,24 @@ class LogicRemit
         $parentRemitConfigMaxIdx = count($parentRemitConfig)-1;
         for($i=$parentRemitConfigMaxIdx; $i>=0; $i--){
             $remitConfig = $parentRemitConfig[$i];
-            Yii::debug(["remit bonus, find config",json_encode($remitConfig)]);
+            Yii::info(["remit bonus, find config",json_encode($remitConfig)]);
 
             $pUser      = User::findActive($remitConfig['merchant_id']);
 
             //有上级的才返
             if ($remitConfig['fee_rebate']<=0) {
-                Yii::debug(["remit bonus, parent fee empty", $pUser->id, $pUser->username,$remitConfig['fee_rebate']]);
+                Yii::info(["remit bonus, parent fee empty", $pUser->id, $pUser->username,$remitConfig['fee_rebate']]);
                 continue;
             }
 
             //没有上级可以直接中断了
             if (!$pUser->parentAgent) {
-                Yii::debug(["remit bonus, has no parent", $pUser->id, $pUser->username]);
+                Yii::info(["remit bonus, has no parent", $pUser->id, $pUser->username]);
                 break;
             }
 
             //有上级的才返，余额操作对象是上级代理
-            Yii::debug(["remit bonus parent", $pUser->id, $pUser->username, $remitConfig['fee_rebate'],$pUser->parentAgent->id, $pUser->parentAgent->username]);
+            Yii::info(["remit bonus parent", $pUser->id, $pUser->username, $remitConfig['fee_rebate'],$pUser->parentAgent->id, $pUser->parentAgent->username]);
             $logicUser   = new LogicUser($pUser->parentAgent);
             $logicUser->changeUserBalance($remitConfig['fee_rebate'], Financial::EVENT_TYPE_REMIT_BONUS, $remit->order_no, $remit->amount,
                 Yii::$app->request->userIP);
@@ -258,7 +258,7 @@ class LogicRemit
      * 提款扣款
      */
     static public function deduct(Remit $remit){
-        Yii::debug([__CLASS__.':'.__FUNCTION__,$remit->order_no]);
+        Yii::info([__CLASS__.':'.__FUNCTION__,$remit->order_no]);
         //账户余额扣款
         if($remit->status == Remit::STATUS_CHECKED){
             //账户扣款
@@ -285,7 +285,7 @@ class LogicRemit
      * 提交提款请求到银行
      */
     static public function commitToBank(Remit $remit, ChannelAccount $paymentChannelAccount){
-        Yii::debug([__CLASS__.':'.__FUNCTION__,$remit->order_no]);
+        Yii::info([__CLASS__.':'.__FUNCTION__,$remit->order_no]);
         if($remit->status == Remit::STATUS_DEDUCT){
             //提交到银行
             //银行状态说明：00处理中，04成功，05失败或拒绝
@@ -328,7 +328,7 @@ class LogicRemit
     }
 
     static public function queryChannelRemitStatus(Remit $remit){
-        Yii::debug([__CLASS__.':'.__FUNCTION__,$remit->order_no]);
+        Yii::info([__CLASS__.':'.__FUNCTION__,$remit->order_no]);
 
         $paymentChannelAccount = $remit->channelAccount;
         //提交到银行
@@ -374,7 +374,7 @@ class LogicRemit
     }
 
     static public function refund($remit, $reason = ''){
-        Yii::debug([__CLASS__.':'.__FUNCTION__,$remit->order_no]);
+        Yii::info([__CLASS__.':'.__FUNCTION__,$remit->order_no]);
         if(
             $remit->status == Remit::STATUS_BANK_PROCESS_FAIL
             || $remit->status == Remit::STATUS_BANK_NET_FAIL

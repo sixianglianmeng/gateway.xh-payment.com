@@ -31,7 +31,8 @@ class HtController extends WebAppController
         //解析订单回调，获取统一的订单id，金额等信息
         $payment = new HtBasePayment();
         $noticeResult = $payment->parseReturnRequest($this->allParams);
-        Yii::debug("parseReturnRequest: ".\GuzzleHttp\json_encode($noticeResult));
+
+        Yii::info("parseReturnRequest: ".\GuzzleHttp\json_encode($noticeResult));
 
         if(empty($noticeResult['data']['order'])){
             throw new OperationFailureException("无法解析订单信息：".$noticeResult['msg']);
@@ -53,7 +54,7 @@ class HtController extends WebAppController
         //解析订单回调，获取统一的订单id，金额等信息
         $payment = new HtBasePayment();
         $noticeResult = $payment->parseReturnRequest($this->allParams);
-        Yii::debug("parseReturnRequest: ".\GuzzleHttp\json_encode($noticeResult));
+        Yii::info("parseReturnRequest: ".\GuzzleHttp\json_encode($noticeResult));
 
         if(empty($noticeResult->order)){
             throw new OperationFailureException("无法解析订单信息：".$noticeResult->msg);

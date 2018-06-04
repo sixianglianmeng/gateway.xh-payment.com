@@ -5,6 +5,7 @@ namespace app\lib\payment\channels\ht;
 use app\common\models\model\BankCodes;
 use app\common\models\model\Channel;
 use app\common\models\model\Remit;
+use app\components\Util;
 use Yii;
 use app\common\models\model\Order;
 use app\components\Macro;
@@ -102,35 +103,41 @@ class HxBasePayment extends BasePayment
     }
 
     /*
-     * 微信支付
+     * 微信H5支付
      */
-    public function wechatQr()
+    public function wechatH5()
     {
+
         $banCode = BankCodes::getChannelBankCode($this->order['channel_id'],$this->order['bank_code']);
         if(empty($banCode)){
             throw new \app\common\exceptions\OperationFailureException("银行代码配置错误:".get_class($this).':'.$this->order['bank_code'],Macro::ERR_PAYMENT_BANK_CODE);
         }
 
         $params = [
-            'notify_url'=>Yii::$app->request->hostInfo."/gateway/hx/notify",
-            'return_url'=>Yii::$app->request->hostInfo."/gateway/htx/return",
-            'bank_code'=>$banCode,
-            'merchant_code'=>$this->order['channel_merchant_id'],
-            'order_no'=>$this->order['order_no'],
-            'pay_type'=>$this->order['pay_method_code'],
-            'order_amount'=>$this->order['amount'],
-            'req_referer'=>Yii::$app->request->referrer?Yii::$app->request->referrer:Yii::$app->request->getHostInfo().Yii::$app->request->url,
-            'order_time'=>date("Y-m-d H:i:s"),
-            'customer_ip'=>Yii::$app->request->remoteIP,
+            'charset'=>'UTF-8',
+            'version'=>'1.0',
+            'signType'=>'MD5',
+            'businessType'=>$this->getPayType($this->order['pay_method_code']),
+            'backNotifyUrl'=>Yii::$app->request->hostInfo."/gateway/hx/notify",
+            'pageNotifyUrl'=>Yii::$app->request->hostInfo."/gateway/hx/return",
+            'merchantId'=>$this->order['channel_merchant_id'],
+            'orderId'=>$this->order['order_no'],
+            'tranAmt'=>$this->order['amount'],
+            'tranTime'=>date("YmdHis"),
+            'orderDesc'=>'',
             'return_params'=>$this->order['order_no'],
         ];
 
-        $params['sign'] = self::md5Sign($params,trim($this->paymentConfig['key']));
+        $params['signData'] = self::md5Sign($params,trim($this->paymentConfig['key']));
 
-        $requestUrl = $this->paymentConfig['base_gateway_url'].'/pay.html';
+        $requestUrl = $this->paymentConfig['base_gateway_url'].'/mpsGate/h5mpsTransaction';
 var_dump($params);
+        $headers = [
+            ['Content-Type' => 'application/text;charset=UTF-8']
+        ];
         $ret = self::post($requestUrl,$params);
 var_dump(htmlspecialchars($ret));
+exit;
         $ret = self::RECHARGE_WEBBANK_RESULT;
         $ret['status'] = Macro::SUCCESS;
         $ret['data']['type'] = self::RENDER_TYPE_QR;
@@ -302,6 +309,39 @@ var_dump(htmlspecialchars($ret));
      */
     public static function getPayType($type)
     {
+        if(empty(self::PAY_TYPE_MAPS[$type])){
+            Util::throwException(Macro::ERR_PAYMENT_CHANNEL_TYPE_NOT_ALLOWED);
+        }
+
         return self::PAY_TYPE_MAPS[$type] ?? '';
+    }
+
+    /**
+     *
+     * 获取参数排序md5签名
+     *
+     * @param array $params 要签名的参数数组
+     * @param string $signKey 签名密钥
+     *
+     * @return bool|string
+     */
+    public static function md5Sign(array $params, $signKey){
+        if (is_array($params)) {
+            unset($params['signData']);
+            unset($params['signType']);
+            $a      = $params;
+            $params = array();
+            foreach ($a as $key => $value) {
+                $params[] = "$key=$value";
+            }
+            sort($params,SORT_STRING);
+            $params = implode('&', $params);
+        } else {
+            return '';
+        }
+
+        $signStr = md5($params.'&'.$signKey);
+        //        Yii::info(['md5Sign string: ',$signStr,$params]);
+        return $signStr;
     }
 }

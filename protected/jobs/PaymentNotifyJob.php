@@ -18,7 +18,7 @@ class PaymentNotifyJob extends BaseObject implements RetryableJobInterface
 
     public function execute($queue)
     {
-        Yii::debug(['got PaymentNotifyJob ret',$this->orderNo,http_build_query($this->data)]);
+        Yii::info(['got PaymentNotifyJob ret',$this->orderNo,http_build_query($this->data)]);
         $ts = microtime(true);
         $orderNo = $this->orderNo;
 
@@ -38,7 +38,7 @@ class PaymentNotifyJob extends BaseObject implements RetryableJobInterface
             if($httpCode==200 || empty($httpCode)) $httpCode=-1;
         }
 
-        Yii::debug('PaymentNotifyJob ret: '.$this->orderNo.' '.$httpCode.' '.$body);
+        Yii::info('PaymentNotifyJob ret: '.$this->orderNo.' '.$httpCode.' '.$body);
         $costTime = bcsub(microtime(true),$ts,4);
 
         //接口日志埋点

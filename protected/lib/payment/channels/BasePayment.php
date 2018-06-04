@@ -200,7 +200,7 @@ class BasePayment
         }
 
         $signStr = md5($params.'&key='.$signKey);
-        //        Yii::debug(['md5Sign string: ',$signStr,$params]);
+        //        Yii::info(['md5Sign string: ',$signStr,$params]);
         return $signStr;
     }
 
@@ -259,7 +259,7 @@ class BasePayment
             $body = $e->getMessage();
         }
 
-        Yii::debug('request to channel: '.$url.' '.$httpCode.' '.$body);
+        Yii::info('request to channel: '.$url.' '.$httpCode.' '.$body);
 
         return $body;
     }

@@ -218,7 +218,8 @@ class LogicOrder
 
     static public function processChannelNotice($noticeResult){
         if(
-        !$noticeResult['data']['order']
+        empty($noticeResult['data']['order'])
+        || empty($noticeResult['data']['amount'])
         ){
             throw new InValidRequestException('支付结果对象错误',Macro::ERR_PAYMENT_NOTICE_RESULT_OBJECT);
         }
@@ -245,7 +246,7 @@ class LogicOrder
         }
         elseif( $noticeResult['status'] === Macro::FAIL){
                 $order = self::payFail($order,$noticeResult['msg']);
-            Yii::debug(__FUNCTION__.' order not paid: '.$noticeResult['data']['order_no']);
+            Yii::info(__FUNCTION__.' order not paid: '.$noticeResult['data']['order_no']);
         }
 
         if($order->notify_status != Order::NOTICE_STATUS_SUCCESS){
@@ -280,7 +281,9 @@ class LogicOrder
      * @param String $channelOrderNo 第三方流水号
      */
     static public function paySuccess(Order $order,$paidAmount,$channelOrderNo, $opUid=0, $opUsername='',$bak=''){
-        Yii::debug([__FUNCTION__.' '.$order->order_no.','.$paidAmount.','.$channelOrderNo]);
+        var_dump($paidAmount);exit;
+        var_dump($paidAmount);exit;
+        Yii::info([__FUNCTION__.' '.$order->order_no.','.$paidAmount.','.$channelOrderNo]);
         if($order->status != Order::STATUS_PAID){
             //更改订单状态
             $order->paid_amount = $paidAmount;
@@ -332,7 +335,7 @@ class LogicOrder
      * @param String $bak 备注
      */
     static public function frozen(Order $order, $opUid, $opUsername, $bak='', $ip=''){
-        Yii::debug(__FUNCTION__.' '.$order->order_no.' '.$bak);
+        Yii::info(__FUNCTION__.' '.$order->order_no.' '.$bak);
         if($order->status === Order::STATUS_FREEZE){
             return $order;
         }
@@ -361,7 +364,7 @@ class LogicOrder
      * @param Order $order 订单对象
      */
     static public function unfrozen(Order $order, $opUid, $opUsername, $bak='', $ip=''){
-        Yii::debug(__FUNCTION__.' '.$order->order_no.' '.$bak);
+        Yii::info(__FUNCTION__.' '.$order->order_no.' '.$bak);
         if($order->status != Order::STATUS_FREEZE){
             return $order;
         }
@@ -385,7 +388,7 @@ class LogicOrder
      * 订单分红
      */
     static public function bonus(Order $order){
-        Yii::debug([__CLASS__.':'.__FUNCTION__.' '.$order->order_no]);
+        Yii::info([__CLASS__.':'.__FUNCTION__.' '.$order->order_no]);
         if($order->financial_status === Order::FINANCIAL_STATUS_SUCCESS){
             Yii::warning([__FUNCTION__.' order has been bonus,will return, '.$order->order_no]);
             return $order;
@@ -397,21 +400,21 @@ class LogicOrder
         for($i=$parentRechargeConfigMaxIdx; $i>=0; $i--){
             $rechargeConfig = $parentRechargeConfig[$i];
 
-            Yii::debug(["order bonus, find config",json_encode($rechargeConfig)]);
+            Yii::info(["order bonus, find config",json_encode($rechargeConfig)]);
             //parent_recharge_rebate_rate
             if ($rechargeConfig['parent_rebate_rate']<=0) {
-                Yii::debug(["order bonus, parent_rebate_rate empty",$order->order_no]);
+                Yii::info(["order bonus, parent_rebate_rate empty",$order->order_no]);
                 continue;
             }
 
             $pUser = User::findActive($rechargeConfig['merchant_id']);
             //没有上级可以直接中断了
             if(!$pUser->parentAgent){
-                Yii::debug(["order bonus, has no parent",$pUser->id,$pUser->username]);
+                Yii::info(["order bonus, has no parent",$pUser->id,$pUser->username]);
                 break;
             }
             //有上级的才返，余额操作对象是上级代理
-            Yii::debug(["order bonus parent",$pUser->id,$pUser->username,$pUser->parentAgent->id,$pUser->parentAgent->username]);
+            Yii::info(["order bonus parent",$pUser->id,$pUser->username,$pUser->parentAgent->id,$pUser->parentAgent->username]);
             $logicUser =  new LogicUser($pUser->parentAgent);
             $rechargeFee =  bcmul($rechargeConfig['parent_rebate_rate'],$order->paid_amount);
             $logicUser->changeUserBalance($rechargeFee, Financial::EVENT_TYPE_BONUS, $order->order_no, $order->amount, Yii::$app->request->userIP);
@@ -544,7 +547,7 @@ class LogicOrder
      * 到第三方查询订单状态
      */
     static public function queryChannelOrderStatus(Order $order){
-        Yii::debug([(new \ReflectionClass(__CLASS__))->getShortName().':'.__FUNCTION__,$order->order_no]);
+        Yii::info([(new \ReflectionClass(__CLASS__))->getShortName().':'.__FUNCTION__,$order->order_no]);
 
         $paymentChannelAccount = $order->channelAccount;
         //提交到银行

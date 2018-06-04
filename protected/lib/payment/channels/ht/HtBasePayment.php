@@ -77,10 +77,10 @@ class HtBasePayment extends BasePayment
         $ret = self::RECHARGE_NOTIFY_RESULT;
         if(!empty($request['trade_status']) && $request['trade_status'] == self::TRADE_STATUS_SUCCESS) {
             $ret['data']['order'] = $order;
-            $ret['order_no'] = $order->order_no;
-            $ret['amount'] = $data['order_amount'];
+            $ret['data']['order_no'] = $order->order_no;
+            $ret['data']['amount'] = $data['order_amount'];
             $ret['status'] = Macro::SUCCESS;
-            $ret['channel_order_no'] = $data['trade_no'];
+            $ret['data']['channel_order_no'] = $data['trade_no'];
         }
         elseif(!empty($request['trade_status']) && $request['trade_status'] == self::TRADE_STATUS_FAIL) {
             $ret['status'] =  Macro::FAIL;
