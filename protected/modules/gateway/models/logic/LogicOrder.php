@@ -285,7 +285,7 @@ class LogicOrder
             //更改订单状态
             $order->paid_amount = $paidAmount;
             if($order->amount>$order->paid_amount){
-                $order->amount = $order->paid_amount;
+//                $order->amount = $order->paid_amount;
             }
             $order->channel_order_no = $channelOrderNo;
             $order->status = Order::STATUS_PAID;
