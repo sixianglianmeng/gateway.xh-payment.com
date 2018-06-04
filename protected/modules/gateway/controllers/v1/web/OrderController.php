@@ -2,6 +2,7 @@
 namespace app\modules\gateway\controllers\v1\web;
 
 use app\common\exceptions\OperationFailureException;
+use app\common\models\logic\LogicApiRequestLog;
 use app\common\models\model\Channel;
 use app\common\models\model\ChannelAccount;
 use app\common\models\model\User;
@@ -91,6 +92,9 @@ class OrderController extends BaseWebSignedRequestController
 
         //生成订单之后进行多次随机跳转,最后再到三方支付
         $url = LogicOrder::generateRandRedirectUrl($order->order_no,mt_rand(2,5));
+
+        //设置了请求日志，写入日志表
+        LogicApiRequestLog::inLog($url);
 
         return $this->redirect($url, 302);
     }

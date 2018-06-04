@@ -287,6 +287,16 @@ class LogicRemit
      */
     static public function commitToBank(Remit $remit, ChannelAccount $paymentChannelAccount){
         Yii::info(__CLASS__.':'.__FUNCTION__.' '.$remit->order_no);
+        //接口日志埋点
+        Yii::$app->params['apiRequestLog'] = [
+            'event_id'=>$remit->order_no,
+            'event_type'=> LogApiRequest::EVENT_TYPE_OUT_REMIT_ADD,
+            'merchant_id'=>$remit->channel_merchant_id,
+            'merchant_name'=>'',
+            'channel_account_id'=>$remit->channel_account_id,
+            'channel_name'=>'',
+        ];
+
         if($remit->status == Remit::STATUS_CHECKED){
             $remit = self::deduct($remit);
         }
@@ -312,6 +322,9 @@ class LogicRemit
                     case  Remit::BANK_STATUS_FAIL:
                         $remit->status = Remit::STATUS_NOT_REFUND;
                         $remit->bank_status =  Remit::BANK_STATUS_FAIL;
+                        break;
+                    default:
+                        throw new OperationFailureException('错误的银行返回值:'.$remit->order_no.' '.$ret['data']['bank_status']);
                         break;
                 }
 
@@ -340,7 +353,15 @@ class LogicRemit
 
     static public function queryChannelRemitStatus(Remit $remit){
         Yii::info(__CLASS__ . ':' . __FUNCTION__ . ' ' . $remit->order_no);
-
+        //接口日志埋点
+        Yii::$app->params['apiRequestLog'] = [
+            'event_id'=>$remit->order_no,
+            'event_type'=> LogApiRequest::EVENT_TYPE_OUT_REMIT_QUERY,
+            'merchant_id'=>$remit->channel_merchant_id,
+            'merchant_name'=>'',
+            'channel_account_id'=>$remit->channel_account_id,
+            'channel_name'=>'',
+        ];
         $paymentChannelAccount = $remit->channelAccount;
         //提交到银行
         //银行状态说明：00处理中，04成功，05失败或拒绝

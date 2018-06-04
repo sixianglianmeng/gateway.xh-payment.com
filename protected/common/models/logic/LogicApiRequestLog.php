@@ -22,6 +22,13 @@ class LogicApiRequestLog
         //设置了请求日志，写入日志表
         if(!empty(Yii::$app->params['apiRequestLog'])){
             $logData = Yii::$app->params['apiRequestLog'];
+            $logCheckKey = 'apiRequestLogWrited'.$logData['event_type'].$logData['event_id'];
+            if(!empty(Yii::$app->params[$logCheckKey])){
+                return true;
+            }
+
+            Yii::$app->params[$logCheckKey] = 1;
+
             $logData['request_url'] = Yii::$app->request->hostInfo.Yii::$app->request->getUrl();
             $logData['request_method'] = Yii::$app->request->method=='GET'?1:2;
             $logData['post_data'] = json_encode(Yii::$app->getRequest()->getBodyParams(),JSON_UNESCAPED_UNICODE);
@@ -57,6 +64,14 @@ class LogicApiRequestLog
         //设置了请求日志，写入日志表
         if(!empty(Yii::$app->params['apiRequestLog'])){
             $logData = Yii::$app->params['apiRequestLog'];
+
+            $logCheckKey = 'apiRequestLogWrited'.$logData['event_type'].$logData['event_id'];
+            if(!empty(Yii::$app->params[$logCheckKey])){
+                return true;
+            }
+
+            Yii::$app->params[$logCheckKey] = 1;
+
             $logData['request_url'] = $url;
             $logData['request_method'] = strtoupper($method)=='GET'?1:2;
             $logData['post_data'] = is_string($logRequest)?$logRequest:json_encode($logRequest,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES);

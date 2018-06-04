@@ -126,6 +126,7 @@ class HtBasePayment extends BasePayment
 
         //是否跳过汇通
         $skipHt = true;
+        $form = '';
         if($skipHt){
             //跳过上游第一个地址,达到隐藏上游目的.
             //        $htmlTxt = file_get_contents($getUrl);

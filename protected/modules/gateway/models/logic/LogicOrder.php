@@ -130,7 +130,7 @@ class LogicOrder
         $newOrder->save();
 
         //接口日志埋点
-        if(empty($remitData['op_uid']) && empty($remitData['op_username'])){
+        if(empty($orderData['op_uid']) && empty($orderData['op_username'])){
             Yii::$app->params['apiRequestLog'] = [
                 'event_id'=>$newOrder->order_no,
                 'event_type'=>LogApiRequest::EVENT_TYPE_IN_RECHARGE_ADD,
@@ -140,7 +140,6 @@ class LogicOrder
                 'channel_name'=>$rechargeMethod->channel_account_name,
             ];
         }
-
         return $newOrder;
     }
 
@@ -218,8 +217,8 @@ class LogicOrder
 
     static public function processChannelNotice($noticeResult){
         if(
-        empty($noticeResult['data']['order'])
-        || empty($noticeResult['data']['amount'])
+            empty($noticeResult['data']['order'])
+            || empty($noticeResult['data']['amount'])
         ){
             throw new InValidRequestException('支付结果对象错误',Macro::ERR_PAYMENT_NOTICE_RESULT_OBJECT);
         }
