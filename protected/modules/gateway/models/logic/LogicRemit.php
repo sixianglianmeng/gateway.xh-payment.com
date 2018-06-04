@@ -325,7 +325,10 @@ class LogicRemit
             }
             //提交失败暂不处理,等待重新提交
             else{
-
+                if($ret['message']){
+                    $remit->bank_ret = date('Y-m-d H:i:s').''.$ret['message']."\n";
+                    $remit->save();
+                }
             }
 
 
@@ -359,7 +362,7 @@ class LogicRemit
                 case  Remit::BANK_STATUS_FAIL:
                     $remit->status = Remit::STATUS_NOT_REFUND;
                     $remit->bank_status =  Remit::BANK_STATUS_FAIL;
-                    if($ret['message']) $remit->bak = date('Y-md H:i:s').''.$ret['message']."\n";
+                    if($ret['message']) $remit->bank_ret = date('Y-m-d H:i:s').''.$ret['message']."\n";
                     break;
             }
 
