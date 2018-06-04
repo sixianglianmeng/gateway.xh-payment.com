@@ -483,13 +483,14 @@ class LogicOrder
     }
 
     /*
-     * 生成订单同步通知跳转连接
+     * 更新通通知结果
      */
     static public function updateNotifyResult($orderNo, $retCode, $retContent){
         $order = self::getOrderByOrderNo($orderNo);
 
         $order->notify_at = time();
         $order->notify_status = $retCode;
+        $order->notify_ret = $retContent;
         $order->next_notify_time = time()+self::NOTICE_DELAY;
         $order->save();
         $order->updateCounters(['notify_times' => 1]);
