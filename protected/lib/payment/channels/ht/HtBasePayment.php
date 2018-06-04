@@ -242,6 +242,74 @@ class HtBasePayment extends BasePayment
         return $this->wechatQr();
     }
 
+
+    /**
+     * 网银快捷支付
+     */
+    public function bankQuickPay()
+    {
+        return $this->wechatQr();
+    }
+
+    /**
+     * 微信快捷扫码支付
+     */
+    public function wechatQuickQr()
+    {
+        return $this->wechatQr();
+    }
+
+    /**
+     * 微信H5支付
+     */
+    public function wechatH5()
+    {
+        return $this->wechatQr();
+
+    }
+
+    /**
+     * 支付宝H5支付
+     */
+    public function alipayH5()
+    {
+        return $this->wechatQr();
+    }
+
+
+    /**
+     * QQ H5支付
+     */
+    public function qqH5()
+    {
+        return $this->wechatQr();
+    }
+
+    /**
+     * 京东钱包支付
+     */
+    public function jdWallet()
+    {
+        return $this->wechatQr();
+    }
+
+    /**
+     * 银联微信扫码支付
+     */
+    public function unoinPayQr()
+    {
+        return $this->wechatQr();
+    }
+
+
+    /**
+     * 京东H5支付
+     */
+    public function jdh5()
+    {
+        return $this->wechatQr();
+    }
+
     /**
      * 提交出款请求
      *
