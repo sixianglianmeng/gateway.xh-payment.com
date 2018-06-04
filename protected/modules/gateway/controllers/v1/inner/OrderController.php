@@ -69,11 +69,13 @@ class OrderController extends BaseInnerController
             Util::throwException(Macro::PARAMETER_VALIDATION_FAILED);
         }
 
-        $filter = ['!=','status',Order::STATUS_PAID];
+        $query =  Order::find()
+            ->andWhere(['!=','status',Order::STATUS_PAID]);
+
         //最长一天
         if($inSeconds>14400) $inSeconds = 14400;
         if($inSeconds){
-            $filter[] = ['>=','created_at',time()-$inSeconds];
+            $query->andWhere(['>=','created_at',time()-$inSeconds]);
         }
         if($orderNoList){
             foreach ($orderNoList as $k=>$on){
@@ -81,10 +83,10 @@ class OrderController extends BaseInnerController
                     unset($orderNoList[$k]);
                 }
             }
-
-            $filter[] = ['order_no',$orderNoList];
+            $query->andWhere(['order_no'=>$orderNoList]);
         }
-        $orders = Order::find($filter)->all();
+        $orders = $query->all();
+
         foreach ($orders as $order){
             LogicOrder::queryChannelOrderStatus($order);
         }
@@ -104,12 +106,14 @@ class OrderController extends BaseInnerController
             Util::throwException(Macro::PARAMETER_VALIDATION_FAILED);
         }
 
-        $filter = ['!=','notify_status',Order::NOTICE_STATUS_SUCCESS];
-        $filter[] = ['status',Order::STATUS_PAID];
+        $query =  Order::find()
+            ->andWhere(['status'=>Order::STATUS_PAID])
+            ->andWhere(['!=','notify_status',Order::NOTICE_STATUS_SUCCESS]);
+
         //最长一天
         if($inSeconds>14400) $inSeconds = 14400;
         if($inSeconds){
-            $filter[] = ['>=','created_at',time()-$inSeconds];
+            $query->andWhere(['>=','created_at',time()-$inSeconds]);
         }
         if($orderNoList){
             foreach ($orderNoList as $k=>$on){
@@ -117,10 +121,10 @@ class OrderController extends BaseInnerController
                     unset($orderNoList[$k]);
                 }
             }
-
-            $filter[] = ['order_no',$orderNoList];
+            $query->andWhere(['order_no'=>$orderNoList]);
         }
-        $orders = Order::find($filter)->all();
+        $orders = $query->all();
+
         foreach ($orders as $order){
             LogicOrder::notify($order);
         }
