@@ -45,7 +45,7 @@ class HtBasePayment extends BasePayment
      */
     public function parseReturnRequest(array $request){
 
-        $data['order_no'] = ControllerParameterValidator::getRequestParam($request, 'order_no',null,Macro::CONST_PARAM_TYPE_ALNUM, '订单号错误！');
+        $data['order_no'] = ControllerParameterValidator::getRequestParam($request, 'order_no',null,Macro::CONST_PARAM_TYPE_STRING, '订单号错误！');
         $data['order_amount'] = ControllerParameterValidator::getRequestParam($request, 'order_amount',null,Macro::CONST_PARAM_TYPE_DECIMAL, '订单金额错误！');
         $data['order_time'] = ControllerParameterValidator::getRequestParam($request, 'order_time',null,Macro::CONST_PARAM_TYPE_STRING, '订单时间错误！',[3]);
         $data['return_params'] = ControllerParameterValidator::getRequestParam($request, 'notifyTime','',Macro::CONST_PARAM_TYPE_STRING, '订单返回参数错误！',[3]);
@@ -57,6 +57,11 @@ class HtBasePayment extends BasePayment
         $data['merchant_code'] = ControllerParameterValidator::getRequestParam($request, 'merchant_code',null,Macro::CONST_PARAM_TYPE_STRING, 'merchantId错误！',[3]);
 
         $sign = ControllerParameterValidator::getRequestParam($request, 'sign',null,Macro::CONST_PARAM_TYPE_STRING, 'sign错误！',[3]);
+        //修复某段时间订单号携带_的bug
+        if(strpos($data['order_no'],'_')!==false){
+            $orderNoArr = explode('_',$data['order_no']);
+            $data['order_no'] = $orderNoArr[0];
+        }
 
         $order = LogicOrder::getOrderByOrderNo($data['order_no']);
         $this->setPaymentConfig($order->channelAccount);
@@ -103,7 +108,7 @@ class HtBasePayment extends BasePayment
             'return_url'=>Yii::$app->request->hostInfo."/gateway/ht/return",
             'bank_code'=>$banCode,
             'merchant_code'=>$this->order['channel_merchant_id'],
-            'order_no'=>$this->order['order_no'].'_'.mt_rand(1,1000),
+            'order_no'=>$this->order['order_no'],
             'pay_type'=>$this->order['pay_method_code'],
             'order_amount'=>$this->order['amount'],
             'req_referer'=>Yii::$app->request->referrer?Yii::$app->request->referrer:Yii::$app->request->getHostInfo().Yii::$app->request->url,
@@ -182,8 +187,8 @@ class HtBasePayment extends BasePayment
     public function wechatQr()
     {
         $params = [
-            'notify_url'=>Yii::$app->request->hostInfo."/gateway/ht/notify",
-            'return_url'=>Yii::$app->request->hostInfo."/gateway/ht/return",
+            'notify_url'=>Yii::$app->request->hostInfo."/gateway/v1/web/ht/notify",
+            'return_url'=>Yii::$app->request->hostInfo."/gateway/v1/web/ht/return",
             'bank_code'=>'',
             'merchant_code'=>$this->order['channel_merchant_id'],
             'order_no'=>$this->order['order_no'],

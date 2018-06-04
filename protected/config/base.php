@@ -101,6 +101,7 @@ $config = [
                 '/remit_query.html' => '/gateway/v1/server/remit/status',
                 //余额查询
                 '/balance.html' => '/gateway/v1/server/account/balance',
+                '/gateway/ht/notify' => '/gateway/v1/web/ht/notify',
                 /********商户接口URL重写结束*******/
 
                 [
