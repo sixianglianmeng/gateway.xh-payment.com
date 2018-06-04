@@ -63,7 +63,7 @@ class RemitController extends BaseConsoleCommand
                 $expire = SiteConfig::cacheGetContent('remit_check_expire');
                 $startTs = time()-($expire?$expire*60:1800);
 
-                $remits = Remit::find(['status'=>Remit::STATUS_DEDUCT])
+                $remits = Remit::find(['status'=>[Remit::STATUS_DEDUCT,Remit::STATUS_CHECKED]])
                     ->andWhere(['>=', 'updated_at', $startTs])
                     ->limit(100)->all();
 
