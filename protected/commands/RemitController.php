@@ -74,6 +74,8 @@ class RemitController extends BaseConsoleCommand
                     ]);
                     Yii::$app->remitBankCommitQueue->push($job);//->delay(10)
                 }
+            }else{
+                Yii::info('system set stop commit to bank');
             }
 
             sleep(mt_rand(5,10));
