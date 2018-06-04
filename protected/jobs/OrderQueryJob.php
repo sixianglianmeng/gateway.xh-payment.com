@@ -15,7 +15,7 @@ class OrderQueryJob extends BaseObject implements RetryableJobInterface
 
     public function execute($queue)
     {
-        Yii::info(['got OrderQueryJob ret',$this->orderNo]);
+        Yii::info('got OrderQueryJob ret: '.$this->orderNo);
 
         $order = Order::findOne(['order_no'=>$this->orderNo]);
         if(!$order){

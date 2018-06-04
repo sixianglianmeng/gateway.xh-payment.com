@@ -18,7 +18,7 @@ class PaymentNotifyJob extends BaseObject implements RetryableJobInterface
 
     public function execute($queue)
     {
-        Yii::info(['got PaymentNotifyJob ret',$this->orderNo,http_build_query($this->data)]);
+        Yii::info('got PaymentNotifyJob ret: '.$this->orderNo.' '.http_build_query($this->data));
         $ts = microtime(true);
         $orderNo = $this->orderNo;
 

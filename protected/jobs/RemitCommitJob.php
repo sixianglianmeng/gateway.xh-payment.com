@@ -15,7 +15,7 @@ class RemitCommitJob extends BaseObject implements \yii\queue\JobInterface
 
     public function execute($queue)
     {
-        Yii::info(['got RemitCommitJob ret',$this->orderNo]);
+        Yii::info('got RemitCommitJob ret '.$this->orderNo);
 
         $remit = Remit::findOne(['order_no'=>$this->orderNo]);
         if(!$remit){
