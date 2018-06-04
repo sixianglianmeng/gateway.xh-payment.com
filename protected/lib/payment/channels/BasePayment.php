@@ -213,26 +213,27 @@ class BasePayment
      *
      * @return bool|string
      */
-    public static function post($url, $postData)
+    public static function post($url, $postData, $header = [], $timeout = 5)
     {
         $headers = [];
-        try{
-            $client = new \GuzzleHttp\Client();
+        try {
+            $client   = new \GuzzleHttp\Client();
             $response = $client->request('POST', $url, [
-                'timeout' => 5,
-                'body' => http_build_query($postData),
+                'headers'     => $headers,
+                'timeout'     => $timeout,
+                'body'        => http_build_query($postData),
                 'form_params' => ($postData),
             ]);
 
-//            $response = $client->get($url.'?'.http_build_query($postData));
+            //            $response = $client->get($url.'?'.http_build_query($postData));
             $httpCode = $response->getStatusCode();
-            $body = (string)$response->getBody();
-        }catch (\Exception $e){
+            $body     = (string)$response->getBody();
+        } catch (\Exception $e) {
             $httpCode = $e->getCode();
-            $body = $e->getMessage();
+            $body     = $e->getMessage();
         }
 
-        Yii::debug('request to channel: '.$url.' '.$body);
+        Yii::info('request to channel: ' . $url . ' ' . $body);
 
         return $body;
     }

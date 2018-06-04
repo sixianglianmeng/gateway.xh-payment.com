@@ -15,7 +15,7 @@ class RemitQueryJob extends BaseObject implements RetryableJobInterface
 
     public function execute($queue)
     {
-        Yii::debug(['got PaymentNotifyJob ret',$this->orderNo]);
+        Yii::debug(['got RemitQueryJob ret',$this->orderNo]);
 
         $remit = Remit::findOne(['order_no'=>$this->orderNo]);
         if(!$remit){

@@ -42,7 +42,7 @@ class OrderController extends BaseConsoleCommand
             //最多通知10次
             ->andWhere(['<', 'notify_times', 10])
             //已经到达通知时间
-            ->andWhere(['>=', 'next_notify_time', time()]);
+            ->andWhere(['or',['next_notify_time'=>0],['>=', 'next_notify_time', time()]]);
 
             $orders = $query->limit(100)->all();
             Yii::info('find order to notify: '.count($orders));

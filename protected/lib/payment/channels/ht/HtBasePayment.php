@@ -264,7 +264,7 @@ class HtBasePayment extends BasePayment
 
         $requestUrl = $this->paymentConfig['base_gateway_url'] . '/remit.html';
         $resTxt = self::post($requestUrl, $params);
-
+        Yii::info('remit to bank result: '.$this->remit['order_no'].' '.$resTxt);
         $ret = self::REMIT_RESULT;
         if (!empty($resTxt)) {
             $res = json_decode($resTxt, true);
@@ -299,7 +299,7 @@ class HtBasePayment extends BasePayment
         $params['sign'] = self::md5Sign($params,trim($this->paymentConfig['key']));
         $requestUrl = $this->paymentConfig['base_gateway_url'].'/remit_query.html';
         $resTxt = self::post($requestUrl, $params);
-
+        Yii::info('remit query result: '.$this->remit['order_no'].' '.$resTxt);
         $ret = self::REMIT_QUERY_RESULT;
         if (!empty($resTxt)) {
             $res = json_decode($resTxt, true);
