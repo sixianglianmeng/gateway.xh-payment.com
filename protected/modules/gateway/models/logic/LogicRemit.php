@@ -39,7 +39,6 @@ class LogicRemit
      */
     static public function addRemit(array $request, User $merchant, ChannelAccount $paymentChannelAccount, $skipCheck=false)
     {
-        //        ['merchant_code', 'trade_no', 'order_amount', 'order_time', 'bank_code', ' account_name', 'account_number',
         $remitData                      = [];
         $remitData['app_id']              = $request['app_id'] ?? $merchant->id;
         $remitData['merchant_order_no'] = $request['trade_no'];
