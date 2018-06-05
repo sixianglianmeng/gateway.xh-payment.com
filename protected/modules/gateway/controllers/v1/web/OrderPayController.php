@@ -5,6 +5,7 @@
     use app\common\models\model\BankCodes;
     use app\common\models\model\Channel;
     use app\common\models\model\Order;
+    use app\common\models\model\SiteConfig;
     use app\components\Macro;
     use app\components\Util;
     use app\components\WebAppController;
@@ -82,7 +83,8 @@
                 }
 
                 if(empty($bankCode)){
-                    $this->view->title = '选择银行';
+                    $siteName = SiteConfig::cacheGetContent('site_name');
+                    $this->view->title = $siteName.' - 选择银行';
 
                     $ret['token'] = $this->setOrderStatusQueryCsrfToken($order->order_no);
                     $ret['order'] = $order->toArray();
@@ -115,7 +117,8 @@
                     }
                     break;
                 case BasePayment::RENDER_TYPE_QR:
-                    $this->view->title = '订单付款';
+                    $siteName = SiteConfig::cacheGetContent('site_name');
+                    $this->view->title = $siteName.' - 订单付款';
 
                     $ret['token'] = $this->setOrderStatusQueryCsrfToken($orderNo);
                     $ret['order']                   = $order->toArray();
