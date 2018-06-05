@@ -7,8 +7,8 @@ $config = \yii\helpers\ArrayHelper::merge(
         'components' => [
             'db' => [
                 'class' => 'yii\db\Connection',
-                'dsn' => 'mysql:host=127.0.0.1;dbname=root',
-                'username' => 'payment_com',
+                'dsn' => 'mysql:host=127.0.0.1;dbname=payment_com',
+                'username' => 'root',
                 'password' => 'z4wIxIJtgH7wouBO',
                 'charset' => 'utf8',
                 'tablePrefix' => 'p_',
