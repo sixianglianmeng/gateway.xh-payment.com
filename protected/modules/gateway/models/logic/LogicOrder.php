@@ -43,8 +43,8 @@ class LogicOrder
         $orderData['merchant_order_no'] = $request['order_no'];
         $hasOrder = Order::findOne(['app_id' => $orderData['app_id'], 'merchant_order_no' => $orderData['merchant_order_no']]);
         if ($hasOrder) {
-            //            throw new InValidRequestException('请不要重复下单');
-            return $hasOrder;
+              throw new OperationFailureException('请不要重复下单');
+//            return $hasOrder;
         }
 
         $orderData['pay_method_code']   = $request['pay_type'];
@@ -103,16 +103,13 @@ class LogicOrder
                 'channel_account_id'=>$rechargeMethod->channel_account_id,
             ];
         }
-        $orderData['plat_fee_amount'] = 0;
+        $orderData['plat_fee_amount']     = bcmul($orderData['plat_fee_rate'], $orderData['amount'], 6);
         $orderData['plat_fee_profit'] = 0;
         //如果上级列表不仅有自己
         if(count($parentConfigs)>1){
             $orderData['all_parent_recharge_config'] = json_encode($parentConfigs);
-            var_dump($parentConfigs);exit;
             //上级代理列表第一个为最上级代理
             $topestPrent = array_shift($parentConfigs);
-
-            $orderData['plat_fee_amount']     = bcmul($orderData['plat_fee_rate'], $orderData['amount'], 6);
             $orderData['plat_fee_profit']     = bcmul(bcsub($topestPrent['fee_rate'],$orderData['plat_fee_rate'],6), $orderData['amount'], 6);
 
             if($topestPrent['fee_rate']<$orderData['plat_fee_rate']){
@@ -120,13 +117,19 @@ class LogicOrder
                 throw new InValidRequestException("商户费率配置错误,小于渠道最低费率!");
             }
         }
+        //没有上级,平台利润为商户-渠道
+        else{
+            $orderData['plat_fee_profit']     = bcmul(bcsub($rechargeMethod->fee_rate,$orderData['plat_fee_rate'],6), $orderData['amount'], 6);
+
+        }
+
         unset($parentConfigs);
         unset($parentConfigModels);
 
         $newOrder = new Order();
         $newOrder->setAttributes($orderData, false);
         self::beforeAddOrder($newOrder, $merchant, $rechargeMethod->channelAccount, $rechargeMethod, $channelAccountRechargeConfig);
-
+        $newOrder->plat_fee_profit;
         $newOrder->save();
 
         //接口日志埋点

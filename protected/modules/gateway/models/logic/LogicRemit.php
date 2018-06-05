@@ -41,15 +41,22 @@ class LogicRemit
     {
         //        ['merchant_code', 'trade_no', 'order_amount', 'order_time', 'bank_code', ' account_name', 'account_number',
         $remitData                      = [];
+        $remitData['app_id']              = $request['app_id'] ?? $merchant->id;
+        $remitData['merchant_order_no'] = $request['trade_no'];
+
+        $hasRemit = Remit::findOne(['app_id' => $remitData['app_id'], 'merchant_order_no'=>$request['trade_no']]);
+        if($hasRemit){
+            throw new OperationFailureException('请不要重复下单');
+            return $hasRemit;
+        }
+
+        $remitData['amount']            = $request['order_amount'];
         $remitData['bat_order_no']      = $request['bat_order_no'] ?? '';
         $remitData['bat_index']         = $request['bat_index'] ?? 0;
         $remitData['bat_count']         = $request['bat_count'] ?? 0;
         $remitData['bank_code']         = $request['bank_code'];
         $remitData['bank_account']      = $request['account_name'];
         $remitData['bank_no']           = $request['account_number'];
-        $remitData['merchant_order_no'] = $request['trade_no'];
-        $remitData['amount']            = $request['order_amount'];
-
         $remitData['client_ip']   = $request['client_ip'] ?? '';
         $remitData['op_uid']      = $request['op_uid'] ?? 0;
         $remitData['op_username'] = $request['op_username'] ?? '';
@@ -62,7 +69,6 @@ class LogicRemit
         $remitData['bank_status']      = Remit::BANK_STATUS_NONE;
         $remitData['financial_status'] = Remit::FINANCIAL_STATUS_NONE;
 
-        $remitData['app_id']              = $request['app_id'] ?? $merchant->id;
         $remitData['merchant_id']         = $merchant->id;
         $remitData['merchant_account']    = $merchant->username;
         $remitData['all_parent_agent_id'] = $merchant->all_parent_agent_id;
@@ -89,29 +95,34 @@ class LogicRemit
         }
         $remitData['all_parent_remit_config'] = json_encode($parentConfigs);
 
-        //上级代理列表第一个为最上级代理
-        $topestPrent = array_shift($parentConfigs);
-        unset($parentConfigs);
-        unset($parentConfigModels);
         $remitData['plat_fee_amount']     = $paymentChannelAccount->remit_fee;
-        $orderData['plat_fee_profit']     = bcsub($topestPrent['fee'], $remitData['plat_fee_amount'],6);
-        if($topestPrent['fee']<$remitData['plat_fee_amount']){
-            Yii::error("商户出款费率配置错误,小于渠道最低费率: 顶级商户ID:{$topestPrent['merchant_id']},商户渠道账户ID:{$topestPrent['channel_account_id']},商户费率:{$topestPrent['fee']},渠道费率:{$remitData['plat_fee_amount']}");
-            throw new InValidRequestException('商户费率配置错误,小于渠道最低费率!');
+        $remitData['plat_fee_profit']     = 0;//bcsub($topestPrent['fee'], $remitData['plat_fee_amount'],6);
+        //如果上级列表不仅有自己
+        if(count($parentConfigs)>1){
+            $remitData['all_parent_recharge_config'] = json_encode($parentConfigs);
+            //上级代理列表第一个为最上级代理
+            $topestPrent = array_shift($parentConfigs);
+            $remitData['plat_fee_profit']     = bcsub($topestPrent['fee'],$remitData['plat_fee_amount'],6);
+
+            if($topestPrent['fee']<$remitData['plat_fee_amount']){
+                Yii::error("商户费率配置错误,小于渠道最低费率: 顶级商户ID:{$topestPrent['merchant_id']},商户渠道账户ID:{$topestPrent['channel_account_id']},商户费率:{$topestPrent['fee']},渠道名:{$paymentChannelAccount->remit_channel_account_name},渠道费率:{$remitData['plat_fee_amount']}");
+                throw new InValidRequestException("商户费率配置错误,小于渠道最低费率!");
+            }
+        }
+        //没有上级,平台利润为商户-渠道
+        else{
+            $remitData['plat_fee_profit']     = bcsub($remitData['remit_fee'],$remitData['plat_fee_amount'],6);
+
         }
 
-        $hasRemit = Remit::findOne(['app_id' => $remitData['app_id'], 'merchant_order_no'=>$request['trade_no']]);
-        if($hasRemit){
-//            throw new InValidRequestException('请不要重复下单');
-            return $hasRemit;
-        }
+        unset($parentConfigs);
+        unset($parentConfigModels);
 
         $newRemit = new Remit();
         $newRemit->setAttributes($remitData,false);
         if(!$skipCheck){
             self::beforeAddRemit($newRemit, $merchant, $paymentChannelAccount);
         }
-
 
         $newRemit->save();
 
