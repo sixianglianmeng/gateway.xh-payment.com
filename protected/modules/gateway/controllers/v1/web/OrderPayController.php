@@ -2,6 +2,7 @@
 
     namespace app\modules\gateway\controllers\v1\web;
 
+    use app\common\models\model\BankCodes;
     use app\common\models\model\Channel;
     use app\common\models\model\Order;
     use app\components\Macro;
@@ -38,10 +39,15 @@
         public function actionPay()
         {
             $orderNo = ControllerParameterValidator::getRequestParam($this->allParams, 'orderNo', null, Macro::CONST_PARAM_TYPE_ORDER_NO, '订单号错误');
+            $selectBankCode = ControllerParameterValidator::getRequestParam($this->allParams, 'bankCode', '', Macro::CONST_PARAM_TYPE_ALNUM, '银行代码错误');
+            $token = ControllerParameterValidator::getRequestParam($this->allParams, 'token', '', Macro::CONST_PARAM_TYPE_STRING, 'token错误-404',[10]);
 
             $order = Order::findOne(['order_no' => $orderNo]);
             if (!$order) {
                 return ResponseHelper::formatOutput(Macro::ERR_UNKNOWN, '订单不存在');
+            }
+            if (Order::STATUS_PAID == $order->status) {
+                return ResponseHelper::formatOutput(Macro::ERR_UNKNOWN, '订单已付款');
             }
 
             //设置客户端唯一id
@@ -56,6 +62,38 @@
             $methodFnc = Channel::getPayMethodEnStr($order->pay_method_code);
             if (!is_callable([$payment, $methodFnc])) {
                 return ResponseHelper::formatOutput(Macro::ERR_UNKNOWN, "对不起,系统中此通道暂未支持此支付方式.");
+            }
+
+            //检测网银对应银行代码是否正确,若不正确,显示选择页面
+            if($order->pay_method_code == Channel::METHOD_WEBBANK) {
+                $bankCode = BankCodes::getChannelBankCode($order->channel_id, $order->bank_code);
+
+                if ($selectBankCode && empty($bankCode)) {
+                    if(!$this->checkOrderStatusQueryCsrfToken($order->order_no,$token)){
+                        return ResponseHelper::formatOutput(Macro::ERR_UNKNOWN,'token校验失败');
+                    }
+
+                    $selectBank = BankCodes::getChannelBankCode($order->channel_id, $selectBankCode);
+                    if ($selectBank){
+                        $bankCode = $selectBankCode;
+                        $order->bank_code = $bankCode;
+                        $order->save();
+                    }
+                }
+
+                if(empty($bankCode)){
+                    $this->view->title = '选择银行';
+
+                    $ret['token'] = $this->setOrderStatusQueryCsrfToken($order->order_no);
+                    $ret['order'] = $order->toArray();
+                    $ret['banks'] = BankCodes::getBankList($order->channel_id);
+
+                    $response = $this->render('@app/modules/gateway/views/cashier/bank_select', [
+                        'data' => $ret,
+                    ]);
+
+                    return $response;
+                }
             }
 
             //由各方法自行处理响应

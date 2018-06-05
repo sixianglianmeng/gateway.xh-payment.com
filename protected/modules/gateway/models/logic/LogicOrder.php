@@ -47,11 +47,12 @@ class LogicOrder
 //            return $hasOrder;
         }
 
-        $orderData['pay_method_code']   = $request['pay_type'];
-        $orderData['amount']            = $request['order_amount'];
+        $orderData['pay_method_code']     = $request['pay_type'];
+        $orderData['amount']              = $request['order_amount'];
         $orderData['notify_url']          = $request['notify_url'] ?? '';
         $orderData['return_url']          = $request['return_url'] ?? '';
         $orderData['bank_code']           = $request['bank_code'] ?? '';
+        $orderData['bank_code']           = strtoupper($orderData['bank_code']);
         $orderData['op_uid']              = $request['op_uid'] ?? 0;
         $orderData['op_username']         = $request['op_username'] ?? '';
         $orderData['merchant_user_id']    = $request['user_id'] ?? '';
@@ -60,10 +61,10 @@ class LogicOrder
         $orderData['notify_ret']          = '';
         $orderData['client_ip']           = $request['client_ip'] ?? Yii::$app->request->userIP;
         $orderData['return_params']       = $request['return_params'] ?? '';
-        $orderData['status']           = Order::STATUS_NOTPAY;
-        $orderData['financial_status'] = Order::FINANCIAL_STATUS_NONE;
-        $orderData['notify_status']    = Order::NOTICE_STATUS_NONE;
-        $orderData['created_at']       = time();
+        $orderData['status']              = Order::STATUS_NOTPAY;
+        $orderData['financial_status']    = Order::FINANCIAL_STATUS_NONE;
+        $orderData['notify_status']       = Order::NOTICE_STATUS_NONE;
+        $orderData['created_at']          = time();
         $orderData['merchant_id']         = $merchant->id;
         $orderData['merchant_account']    = $merchant->username;
         $orderData['all_parent_agent_id'] = $merchant->all_parent_agent_id;

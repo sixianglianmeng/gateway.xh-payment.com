@@ -9,6 +9,9 @@ use yii\helpers\Html;
         <?= Html::csrfMetaTags() ?>
         <title><?= Html::encode($this->title) ?></title>
         <?php $this->head() ?>
+        <?php if (isset($this->blocks['css'])){ ?>
+            <?= $this->blocks['css'] ?>
+        <?php } ?>
     </head>
     <body>
     <?php $this->beginBody() ?>
