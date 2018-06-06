@@ -39,6 +39,7 @@ class OrderController extends BaseConsoleCommand
 
             $query = Order::find()
             ->where(['status'=>Order::STATUS_PAID,'notify_status'=>[Order::NOTICE_STATUS_NONE,Order::NOTICE_STATUS_FAIL]])
+            ->andWhere(['!=', 'notify_url', ''])
             ->andWhere(['>=', 'paid_at', $startTs])
             //最多通知10次
             ->andWhere(['<', 'notify_times', 10])

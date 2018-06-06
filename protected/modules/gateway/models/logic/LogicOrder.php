@@ -506,6 +506,10 @@ class LogicOrder
      */
     static public function notify(Order $order){
         Yii::trace((new \ReflectionClass(__CLASS__))->getShortName().'-'.__FUNCTION__.' '.$order->order_no);
+        if(!$order->notify_url){
+            return true;
+        }
+
         //TODO: add task queue
         $arrParams = self::createNotifyParameters($order);
         $job = new PaymentNotifyJob([

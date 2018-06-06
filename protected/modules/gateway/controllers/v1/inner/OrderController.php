@@ -2,6 +2,7 @@
 namespace app\modules\gateway\controllers\v1\inner;
 
 use app\common\models\model\Order;
+use app\common\models\model\User;
 use app\components\Macro;
 use app\components\Util;
 use app\lib\helpers\ControllerParameterValidator;
@@ -38,23 +39,24 @@ class OrderController extends BaseInnerController
         if(empty($merchant)){
             Util::throwException(Macro::ERR_USER_NOT_FOUND);
         }
-        $payMethod = $merchant->merchantPayment->getPayMethodById($payMethodId);
+        $payMethod = $merchant->paymentInfo->getPayMethodById($request['pay_type']);
         if(empty($payMethod)){
             Util::throwException(Macro::ERR_PAYMENT_TYPE_NOT_ALLOWED);
         }
 
-        $request['merchant_order_no'] = LogicOrder::generateMerchantOrderNo();
-        $request['op_uid']              = $this->allParams['op_uid'] ?? 0;
-        $request['op_username']         = $this->allParams['op_username'] ?? '';
-        $request['client_ip']         = $this->allParams['op_ip'] ?? '';
+        $request['order_no']    = LogicOrder::generateMerchantOrderNo();
+        $request['op_uid']      = $this->allParams['op_uid'] ?? 0;
+        $request['op_username'] = $this->allParams['op_username'] ?? '';
+        $request['client_ip']   = $this->allParams['op_ip'] ?? '';
+        $request['order_time']  = time();
         //生成订单
         $order = LogicOrder::addOrder($request, $merchant, $payMethod);
 
-        //生成跳转连接
-        $payment = new ChannelPayment($order, $payMethod->channelAccount);
-        $redirect = $payment->webBank();
-
-        return ResponseHelper::formatOutput(Macro::SUCCESS,'',$redirect);
+        $data = [
+            'order_no'=>$order->order_no,
+            'cashier_url'=>Yii::$app->request->hostInfo."/order/pay.html?orderNo=".$order->order_no,
+        ];
+        return ResponseHelper::formatOutput(Macro::SUCCESS,'', $data);
     }
 
     /**
