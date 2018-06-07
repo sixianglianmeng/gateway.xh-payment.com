@@ -80,9 +80,14 @@ class OrderController extends BaseWebSignedRequestController
         $paymentRequest->validate($this->allParams, $needParams);
 
         $payMethod = $this->merchantPayment->getPayMethodById($this->allParams['pay_type']);
-        if(empty($payMethod) || empty($payMethod->channelAccount)){
-            Util::throwException(Macro::ERR_PAYMENT_TYPE_NOT_ALLOWED);
+
+        if(empty($payMethod)){
+            Util::throwException(Macro::ERR_PAYMENT_TYPE_NOT_ALLOWED,'商户支付方式未配置');
         }
+        if(empty($payMethod->channelAccount)){
+            Util::throwException(Macro::ERR_PAYMENT_TYPE_NOT_ALLOWED,'商户支付方式未绑定通道');
+        }
+
         if($payMethod->channelAccount->status!=ChannelAccount::STATUS_ACTIVE && $payMethod->channelAccount->status!=ChannelAccount::STATUS_REMIT_BANED){
             Util::throwException(Macro::ERR_PAYMENT_TYPE_NOT_ALLOWED,"支付渠道状态不正确:".$payMethod->channelAccount->getStatusStr());
         }

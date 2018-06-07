@@ -121,7 +121,7 @@ class HtBasePayment extends BasePayment
 
         $params['sign'] = self::md5Sign($params,trim($this->paymentConfig['key']));
 
-        $requestUrl = $this->paymentConfig['base_gateway_url'].'/pay.html';
+        $requestUrl = $this->paymentConfig['gateway_base_uri'].'/pay.html';
         $getUrl = $requestUrl.'?'.http_build_query($params);
 
         //是否跳过汇通
@@ -204,8 +204,9 @@ class HtBasePayment extends BasePayment
         ];
         $params['sign'] = self::md5Sign($params,trim($this->paymentConfig['key']));
 
-        $requestUrl = $this->paymentConfig['base_gateway_url'].'/order.html';
+        $requestUrl = $this->paymentConfig['gateway_base_uri'].'/order.html';
         $resTxt = self::post($requestUrl,$params);
+
         //"{"flag":"00","msg":"下单成功","orderId":"106030602907794","payType":"2","qrCodeUrl":"https://api.huitongvip.com/wf2/order.html?id=8a0c808663b537fd0163c03d4a8a2377","sign":"88d1b6ac0c708b386ab4a5af9f75574f","transId":"10218060219213554285555"}"
         $ret = self::RECHARGE_WEBBANK_RESULT;
         if (!empty($resTxt)) {
@@ -338,7 +339,7 @@ class HtBasePayment extends BasePayment
         ];
         $params['sign'] = self::md5Sign($params, trim($this->paymentConfig['key']));
 
-        $requestUrl = $this->paymentConfig['base_gateway_url'] . '/remit.html';
+        $requestUrl = $this->paymentConfig['gateway_base_uri'] . '/remit.html';
         $resTxt = self::post($requestUrl, $params);
         Yii::info('remit to bank result: '.$this->remit['order_no'].' '.$resTxt);
         $ret = self::REMIT_RESULT;
@@ -373,7 +374,7 @@ class HtBasePayment extends BasePayment
             'now_date'=>date("Y-m-d H:i:s"),
         ];
         $params['sign'] = self::md5Sign($params,trim($this->paymentConfig['key']));
-        $requestUrl = $this->paymentConfig['base_gateway_url'].'/remit_query.html';
+        $requestUrl = $this->paymentConfig['gateway_base_uri'].'/remit_query.html';
         $resTxt = self::post($requestUrl, $params);
         Yii::info('remit query result: '.$this->remit['order_no'].' '.$resTxt);
         $ret = self::REMIT_QUERY_RESULT;
@@ -408,7 +409,7 @@ class HtBasePayment extends BasePayment
         ];
         $params['sign'] = self::md5Sign($params,trim($this->paymentConfig['key']));
 
-        $requestUrl = $this->paymentConfig['base_gateway_url'].'/query.html';
+        $requestUrl = $this->paymentConfig['gateway_base_uri'].'/query.html';
         $resTxt = self::post($requestUrl, $params);
 
         $ret = self::REMIT_QUERY_RESULT;
@@ -438,7 +439,7 @@ class HtBasePayment extends BasePayment
         ];
         $params['sign'] = self::md5Sign($params,trim($this->paymentConfig['key']));
 
-        $requestUrl = $this->paymentConfig['base_gateway_url'].'/balance.html';
+        $requestUrl = $this->paymentConfig['gateway_base_uri'].'/balance.html';
         $resTxt = self::post($requestUrl, $params);
 
         $ret = self::BALANCE_QUERY_RESULT;

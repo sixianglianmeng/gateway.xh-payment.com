@@ -10,6 +10,7 @@ use app\common\models\model\ChannelAccountRechargeMethod;
 use app\common\models\model\Financial;
 use app\common\models\model\LogApiRequest;
 use app\common\models\model\MerchantRechargeMethod;
+use app\common\models\model\SiteConfig;
 use app\common\models\model\UserPaymentInfo;
 use app\components\Util;
 use app\jobs\PaymentNotifyJob;
@@ -130,7 +131,6 @@ class LogicOrder
         $newOrder = new Order();
         $newOrder->setAttributes($orderData, false);
         self::beforeAddOrder($newOrder, $merchant, $rechargeMethod->channelAccount, $rechargeMethod, $channelAccountRechargeConfig);
-        $newOrder->plat_fee_profit;
         $newOrder->save();
 
         //接口日志埋点
@@ -159,15 +159,17 @@ class LogicOrder
     static public function beforeAddOrder(Order $order, User $merchant, ChannelAccount $paymentChannelAccount, MerchantRechargeMethod $rechargeMethod,
                                           ChannelAccountRechargeMethod $channelAccountRechargeMethod){
         $userPaymentConfig = $merchant->paymentInfo;
+        //站点是否允许费率设置为0
+        $feeCanBeZero = SiteConfig::cacheGetContent('recharge_fee_can_be_zero');
 
         //账户费率检测
-        if($rechargeMethod->fee_rate <= 0){
-            throw new OperationFailureException(Macro::ERR_MERCHANT_FEE_CONFIG);
+        if(!$feeCanBeZero && $rechargeMethod->fee_rate <= 0){
+            throw new OperationFailureException('费率不能设置为0',Macro::ERR_MERCHANT_FEE_CONFIG);
         }
 
         //账户支付方式开关检测
         if($rechargeMethod->status != MerchantRechargeMethod::STATUS_ACTIVE){
-            throw new OperationFailureException(null,Macro::ERR_PAYMENT_TYPE_NOT_ALLOWED);
+            throw new OperationFailureException('商户此支付方式通道开关未打开',Macro::ERR_PAYMENT_TYPE_NOT_ALLOWED);
         }
 
         //检测账户单笔限额
@@ -188,8 +190,8 @@ class LogicOrder
         }
 
         //渠道费率检测
-        if($channelAccountRechargeMethod->fee_rate <= 0){
-            throw new OperationFailureException(Macro::ERR_CHANNEL_FEE_CONFIG);
+        if(!$feeCanBeZero && $channelAccountRechargeMethod->fee_rate <= 0){
+            throw new OperationFailureException('费率不能设置为0',Macro::ERR_CHANNEL_FEE_CONFIG);
         }
 
         //检测渠道单笔限额

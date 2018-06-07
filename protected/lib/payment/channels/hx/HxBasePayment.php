@@ -1,6 +1,6 @@
 <?php
 
-namespace app\lib\payment\channels\ht;
+namespace app\lib\payment\channels\hx;
 
 use app\common\models\model\BankCodes;
 use app\common\models\model\Channel;
@@ -118,8 +118,8 @@ class HxBasePayment extends BasePayment
             'version'=>'1.0',
             'signType'=>'MD5',
             'businessType'=>$this->getPayType($this->order['pay_method_code']),
-            'backNotifyUrl'=>Yii::$app->request->hostInfo."/gateway/hx/notify",
-            'pageNotifyUrl'=>Yii::$app->request->hostInfo."/gateway/hx/return",
+            'backNotifyUrl'=>Yii::$app->request->hostInfo."/gateway/v1/web/hx/notify",
+            'pageNotifyUrl'=>Yii::$app->request->hostInfo."/gateway/v1/web/hx/return",
             'merchantId'=>$this->order['channel_merchant_id'],
             'orderId'=>$this->order['order_no'],
             'tranAmt'=>$this->order['amount'],
@@ -130,7 +130,7 @@ class HxBasePayment extends BasePayment
 
         $params['signData'] = self::md5Sign($params,trim($this->paymentConfig['key']));
 
-        $requestUrl = $this->paymentConfig['base_gateway_url'].'/mpsGate/h5mpsTransaction';
+        $requestUrl = $this->paymentConfig['gateway_base_uri'].'/mpsGate/h5mpsTransaction';
 var_dump($params);
         $headers = [
             ['Content-Type' => 'application/text;charset=UTF-8']
@@ -167,7 +167,7 @@ exit;
         ];
         $params['sign'] = self::md5Sign($params, trim($this->paymentConfig['key']));
 
-        $requestUrl = $this->paymentConfig['base_gateway_url'] . '/remit.html';
+        $requestUrl = $this->paymentConfig['gateway_base_uri'] . '/remit.html';
         $resTxt = self::post($requestUrl, $params);
 
         $ret = self::REMIT_RESULT;
@@ -202,7 +202,7 @@ exit;
             'now_date'=>date("Y-m-d H:i:s"),
         ];
         $params['sign'] = self::md5Sign($params,trim($this->paymentConfig['key']));
-        $requestUrl = $this->paymentConfig['base_gateway_url'].'/remit_query.html';
+        $requestUrl = $this->paymentConfig['gateway_base_uri'].'/remit_query.html';
         $resTxt = self::post($requestUrl, $params);
 
         $ret = self::REMIT_QUERY_RESULT;
@@ -237,7 +237,7 @@ exit;
         ];
         $params['sign'] = self::md5Sign($params,trim($this->paymentConfig['key']));
 
-        $requestUrl = $this->paymentConfig['base_gateway_url'].'/query.html';
+        $requestUrl = $this->paymentConfig['gateway_base_uri'].'/query.html';
         $resTxt = self::post($requestUrl, $params);
 
         $ret = self::REMIT_QUERY_RESULT;
@@ -267,7 +267,7 @@ exit;
         ];
         $params['sign'] = self::md5Sign($params,trim($this->paymentConfig['key']));
 
-        $requestUrl = $this->paymentConfig['base_gateway_url'].'/balance.html';
+        $requestUrl = $this->paymentConfig['gateway_base_uri'].'/balance.html';
         $resTxt = self::post($requestUrl, $params);
 
         $ret = self::BALANCE_QUERY_RESULT;

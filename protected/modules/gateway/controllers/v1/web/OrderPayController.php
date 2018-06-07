@@ -66,7 +66,7 @@
             }
 
             //检测网银对应银行代码是否正确,若不正确,显示选择页面
-            if($order->pay_method_code == Channel::METHOD_WEBBANK) {
+            if(in_array($order->pay_method_code,[Channel::METHOD_WEBBANK,Channel::METHOD_BANK_H5])) {
                 $bankCode = BankCodes::getChannelBankCode($order->channel_id, $order->bank_code);
 
                 if ($selectBankCode && empty($bankCode)) {

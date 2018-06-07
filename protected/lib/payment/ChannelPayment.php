@@ -1,6 +1,7 @@
 <?php
 namespace app\lib\payment;
 
+use app\common\models\model\Channel;
 use app\common\models\model\Order;
 use app\common\models\model\Remit;
 use app\components\Macro;
@@ -30,6 +31,7 @@ class ChannelPayment
         $channel = $channelAccount->channel;
 
         $payMethod = $channel->remit_handle_class;
+
         if(empty($channel->remit_handle_class)){
             throw new \app\common\exceptions\OperationFailureException("渠道配置错误",Macro::ERR_PAYMENT_CHANNEL_ID);
         }
@@ -45,7 +47,7 @@ class ChannelPayment
 
         $payMethods = $channel->getPayMethods();
         if(empty($payMethods[intval($order->pay_method_code)])){
-            throw new \app\common\exceptions\OperationFailureException("渠道配置错误",Macro::ERR_PAYMENT_CHANNEL_ID);
+            throw new \app\common\exceptions\OperationFailureException("渠道配置错误:未配置".Channel::getPayMethodsStr($order->pay_method_code)."对应Handle",Macro::ERR_PAYMENT_CHANNEL_ID);
         }
 
         $handleClass = "app\\lib\\payment\\channels\\".str_replace('/','\\',$payMethods[$order->pay_method_code]);

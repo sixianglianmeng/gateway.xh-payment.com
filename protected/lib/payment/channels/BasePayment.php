@@ -2,6 +2,7 @@
 
 namespace app\lib\payment\channels;
 
+use app\common\exceptions\OperationFailureException;
 use app\common\models\model\Remit;
 use Yii;
 use app\common\models\model\ChannelAccount;
@@ -41,11 +42,12 @@ class BasePayment
         'status' => Macro::FAIL,
         'message'=>'',
         'data' => [
-            'type'=>self::RENDER_TYPE_REDIRECT,
-            'url'      => '',//get跳转链接
-            'formHtml' => '',//自动提交的form表单HTML
-            'qr' => '',//自动提交的form表单HTML
-            'scheme' => '',//唤醒客户端的scheme
+            'type'             => self::RENDER_TYPE_REDIRECT,
+            'url'              => '',//get跳转链接
+            'channel_order_no' => '',//三方支付流水号
+            'formHtml'         => '',//自动提交的form表单HTML
+            'qr'               => '',//自动提交的form表单HTML
+            'scheme'           => '',//唤醒客户端的scheme
         ],
     ];
 
@@ -85,6 +87,7 @@ class BasePayment
         'message'=>'',
         'data' => [
             'channel_order_no' => '',//三方订单号',
+            'amount' => '',//实际订单金额,可选,
             'trade_status'       => "",//Macro::SUCCESS|Macro::FAIL",
         ],
     ];
@@ -94,6 +97,7 @@ class BasePayment
         'message'=>'',
         'data' => [
             'channel_order_no' => '',//三方订单号',
+            'amount' => '',//实际出款金额,可选,
             'bank_status'       => '',//三方银行状态,需转换为Remit表状态',
         ],
     ];
@@ -153,22 +157,27 @@ class BasePayment
         $baseConfig = $envConfig = [];
 
         //渠道代码(英文)，用于配置文件目录名等。配置文件真实地址为/config/payment/目录名/config.php,且payment目录可放置于不同环境目录下。
-        $baseConfigFile = Yii::getAlias("@app/config/payment/{$channel->channel_code}/config.php");
-        if(file_exists(Yii::getAlias("@app/config/payment/{$channel->channel_code}/config.php"))){
-            $baseConfig = require $baseConfigFile;
-        }
-        $envFile = Yii::getAlias("@app/config/payment/{$channel->channel_code}/config_").strtolower(APPLICATION_ENV) .".php";
-        if(file_exists($envFile)){
-            $envConfig = require $envFile;
+        //全部从数据库读取配置
+//        $baseConfigFile = Yii::getAlias("@app/config/payment/{$channel->channel_code}/config.php");
+//        if(file_exists(Yii::getAlias("@app/config/payment/{$channel->channel_code}/config.php"))){
+//            $baseConfig = require $baseConfigFile;
+//        }
+//        $envFile = Yii::getAlias("@app/config/payment/{$channel->channel_code}/config_").strtolower(APPLICATION_ENV) .".php";
+//        if(file_exists($envFile)){
+//            $envConfig = require $envFile;
+//        }
+        //        $paymentConfig                = \yii\helpers\ArrayHelper::merge($baseConfig, $envConfig);
+
+
+        $paymentConfig = $channelAccount->getAppSectets();
+        if(empty($paymentConfig) || !is_array($paymentConfig) || empty($channelAccount->merchant_id)){
+            throw new OperationFailureException("收款渠道KEY配置错误:channelAccountId:{$channelAccount->id}",Macro::ERR_PAYMENT_CHANNEL_CONFIG);
         }
 
-        $appSecrets = $channelAccount->getAppSectets();
-        if(empty($appSecrets) || !is_array($appSecrets) || empty($channelAccount->merchant_id)){
-            throw new \app\common\exceptions\OperationFailureException("收款渠道配置错误:channelAccountId:{$channelAccount->id}",Macro::ERR_PAYMENT_CHANNEL_CONFIG);
-        }
-        $paymentConfig                = \yii\helpers\ArrayHelper::merge($baseConfig, $envConfig);
+        $channelAccountConfigs = $channelAccount->toArray();
+        unset($channelAccountConfigs['app_secrets']);
+        $paymentConfig                = \yii\helpers\ArrayHelper::merge($paymentConfig, $channelAccountConfigs);
 
-        $paymentConfig                = \yii\helpers\ArrayHelper::merge($paymentConfig, $appSecrets);
         $paymentConfig['merchantId'] = $channelAccount->merchant_id;
         $paymentConfig['appId']      = $channelAccount->app_id;
         $this->paymentConfig          = $paymentConfig;
@@ -184,7 +193,7 @@ class BasePayment
      *
      * @return bool|string
      */
-    public static function md5Sign($params, $signKey){
+    public static function md5Sign(array $params, string $signKey){
         if (is_array($params)) {
             $a      = $params;
             $params = array();
@@ -213,7 +222,7 @@ class BasePayment
      *
      * @return bool|string
      */
-    public static function post($url, $postData, $header = [], $timeout = 5)
+    public static function post(string $url, array $postData, $header = [], $timeout = 5)
     {
         $headers = [];
         try {
@@ -356,6 +365,14 @@ class BasePayment
     }
 
     /**
+     * 网银H5/WAP支付
+     */
+    public function bankH5()
+    {
+        throw new OperationFailureException("通道暂不支持此支付方式:".__FUNCTION__, Macro::ERR_UNKNOWN);
+    }
+
+    /**
      * 网银快捷支付
      */
     public function bankQuickPay()
@@ -429,9 +446,17 @@ class BasePayment
     }
 
     /**
-     * 银联微信扫码支付
+     * 银联扫码支付
      */
     public function unoinPayQr()
+    {
+        throw new OperationFailureException("通道暂不支持此支付方式:".__FUNCTION__, Macro::ERR_UNKNOWN);
+    }
+
+    /**
+     * 银联H5支付
+     */
+    public function unionPayH5()
     {
         throw new OperationFailureException("通道暂不支持此支付方式:".__FUNCTION__, Macro::ERR_UNKNOWN);
     }
@@ -440,7 +465,15 @@ class BasePayment
     /**
      * 京东H5支付
      */
-    public function jdh5()
+    public function jdH5()
+    {
+        throw new OperationFailureException("通道暂不支持此支付方式:".__FUNCTION__, Macro::ERR_UNKNOWN);
+    }
+
+    /**
+     * 京东扫码支付
+     */
+    public function jdQr()
     {
         throw new OperationFailureException("通道暂不支持此支付方式:".__FUNCTION__, Macro::ERR_UNKNOWN);
     }
