@@ -1,6 +1,7 @@
 <?php
 namespace app\lib\payment;
 
+use app\common\exceptions\OperationFailureException;
 use app\common\models\model\Channel;
 use app\common\models\model\Order;
 use app\common\models\model\Remit;
@@ -62,7 +63,7 @@ class ChannelPayment
 
         $payMethod = $channel->remit_handle_class;
         if(empty($channel->remit_handle_class)){
-            throw new \app\common\exceptions\OperationFailureException("渠道配置错误",Macro::ERR_PAYMENT_CHANNEL_ID);
+            throw new OperationFailureException("渠道配置错误",Macro::ERR_PAYMENT_CHANNEL_ID);
         }
 
         $handleClass = "app\\lib\\payment\\channels\\".str_replace('/','\\',$channel->remit_handle_class);
@@ -81,6 +82,9 @@ class ChannelPayment
      */
     public function __call($method, $arguments)
     {
+        if(!is_callable([$this->paymentHandle,$method])){
+            throw new OperationFailureException("找不到处理方法:".class_basename($this->paymentHandle).'->'.$method,Macro::ERR_PAYMENT_CHANNEL_ID);
+        }
         return $this->paymentHandle->$method(...$arguments);
     }
 }

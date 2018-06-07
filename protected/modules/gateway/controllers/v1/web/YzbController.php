@@ -4,6 +4,7 @@ namespace app\modules\gateway\controllers\v1\web;
 use app\components\Macro;
 use app\components\WebAppController;
 use app\lib\payment\channels\ht\HtBasePayment;
+use app\lib\payment\channels\yzb\YzbBasePayment;
 use app\modules\gateway\models\logic\LogicOrder;
 use Yii;
 use app\modules\gateway\controllers\BaseController;
@@ -24,7 +25,7 @@ class HtController extends WebAppController
     }
 
     /*
-     * 异步回调
+     * 收款异步回调
      */
     public function actionNotify()
     {
@@ -40,12 +41,12 @@ class HtController extends WebAppController
 
         LogicOrder::processChannelNotice($noticeResult);
         
-        $responseStr = HtBasePayment::createdResponse(true);
+        $responseStr = YzbBasePayment::createdResponse(true);
         return $responseStr;
     }
 
     /*
-     * 同步步回调
+     * 收款同步步回调
      */
     public function actionReturn()
     {
@@ -76,5 +77,26 @@ class HtController extends WebAppController
             }
         }
 
+    }
+
+    /*
+     * 出款异步回调
+     */
+    public function actionRemitNotify()
+    {
+        //解析订单回调，获取统一的订单id，金额等信息
+        $payment = new HtBasePayment();
+        $noticeResult = $payment->parseRemitNotifyRequest($this->allParams);
+
+        Yii::info("parseReturnRequest: ".\GuzzleHttp\json_encode($noticeResult));
+
+        if(empty($noticeResult['data']['remit'])){
+            throw new OperationFailureException("无法解析订单信息：".$noticeResult['message']);
+        }
+
+        LogicOrder::processRemitQueryStatus($noticeResult);
+
+        $responseStr = YzbBasePayment::createdResponse(true);
+        return $responseStr;
     }
 }

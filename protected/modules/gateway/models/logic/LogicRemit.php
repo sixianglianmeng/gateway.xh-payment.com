@@ -15,6 +15,7 @@ use app\components\Util;
 use app\jobs\PaymentNotifyJob;
 use app\lib\helpers\SignatureHelper;
 use app\lib\payment\ChannelPayment;
+use app\lib\payment\channels\BasePayment;
 use app\lib\payment\ObjectNoticeResult;
 use app\common\models\model\Remit;
 use power\yii2\exceptions\ParameterValidationExpandException;
@@ -152,10 +153,12 @@ class LogicRemit
      */
     static public function beforeAddRemit(Remit $remit, User $merchant, ChannelAccount $paymentChannelAccount){
         $userPaymentConfig = $merchant->paymentInfo;
+        //站点是否允许费率设置为0
+        $feeCanBeZero = SiteConfig::cacheGetContent('remit_fee_can_be_zero');
 
         //账户费率检测
-        if($userPaymentConfig->remit_fee <= 0){
-            throw new OperationFailureException(Macro::ERR_MERCHANT_FEE_CONFIG);
+        if(!$feeCanBeZero && $userPaymentConfig->remit_fee <= 0){
+            throw new OperationFailureException("用户出款费率不能设置为0:".Macro::ERR_MERCHANT_FEE_CONFIG);
         }
 
         //检测账户单笔限额
@@ -176,8 +179,8 @@ class LogicRemit
         }
 
         //渠道费率检测
-        if($paymentChannelAccount->remit_fee <= 0){
-            throw new OperationFailureException(Macro::ERR_CHANNEL_FEE_CONFIG);
+        if(!$feeCanBeZero && $paymentChannelAccount->remit_fee <= 0){
+            throw new OperationFailureException("通道出款费率不能设置为0:".Macro::ERR_CHANNEL_FEE_CONFIG);
         }
         //检测渠道单笔限额
         if($paymentChannelAccount->remit_quota_pertime && $remit->amount > $paymentChannelAccount->remit_quota_pertime){
@@ -418,6 +421,53 @@ class LogicRemit
         return $remit;
     }
 
+    /**
+     * 根据订单查询结果对订单做相应处理
+     *
+     */
+    static public function processRemitQueryStatus($remitRet){
+        Yii::info(__CLASS__ . ':' . __FUNCTION__ . ' ' . json_encode($remitRet));
+
+        if(
+            !isset($remitRet['data']['bank_status'])
+            || empty($remitRet['data']['remit'])
+        ){
+
+            if($remitRet['status'] === Macro::SUCCESS){
+                switch ($remitRet['data']['bank_status']){
+                    case Remit::BANK_STATUS_PROCESSING:
+                        $remitRet['data']['remit']->status = Remit::STATUS_BANK_PROCESSING;
+                        $remitRet['data']['remit']->bank_status =  Remit::BANK_STATUS_PROCESSING;
+                        break;
+                    case Remit::BANK_STATUS_SUCCESS:
+                        $remitRet['data']['remit']->status = Remit::STATUS_SUCCESS;
+                        $remitRet['data']['remit']->bank_status =  Remit::BANK_STATUS_SUCCESS;
+                        $remitRet['data']['remit']->remit_at =  time();
+                        break;
+                    case  Remit::BANK_STATUS_FAIL:
+                        $remitRet['data']['remit']->status = Remit::STATUS_NOT_REFUND;
+                        $remitRet['data']['remit']->bank_status =  Remit::BANK_STATUS_FAIL;
+                        if($ret['message']) $remitRet['data']['remit']->bank_ret = date('Y-m-d H:i:s').''.$ret['message']."\n";
+                        break;
+                }
+
+                if(!empty($ret['data']['channel_order_no']) && empty($remitRet['data']['remit']->channel_order_no)){
+                    $remitRet['data']['remit']->channel_order_no = $ret['data']['channel_order_no'];
+                }
+
+                $remitRet['data']['remit']->save();
+
+                if($remitRet['data']['remit']->bank_status == Remit::BANK_STATUS_SUCCESS){
+                    self::afterSuccess($remitRet['data']['remit']);
+                }
+
+                self::updateToRedis($remitRet['data']['remit']);
+            }
+        }else{
+            Yii::warning(__CLASS__ . ':' . __FUNCTION__ . ' error ret:' . json_encode($remitRet));
+        }
+    }
+
     static public function refund($remit, $reason = ''){
         Yii::info(__CLASS__ . ':' . __FUNCTION__ . ' ' . $remit->order_no);
         if(
@@ -612,6 +662,14 @@ class LogicRemit
         }
 
         return $statusArr;
+    }
+
+    static public function getOrderByOrderNo($orderNo){
+        $order = Remit::findOne(['order_no'=>$orderNo]);
+        if(empty($order)){
+            throw new InValidRequestException('订单不存在');
+        }
+        return $order;
     }
 
     /**

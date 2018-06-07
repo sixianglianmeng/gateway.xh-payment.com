@@ -78,9 +78,10 @@ class BasePayment
             //三方订单流水号
             'channel_order_no' => '',
             //三方成功时间
-            'successTime' => '',
+            'success_time' => '',
         ],
     ];
+
     //收款订单查询接口结果
     const RECHARGE_QUERY_RESULT = [
         'status' => Macro::FAIL,
@@ -106,7 +107,14 @@ class BasePayment
         'status' => Macro::FAIL,
         'message'=>'',
         'data' => [
+            //订单对象 app\common\models\model\Remit
+            'remit' => null,
+            //订单号
+            'order_no' => '',
+            //订单实际出款金额
+            'amount' => 0,
             'channel_order_no' => '',//三方订单号'
+            //出款状态 Remit::STATUS_BANK_PROCESSING|Remit::BANK_STATUS_SUCCESS|Remit::BANK_STATUS_FAIL
             'bank_status'       => '',//三方银行状态,需转换为Remit表状态',
         ],
     ];

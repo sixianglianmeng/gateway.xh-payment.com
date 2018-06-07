@@ -7,6 +7,7 @@ use app\common\models\model\BankCodes;
 use app\common\models\model\Channel;
 use app\common\models\model\Remit;
 use app\components\Util;
+use app\modules\gateway\models\logic\LogicRemit;
 use Yii;
 use app\common\models\model\Order;
 use app\components\Macro;
@@ -112,16 +113,16 @@ class YzbBasePayment extends BasePayment
      */
     public function parseReturnRequest(array $request){
 
-        $data['payKey'] = ControllerParameterValidator::getRequestParam($request, 'payKey',null,Macro::CONST_PARAM_TYPE_STRING, 'payKey错误！',[5]);
-        $data['orderNo'] = ControllerParameterValidator::getRequestParam($request, 'orderNo',null,Macro::CONST_PARAM_TYPE_ORDER_NO, '订单号错误！');
-        $data['orderPrice'] = ControllerParameterValidator::getRequestParam($request, 'orderPrice',null,Macro::CONST_PARAM_TYPE_DECIMAL, '订单金额错误！');
-        $data['orderDate'] = ControllerParameterValidator::getRequestParam($request, 'orderDate',null,Macro::CONST_PARAM_TYPE_STRING, '订单时间错误！',[10]);
-        $data['serviceType'] = ControllerParameterValidator::getRequestParam($request, 'serviceType','',Macro::CONST_PARAM_TYPE_STRING, 'serviceType错误！',[3]);
-        $data['trxNo'] = ControllerParameterValidator::getRequestParam($request, 'trxNo',null,Macro::CONST_PARAM_TYPE_STRING, '平台订单号错误！',[3]);
-        $data['tradeStatus'] = ControllerParameterValidator::getRequestParam($request, 'tradeStatus',null,Macro::CONST_PARAM_TYPE_STRING, 'tradeStatus错误！',[3]);
-        $data['trade_status'] = ControllerParameterValidator::getRequestParam($request, 'trade_status',null,Macro::CONST_PARAM_TYPE_STRING, '状态错误！',[1]);
-        $data['productName'] = ControllerParameterValidator::getRequestParam($request, 'productName','',Macro::CONST_PARAM_TYPE_STRING, 'productName错误！');
-        $sign = ControllerParameterValidator::getRequestParam($request, 'sign',null,Macro::CONST_PARAM_TYPE_STRING, 'sign错误！',[3]);
+        $data['payKey']      = ControllerParameterValidator::getRequestParam($request, 'payKey', null, Macro::CONST_PARAM_TYPE_STRING, 'payKey错误！', [5]);
+        $data['orderNo']     = ControllerParameterValidator::getRequestParam($request, 'orderNo', null, Macro::CONST_PARAM_TYPE_ORDER_NO, '订单号错误！');
+        $data['orderPrice']  = ControllerParameterValidator::getRequestParam($request, 'orderPrice', null, Macro::CONST_PARAM_TYPE_DECIMAL, '订单金额错误！');
+        $data['orderDate']   = ControllerParameterValidator::getRequestParam($request, 'orderDate', null, Macro::CONST_PARAM_TYPE_STRING, '订单时间错误！', [4]);
+        $data['orderTime']   = ControllerParameterValidator::getRequestParam($request, 'orderTime', null, Macro::CONST_PARAM_TYPE_STRING, 'orderTime错误！', [10]);
+        $data['serviceType'] = ControllerParameterValidator::getRequestParam($request, 'serviceType', '', Macro::CONST_PARAM_TYPE_STRING, 'serviceType错误！', [3]);
+        $data['trxNo']       = ControllerParameterValidator::getRequestParam($request, 'trxNo', null, Macro::CONST_PARAM_TYPE_STRING, '平台订单号错误！', [3]);
+        $data['tradeStatus'] = ControllerParameterValidator::getRequestParam($request, 'tradeStatus', null, Macro::CONST_PARAM_TYPE_STRING, 'tradeStatus错误！', [3]);
+        $data['productName'] = ControllerParameterValidator::getRequestParam($request, 'productName', '', Macro::CONST_PARAM_TYPE_STRING, 'productName错误！');
+        $sign                = ControllerParameterValidator::getRequestParam($request, 'sign', null, Macro::CONST_PARAM_TYPE_STRING, 'sign错误！', [3]);
 
         $order = LogicOrder::getOrderByOrderNo($data['orderNo']);
         $this->setPaymentConfig($order->channelAccount);
@@ -133,7 +134,7 @@ class YzbBasePayment extends BasePayment
         }
 
         $ret = self::RECHARGE_NOTIFY_RESULT;
-        if(!empty($request['tradeStatus']) && $request['tradeStatus'] == self::TRADE_STATUS_SUCCESS && $data['orderPrice']>0) {
+        if(!empty($request['tradeStatus']) && $request['tradeStatus'] == 'SUCCESS' &&  self::TRADE_STATUS_SUCCESS && $data['orderPrice']>0) {
             $ret['data']['order'] = $order;
             $ret['data']['order_no'] = $order->order_no;
             $ret['data']['amount'] = $data['order_amount'];
@@ -386,18 +387,18 @@ class YzbBasePayment extends BasePayment
         if(empty($this->remit)){
             throw new OperationFailureException('未传入出款订单对象',Macro::ERR_UNKNOWN);
         }
-        $bankCode = BankCodes::getChannelBankCode($this->order['channel_id'],$this->order['bank_code']);
+        $bankCode = BankCodes::getChannelBankCode($this->remit['channel_id'],$this->remit['bank_code']);
 
         if(empty($bankCode)){
-            throw new OperationFailureException("银行代码配置错误:".$this->order['channel_id'].':'.$this->order['bank_code'],Macro::ERR_PAYMENT_BANK_CODE);
+            throw new OperationFailureException("银行代码配置错误:".$this->remit['channel_id'].':'.$this->remit['bank_code'],Macro::ERR_PAYMENT_BANK_CODE);
         }
         if(empty(self::BANKS[$bankCode])){
             throw new OperationFailureException('出款程序银行代码未配置:BANKS',Macro::ERR_UNKNOWN);
         }
         $params = [
-            'serviceType'=>'DF001',
+            'serviceType'=>'DF003',
             'version'=>'v100',
-            'orderPrice'=>bcadd(0, $this->order['amount'], 2),
+            'orderPrice'=>bcadd(0, $this->remit['amount'], 2),
             'orderTime'=>date('YmdHis'),
             'merchantNo'=>$this->remit['channel_merchant_id'],
             'payKey'=>$this->paymentConfig['payKey'],
@@ -409,9 +410,10 @@ class YzbBasePayment extends BasePayment
         ];
         $params['sign'] = self::md5Sign($params, trim($this->paymentConfig['key']));
 
-        $requestUrl = $this->paymentConfig['gateway_base_uri'] . '/remit.html';
+        $requestUrl = $this->paymentConfig['gateway_base_uri'];
         $resTxt = self::post($requestUrl, $params);
-        Yii::info('remit to bank result: '.$this->remit['order_no'].' '.$resTxt);
+
+        Yii::info('remit to bank raw result: '.$this->remit['order_no'].' '.$resTxt);
         $ret = self::REMIT_RESULT;
         if (!empty($resTxt)) {
             $res = json_decode($resTxt, true);
@@ -420,7 +422,6 @@ class YzbBasePayment extends BasePayment
                 isset($res['status']) && $res['status'] == 'SUCCESS'
                 && isset($res['code'])
             ) {
-
                 //打款成功是00000（大部分情况是能够直接打款成功），
                 //88888还在打款中，需要等待异步回调或请求查询结果
                 //其他都是失败
@@ -466,6 +467,9 @@ class YzbBasePayment extends BasePayment
         $resTxt = self::post($requestUrl, $params);
         Yii::info('remit query result: '.$this->remit['order_no'].' '.$resTxt);
         $ret = self::REMIT_QUERY_RESULT;
+        $ret['data']['remit'] = $this->remit;
+        $ret['data']['order_no'] = $this->remit->order_no;
+
         if (!empty($resTxt)) {
             $res = json_decode($resTxt, true);
 
@@ -536,6 +540,47 @@ class YzbBasePayment extends BasePayment
         }
 
         return  $ret;
+    }
+
+    /*
+     * 解析出款异步通知请求，返回订单
+     *
+     * @return array self::RECHARGE_NOTIFY_RESULT
+     */
+    public function parseRemitNotifyRequest(array $request){
+
+        $data['payKey'] = ControllerParameterValidator::getRequestParam($request, 'payKey',null,Macro::CONST_PARAM_TYPE_STRING, 'payKey错误！',[5]);
+        $data['orderNo'] = ControllerParameterValidator::getRequestParam($request, 'orderNo',null,Macro::CONST_PARAM_TYPE_ORDER_NO, '订单号错误！');
+        $data['payAmount'] = ControllerParameterValidator::getRequestParam($request, 'payAmount',null,Macro::CONST_PARAM_TYPE_DECIMAL, '订单金额错误！');
+        $data['serviceType'] = ControllerParameterValidator::getRequestParam($request, 'serviceType','',Macro::CONST_PARAM_TYPE_STRING, 'serviceType错误！',[3]);
+        $data['pl_orderNo'] = ControllerParameterValidator::getRequestParam($request, 'pl_orderNo',null,Macro::CONST_PARAM_TYPE_STRING, '平台订单号错误！',[3]);
+        $data['tradeStatus'] = ControllerParameterValidator::getRequestParam($request, 'tradeStatus',null,Macro::CONST_PARAM_TYPE_STRING, 'tradeStatus错误！',[3]);
+        $data['merchantNo'] = ControllerParameterValidator::getRequestParam($request, 'merchantNo',null,Macro::CONST_PARAM_TYPE_STRING, 'merchantNo错误！',[1]);
+        $sign = ControllerParameterValidator::getRequestParam($request, 'sign',null,Macro::CONST_PARAM_TYPE_STRING, 'sign错误！',[3]);
+
+        $remit = LogicRemit::getOrderByOrderNo($data['orderNo']);
+        $this->setPaymentConfig($remit->channelAccount);
+        $this->setRemit($remit);
+
+        $localSign = self::md5Sign($request,trim($this->paymentConfig['key']));
+        if($sign != $localSign){
+            throw new SignatureNotMatchException("签名验证失败");
+        }
+
+        $ret = self::RECHARGE_QUERY_RESULT;
+        $ret['data']['remit'] = $remit;
+        $ret['data']['order_no'] = $remit->order_no;
+
+        if(!empty($request['tradeStatus']) && $request['tradeStatus'] =='SUCCESS' && self::TRADE_STATUS_SUCCESS && $data['orderPrice']>0) {
+            $ret['data']['amount'] = $data['payAmount'];
+            $ret['status'] = Macro::SUCCESS;
+            $ret['data']['bank_status'] = Remit::BANK_STATUS_SUCCESS;
+            $ret['data']['channel_order_no'] = $data['pl_orderNo'];
+        }elseif(!empty($request['tradeStatus']) && $request['tradeStatus'] =='FAILED ') {
+            $ret['data']['bank_status'] = Remit::BANK_STATUS_FAIL;
+        }
+
+        return $ret;
     }
 
     /**
