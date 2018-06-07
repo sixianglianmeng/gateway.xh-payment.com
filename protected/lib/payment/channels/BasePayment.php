@@ -82,7 +82,7 @@ class BasePayment
         ],
     ];
 
-    //收款订单查询接口结果
+    //收款订单查询接口结果商户此支付方式通道开关未打
     const RECHARGE_QUERY_RESULT = [
         'status' => Macro::FAIL,
         'message'=>'',
@@ -250,7 +250,7 @@ class BasePayment
             $body     = $e->getMessage();
         }
 
-        Yii::info('request to channel: ' . $url . ' ' . $body);
+        Yii::info('request to channel: ' . $url . ' ' . json_encode($postData,JSON_UNESCAPED_UNICODE). ' ' . $body);
 
         return $body;
     }
@@ -350,7 +350,7 @@ class BasePayment
      * @return array BasePayment::REMIT_QUERY_RESULT
      */
     public function remitStatus(){
-
+        throw new OperationFailureException("通道暂不支持查询出款状态", Macro::ERR_UNKNOWN);
     }
 
     /**
