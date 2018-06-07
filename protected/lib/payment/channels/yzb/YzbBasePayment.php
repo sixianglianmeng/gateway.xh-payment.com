@@ -673,4 +673,14 @@ class YzbBasePayment extends BasePayment
         //        Yii::info(['md5Sign string: ',$signStr,$params]);
         return $signStr;
     }
+
+    /**
+     * 余额查询,此通道没有余额查询接口.但是需要做伪方法,防止批量实时查询失败.
+     *
+     * return  array BasePayment::BALANCE_QUERY_RESULT
+     */
+    public function balance()
+    {
+    }
+
 }
