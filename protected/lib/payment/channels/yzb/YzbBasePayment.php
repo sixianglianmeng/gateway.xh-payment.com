@@ -459,7 +459,7 @@ class YzbBasePayment extends BasePayment
             'payKey'=>$this->paymentConfig['payKey'],
             'merchantNo'=>$this->remit['channel_merchant_id'],
             'orderNo'=>$this->remit['order_no'],
-            'serviceType'=>'DF001',
+            'serviceType'=>'DF_QUERY_001',
         ];
         $params['sign'] = self::md5Sign($params,trim($this->paymentConfig['key']));
 
