@@ -171,8 +171,8 @@ class YzbBasePayment extends BasePayment
             'bankCode'=>$bankCode,
             'orderPrice'=>bcadd(0, $this->order['amount'], 2),
             'orderTime'=>date('YmdHis'),
-            'notifyUrl'=>Yii::$app->request->hostInfo."/gateway/v1/web/yzb/notify",
-            'returnUrl'=>Yii::$app->request->hostInfo."/gateway/v1/web/yzb/return",
+            'notifyUrl'=>str_replace('https','http',str_replace('https','http',Yii::$app->request->hostInfo))."/gateway/v1/web/yzb/notify",
+            'returnUrl'=>str_replace('https','http',Yii::$app->request->hostInfo)."/gateway/v1/web/yzb/return",
             'productName'=>'账户充值',
 
             'merchantNo'=>$this->order['channel_merchant_id'],
@@ -237,8 +237,8 @@ class YzbBasePayment extends BasePayment
             'version'=>'v100',
             'orderPrice'=>bcadd(0, $this->order['amount'], 2),
             'orderTime'=>date('YmdHis'),
-            'notifyUrl'=>Yii::$app->request->hostInfo."/gateway/v1/web/yzb/notify",
-            'returnUrl'=>Yii::$app->request->hostInfo."/gateway/v1/web/yzb/return",
+            'notifyUrl'=>str_replace('https','http',Yii::$app->request->hostInfo)."/gateway/v1/web/yzb/notify",
+            'returnUrl'=>str_replace('https','http',Yii::$app->request->hostInfo)."/gateway/v1/web/yzb/return",
             'productName'=>'账户充值',
             'merchantNo'=>$this->order['channel_merchant_id'],
             'payKey'=>$this->paymentConfig['payKey'],
@@ -323,8 +323,8 @@ class YzbBasePayment extends BasePayment
             'version'=>'v100',
             'orderPrice'=>bcadd(0, $this->order['amount'], 2),
             'orderTime'=>date('YmdHis'),
-            'notifyUrl'=>Yii::$app->request->hostInfo."/gateway/v1/web/yzb/notify",
-            'returnUrl'=>Yii::$app->request->hostInfo."/gateway/v1/web/yzb/return",
+            'notifyUrl'=>str_replace('https','http',Yii::$app->request->hostInfo)."/gateway/v1/web/yzb/notify",
+            'returnUrl'=>str_replace('https','http',Yii::$app->request->hostInfo)."/gateway/v1/web/yzb/return",
             'productName'=>'账户充值',
             'merchantNo'=>$this->order['channel_merchant_id'],
             'payKey'=>$this->paymentConfig['payKey'],
@@ -406,7 +406,7 @@ class YzbBasePayment extends BasePayment
             'accountName'=>$this->remit['bank_account'],
             'bankCard'=>$this->remit['bank_no'],
             'bankName'=>self::BANKS[$bankCode],
-            'notifyUrl'=>Yii::$app->request->hostInfo."/gateway/v1/web/yzb/remit-notify",
+            'notifyUrl'=>str_replace('https','http',Yii::$app->request->hostInfo)."/gateway/v1/web/yzb/remit-notify",
         ];
         $params['sign'] = self::md5Sign($params, trim($this->paymentConfig['key']));
 
