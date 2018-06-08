@@ -137,7 +137,7 @@ class YzbBasePayment extends BasePayment
         if(!empty($request['tradeStatus']) && $request['tradeStatus'] == 'SUCCESS' &&  self::TRADE_STATUS_SUCCESS && $data['orderPrice']>0) {
             $ret['data']['order'] = $order;
             $ret['data']['order_no'] = $order->order_no;
-            $ret['data']['amount'] = $data['order_amount'];
+            $ret['data']['amount'] = $data['orderPrice'];
             $ret['status'] = Macro::SUCCESS;
             $ret['data']['channel_order_no'] = $data['trxNo'];
         }
