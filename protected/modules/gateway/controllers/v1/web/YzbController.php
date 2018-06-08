@@ -13,7 +13,7 @@ use app\common\exceptions\OperationFailureException;
 /*
  * 汇通充值回调
  */
-class HtController extends WebAppController
+class YzbController extends WebAppController
 {
     /**
      * 前置action
