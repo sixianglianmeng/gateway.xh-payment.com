@@ -105,7 +105,7 @@ class LogicRemit
             $remitData['plat_fee_profit']     = bcsub($topestPrent['fee'],$remitData['plat_fee_amount'],6);
 
             if($topestPrent['fee']<$remitData['plat_fee_amount']){
-                Yii::error("商户费率配置错误,小于渠道最低费率: 顶级商户ID:{$topestPrent['merchant_id']},商户渠道账户ID:{$topestPrent['channel_account_id']},商户费率:{$topestPrent['fee']},渠道名:{$paymentChannelAccount->remit_channel_account_name},渠道费率:{$remitData['plat_fee_amount']}");
+                Yii::error("商户费率配置错误,小于渠道最低费率: 顶级商户ID:{$topestPrent['merchant_id']},商户渠道账户ID:{$topestPrent['channel_account_id']},商户费率:{$topestPrent['fee']},渠道名:{$paymentChannelAccount->channel_name},渠道费率:{$remitData['plat_fee_amount']}");
                 throw new InValidRequestException("商户费率配置错误,小于渠道最低费率!");
             }
         }
@@ -447,7 +447,7 @@ class LogicRemit
                     case  Remit::BANK_STATUS_FAIL:
                         $remitRet['data']['remit']->status = Remit::STATUS_NOT_REFUND;
                         $remitRet['data']['remit']->bank_status =  Remit::BANK_STATUS_FAIL;
-                        if($ret['message']) $remitRet['data']['remit']->bank_ret = date('Y-m-d H:i:s').''.$ret['message']."\n";
+                        if($remitRet['message']) $remitRet['data']['remit']->bank_ret = date('Y-m-d H:i:s').''.$ret['message']."\n";
                         break;
                 }
 
