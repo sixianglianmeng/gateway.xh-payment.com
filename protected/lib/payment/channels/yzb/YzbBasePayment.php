@@ -406,7 +406,7 @@ class YzbBasePayment extends BasePayment
             'accountName'=>$this->remit['bank_account'],
             'bankCard'=>$this->remit['bank_no'],
             'bankName'=>self::BANKS[$bankCode],
-            'notifyUrl'=>str_replace('https','http',Yii::$app->request->hostInfo)."/gateway/v1/web/yzb/remit-notify",
+            'notifyUrl'=>"http://".Yii::$app->params['domain.gateway']."/gateway/v1/web/yzb/remit-notify",
         ];
         $params['sign'] = self::md5Sign($params, trim($this->paymentConfig['key']));
 

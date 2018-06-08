@@ -20,9 +20,30 @@ $config = \yii\helpers\ArrayHelper::merge(
                 'port' => 63780,
                 'database' => 0,
             ],
+            'log' => [
+                'targets' => [
+                    'file' => [
+                        'class' => '\power\yii2\log\FileTarget',
+                        'levels' => ['error', 'warning'],
+                        'logFile' => '@runtime/log/err.log',
+                        'enableRotation' => true,
+                        'maxFileSize' => 1024 * 100,
+                        'logVars' => [],
+                    ],
+                    'notice' => [
+                        'class' => '\power\yii2\log\FileTarget',
+                        'levels' => ['debug','notice', 'trace','info','warning','error'],//'profile',
+                        'logFile' => '@runtime/log/common.log',
+                        'enableRotation' => true,
+                        'maxFileSize' => 1024 * 100,
+                        'logVars' => [],
+                    ],
+                ],
+            ],
         ],
         'params' => [
             'domain.cdn' => 't1.agent.huaruipay.com',
+            'domain.gateway' => 't1.gateway.huaruipay.com',
             'domain.gateway.rpc' => 't1.gateway.huaruipay.com',
             'corsOriginDomain' => ['*','t1.gateway.huaruipay.com'],
         ],
