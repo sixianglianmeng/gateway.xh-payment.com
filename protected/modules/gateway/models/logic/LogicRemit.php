@@ -305,9 +305,9 @@ class LogicRemit
             'event_id'=>$remit->order_no,
             'event_type'=> LogApiRequest::EVENT_TYPE_OUT_REMIT_ADD,
             'merchant_id'=>$remit->channel_merchant_id,
-            'merchant_name'=>'',
+            'merchant_name'=>$remit->channelAccount->merchant_account,
             'channel_account_id'=>$remit->channel_account_id,
-            'channel_name'=>'',
+            'channel_name'=>$remit->channelAccount->channel_name,
         ];
 
         if($remit->status == Remit::STATUS_CHECKED){
@@ -371,9 +371,9 @@ class LogicRemit
             'event_id'=>$remit->order_no,
             'event_type'=> LogApiRequest::EVENT_TYPE_OUT_REMIT_QUERY,
             'merchant_id'=>$remit->channel_merchant_id,
-            'merchant_name'=>'',
+            'merchant_name'=>$remit->channelAccount->channel_name,
             'channel_account_id'=>$remit->channel_account_id,
-            'channel_name'=>'',
+            'channel_name'=>$remit->channelAccount->channel_name,
         ];
         $paymentChannelAccount = $remit->channelAccount;
         //提交到银行

@@ -2,6 +2,7 @@
 
 namespace app\lib\payment\channels\ht;
 
+use app\common\models\logic\LogicApiRequestLog;
 use app\common\models\model\BankCodes;
 use app\common\models\model\Remit;
 use app\components\Util;
@@ -69,6 +70,16 @@ class HtBasePayment extends BasePayment
         $this->setPaymentConfig($order->channelAccount);
         $this->setOrder($order);
 
+        //接口日志埋点
+        Yii::$app->params['apiRequestLog'] = [
+            'event_id'=>$order->order_no,
+            'event_type'=> LogApiRequest::EVENT_TYPE_IN_RECHARGE_NOTIFY,
+            'merchant_id'=>$order->merchant_id,
+            'merchant_name'=>$order->merchant_account,
+            'channel_account_id'=>$order->channelAccount->id,
+            'channel_name'=>$order->channelAccount->channel_name,
+        ];
+
         $localSign = self::md5Sign($data,trim($this->paymentConfig['key']));
         if($sign != $localSign){
             throw new SignatureNotMatchException("签名验证失败");
@@ -88,6 +99,9 @@ class HtBasePayment extends BasePayment
         else{
             $ret['status'] =  Macro::ERR_PAYMENT_PROCESSING;
         }
+
+        //设置了请求日志，写入日志表
+        LogicApiRequestLog::inLog($ret);
 
         return $ret;
     }
@@ -342,6 +356,8 @@ class HtBasePayment extends BasePayment
         $requestUrl = $this->paymentConfig['gateway_base_uri'] . '/remit.html';
         $resTxt = self::post($requestUrl, $params);
         Yii::info('remit to bank result: '.$this->remit['order_no'].' '.$resTxt);
+        LogicApiRequestLog::outLog($requestUrl, 'POST', $resTxt, 200,0, $params);
+
         $ret = self::REMIT_RESULT;
         if (!empty($resTxt)) {
             $res = json_decode($resTxt, true);
@@ -376,6 +392,9 @@ class HtBasePayment extends BasePayment
         $params['sign'] = self::md5Sign($params,trim($this->paymentConfig['key']));
         $requestUrl = $this->paymentConfig['gateway_base_uri'].'/remit_query.html';
         $resTxt = self::post($requestUrl, $params);
+        //记录请求日志
+        LogicApiRequestLog::outLog($requestUrl, 'POST', $resTxt, 200,0, $params);
+
         Yii::info('remit query result: '.$this->remit['order_no'].' '.$resTxt);
         $ret = self::REMIT_QUERY_RESULT;
         $ret['data']['remit'] = $this->remit;

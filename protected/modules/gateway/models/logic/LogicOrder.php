@@ -250,7 +250,7 @@ class LogicOrder
             $order = self::paySuccess($order,$noticeResult['data']['amount'],$noticeResult['data']['channel_order_no']);
         }
         elseif( $noticeResult['status'] === Macro::FAIL){
-                $order = self::payFail($order,$noticeResult['msg']);
+            $order = self::payFail($order,$noticeResult['msg']);
             Yii::info(__FUNCTION__.' order not paid: '.$noticeResult['data']['order_no']);
         }
 

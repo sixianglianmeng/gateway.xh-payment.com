@@ -206,6 +206,10 @@ class AllScoreBasePayment extends BasePayment
 
         $resTxt = \AllscoreService::quickPost($this->paymentConfig['payment_query_url'],$parameter,$this->paymentConfig);
         $ret = self::REMIT_QUERY_RESULT;
+
+        //记录请求日志
+        LogicApiRequestLog::outLog($this->paymentConfig['payment_query_url'], 'POST', $resTxt, 200,0, $parameter);
+
         if(!empty($resTxt)){
             $res = json_decode($resTxt,true);
             if(isset($res['retCode']) && $res['retCode']=='0000'){

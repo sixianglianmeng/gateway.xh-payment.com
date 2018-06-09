@@ -3,8 +3,10 @@
 namespace app\lib\payment\channels\yzb;
 
 use app\common\exceptions\OperationFailureException;
+use app\common\models\logic\LogicApiRequestLog;
 use app\common\models\model\BankCodes;
 use app\common\models\model\Channel;
+use app\common\models\model\LogApiRequest;
 use app\common\models\model\Remit;
 use app\components\Util;
 use app\modules\gateway\models\logic\LogicRemit;
@@ -128,6 +130,16 @@ class YzbBasePayment extends BasePayment
         $this->setPaymentConfig($order->channelAccount);
         $this->setOrder($order);
 
+        //接口日志埋点
+        Yii::$app->params['apiRequestLog'] = [
+            'event_id'=>$order->order_no,
+            'event_type'=> LogApiRequest::EVENT_TYPE_IN_RECHARGE_NOTIFY,
+            'merchant_id'=>$order->merchant_id,
+            'merchant_name'=>$order->merchant_account,
+            'channel_account_id'=>$order->channelAccount->id,
+            'channel_name'=>$order->channelAccount->channel_name,
+        ];
+
         $localSign = self::md5Sign($request,trim($this->paymentConfig['key']));
         if($sign != $localSign){
             throw new SignatureNotMatchException("签名验证失败");
@@ -184,6 +196,17 @@ class YzbBasePayment extends BasePayment
         $params['sign'] = self::md5Sign($params,trim($this->paymentConfig['key']));
         $requestUrl = $this->paymentConfig['gateway_base_uri'];
         $resTxt = self::post($requestUrl,$params);
+
+        //接口日志埋点
+        Yii::$app->params['apiRequestLog'] = [
+            'event_id'=>$this->order->order_no,
+            'event_type'=> LogApiRequest::EVENT_TYPE_OUT_RECHARGE_ADD,
+            'merchant_id'=>$this->order->channel_merchant_id,
+            'merchant_name'=>'',
+            'channel_account_id'=>$this->order->channel_account_id,
+            'channel_name'=>'',
+        ];
+        LogicApiRequestLog::outLog($requestUrl, 'POST', $resTxt, 200);
 
         $ret = self::RECHARGE_CASHIER_RESULT;
         if (!empty($resTxt)) {
@@ -412,6 +435,7 @@ class YzbBasePayment extends BasePayment
 
         $requestUrl = $this->paymentConfig['gateway_base_uri'];
         $resTxt = self::post($requestUrl, $params);
+        LogicApiRequestLog::outLog($requestUrl, 'POST', $resTxt, 200,0, $params);
 
         Yii::info('remit to bank raw result: '.$this->remit['order_no'].' '.$resTxt);
         $ret = self::REMIT_RESULT;
@@ -465,6 +489,8 @@ class YzbBasePayment extends BasePayment
 
         $requestUrl = $this->paymentConfig['gateway_base_uri'];
         $resTxt = self::post($requestUrl, $params);
+        LogicApiRequestLog::outLog($requestUrl, 'POST', $resTxt, 200,0, $params);
+
         Yii::info('remit query result: '.$this->remit['order_no'].' '.$resTxt);
         $ret = self::REMIT_QUERY_RESULT;
         $ret['data']['remit'] = $this->remit;
@@ -561,6 +587,16 @@ class YzbBasePayment extends BasePayment
         $remit = LogicRemit::getOrderByOrderNo($data['orderNo']);
         $this->setPaymentConfig($remit->channelAccount);
         $this->setRemit($remit);
+
+        //接口日志埋点
+        Yii::$app->params['apiRequestLog'] = [
+            'event_id'=>$remit->order_no,
+            'event_type'=> LogApiRequest::EVENT_TYPE_IN_RECHARGE_NOTIFY,
+            'merchant_id'=>$remit->merchant_id,
+            'merchant_name'=>$remit->merchant_account,
+            'channel_account_id'=>$remit->channelAccount->id,
+            'channel_name'=>$remit->channelAccount->channel_name,
+        ];
 
         $localSign = self::md5Sign($request,trim($this->paymentConfig['key']));
         if($sign != $localSign){

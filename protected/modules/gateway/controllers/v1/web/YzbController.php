@@ -43,6 +43,10 @@ class YzbController extends WebAppController
         LogicOrder::processChannelNotice($noticeResult);
         
         $responseStr = YzbBasePayment::createdResponse(true);
+
+        //设置了请求日志，写入日志表
+        LogicApiRequestLog::inLog($responseStr);
+
         return $responseStr;
     }
 
@@ -69,10 +73,13 @@ class YzbController extends WebAppController
         //获取商户回跳连接
         $url = LogicOrder::createReturnUrl($noticeResult->order);
 
+        //设置了请求日志，写入日志表
+        LogicApiRequestLog::inLog("ok: redirect:{$url}");
+
         if ($url) {
             Yii::$app->response->redirect($url);
         } else {
-            if ($noticeResult->status === Macro::SUCCESS) {
+            if ($noticeResult['status'] === Macro::SUCCESS) {
                 throw new OperationFailureException("支付成功");
             } else {
                 throw new OperationFailureException("支付失败：" . $noticeResult['message']);
@@ -100,6 +107,10 @@ class YzbController extends WebAppController
         LogicOrder::processRemitQueryStatus($noticeResult);
 
         $responseStr = YzbBasePayment::createdResponse(true);
+
+        //设置了请求日志，写入日志表
+        LogicApiRequestLog::inLog($responseStr);
+
         return $responseStr;
     }
 }
