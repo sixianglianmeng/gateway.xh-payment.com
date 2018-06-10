@@ -26,10 +26,10 @@ $config = \yii\helpers\ArrayHelper::merge(
             ],
         ],
         'params' => [
-            'domain.cdn' => 'portal-api.huaruipay.com',
-            'domain.gateway' => 'gateway.huaruipay.com',
-            'domain.gateway.rpc' => 'gateway.huaruipay.com',
-            'corsOriginDomain' => ['*','portal-api.huaruipay.com'],
+            'domain.cdn' => 'portal-api.gd95516.com',
+            'domain.gateway' => 'gateway.gd95516.com',
+            'domain.gateway.rpc' => 'gateway.gd95516.com',
+            'corsOriginDomain' => ['*','portal-api.gd95516.com'],
         ],
     ]
 );

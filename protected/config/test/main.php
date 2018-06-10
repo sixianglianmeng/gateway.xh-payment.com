@@ -42,10 +42,10 @@ $config = \yii\helpers\ArrayHelper::merge(
             ],
         ],
         'params' => [
-            'domain.cdn' => 't1.agent.huaruipay.com',
-            'domain.gateway' => 't1.gateway.huaruipay.com',
-            'domain.gateway.rpc' => 't1.gateway.huaruipay.com',
-            'corsOriginDomain' => ['*','t1.gateway.huaruipay.com'],
+            'domain.cdn' => 't1.agent.gd95516.com',
+            'domain.gateway' => 't1.gateway.gd95516.com',
+            'domain.gateway.rpc' => 't1.gateway.gd95516.com',
+            'corsOriginDomain' => ['*','t1.gateway.gd95516.com'],
         ],
     ]
 );

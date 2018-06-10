@@ -209,10 +209,10 @@ $config = [
         'user.apiTokenExpire' => 3600,
         'user.passwordResetTokenExpire' => 600,
         'user.rateLimit' => [60, 60],
-        'domain.cdn' => 'dev.gateway.payment.com',
-        'domain.gateway' => 'dev.gateway.payment.com',
-        'domain.gateway.rpc' => 'dev.gateway.payment.com',
-        'corsOriginDomain' => ['*','dev.gateway.payment.com'],
+        'domain.cdn' => 'dev.gateway.pub-payment.com',
+        'domain.gateway' => 'dev.gateway.pub-payment.com',
+        'domain.gateway.rpc' => 'dev.gateway.pub-payment.com',
+        'corsOriginDomain' => ['*','dev.gateway.pub-payment.com'],
     ],
 ];
 

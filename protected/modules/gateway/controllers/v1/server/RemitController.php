@@ -32,8 +32,6 @@ class RemitController extends BaseServerSignedRequestController
      */
     public function actionSingle()
     {
-//        var_dump(\Yii::$app->response->format);
-        //http://dev.gateway.payment.com/gateway/remit/single?merchant_code=10000&trade_no=62168809&order_amount=56.72&order_time=2018-04-27+22%3A59%3A38&account_name=%E5%BC%A0%E4%B8%89&account_number=6217002710000684874&bank_code=ABC&sign=4b961c08775b2f8e7547e491efe5125e
         $needParams = ['merchant_code', 'trade_no', 'order_amount', 'order_time', 'bank_code', ' account_name', 'account_number', 'sign'];
 
         $paymentRequest = new  PaymentRequest($this->merchant, $this->merchantPayment);
