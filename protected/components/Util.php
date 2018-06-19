@@ -2,8 +2,6 @@
 namespace app\components;
 
 use app\common\models\model\Channel;
-use app\common\models\model\Order;
-use app\components\Macro;
 use yii\base\Security;
 
 class Util
@@ -354,23 +352,25 @@ class Util
      */
     public static function getClientIp($type = 0)
     {
-        static $ip = null;
+        static $ip = '';
         $type = $type ? 1 : 0;
 
-        if ($ip !== null) {
+        if ($ip !== '') {
             return $ip[$type];
         }
 
-        foreach (['HTTP_X_FORWARDED_FOR', 'HTTP_X_FORWARDED', 'HTTP_X_CLUSTER_CLIENT_IP', 'HTTP_FORWARDED_FOR', 'HTTP_FORWARDED',  'REMOTE_ADDR', 'HTTP_CLIENT_IP'] as $key) {
+        foreach (['HTTP_CF_CONNECTING_IP','HTTP_X_FORWARDED_FOR', 'HTTP_X_FORWARDED', 'HTTP_X_CLUSTER_CLIENT_IP', 'HTTP_FORWARDED_FOR', 'HTTP_FORWARDED',  'REMOTE_ADDR', 'HTTP_CLIENT_IP'] as $key) {
             if (array_key_exists($key, $_SERVER) === true) {
                 foreach (explode(',', $_SERVER[$key]) as $ip) {
                     $ip = trim($ip); // just to be safe
 
                     if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false) {
-                        $ip = null;
+                        $ip = '';
                     }
                 }
             }
+
+            if($ip) break;
         }
 
         if (!$ip) return $ip;
@@ -791,5 +791,40 @@ class Util
 
         return false;
 
+    }
+
+    /**
+     * 往下拉菜单等列表数组中添加一项
+     *
+     * @param array  $list 转换前数组
+     * @param string $fieldKey 数组列表建名
+     * @param string $valKey 数组列表值
+     * @param bool   $changeObject2List 是否强制转换为list型数组,例如['1'=>'成功','2'=>失败]会转为[['1'=>'成功'],['2'=>失败]]
+     */
+    public static function addAllLabelToOptionList(array $list,bool $changeObject2List=false, string $fieldKey='id',string $valKey='val')
+    {
+        $istListArr = isset($list[0]);
+        if($changeObject2List){
+            $newList = [[$fieldKey=>Macro::SELECT_OPTION_ALL,$valKey=>'全部']];
+            foreach ($list as $k=>$v){
+                $newList[] = $istListArr&&is_array($v)?$v:[$fieldKey=>$k,$valKey=>$v];
+            }
+            $list = $newList;
+        }
+
+        //数字类型下标
+        if(isset($list[0]) && !$changeObject2List){
+            $newList = [[$fieldKey=>Macro::SELECT_OPTION_ALL,$valKey=>'全部']];
+            foreach ($list as $k=>$v){
+                $newList[] = $v;
+            }
+            $list = $newList;
+        }
+        //字符串类型下标
+        elseif(!isset($list[0])){
+            $list[Macro::SELECT_OPTION_ALL]='全部';
+        }
+
+        return $list;
     }
 }

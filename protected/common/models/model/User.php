@@ -3,7 +3,6 @@ namespace app\common\models\model;
 
 use Yii;
 use yii\behaviors\TimestampBehavior;
-use yii\db\ActiveRecord;
 
 class User extends BaseModel
 {
@@ -63,7 +62,7 @@ class User extends BaseModel
         if ($insert){
             //按规则生成uid,(2位分组id+1位是否主账号+当前规则下数据库最大值区3位之后)+10-500随机数,且总长度中6位以上
             $uidPrefix = ($this->group_id<10?99:$this->group_id).''.intval($this->isMainAccount());
-            $parentMerchantIdStr = $this->isMainAccount()?"AND parent_merchant_id=0":"AND parent_merchant_id>?0";
+            $parentMerchantIdStr = $this->isMainAccount()?"AND parent_merchant_id=0":"AND parent_merchant_id>0";
             $maxPrefixId = Yii::$app->db->createCommand("SELECT id from ".User::tableName()." WHERE group_id={$this->group_id} $parentMerchantIdStr ORDER BY id DESC LIMIT 1")
                 ->queryScalar();
             if($maxPrefixId>1000){
@@ -104,6 +103,7 @@ class User extends BaseModel
     {
         return $this->hasOne(User::className(), ['id'=>'parent_agent_id']);
     }
+
     /*
     * 获取状态描述
     *

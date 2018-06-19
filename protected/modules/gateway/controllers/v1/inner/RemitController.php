@@ -1,16 +1,14 @@
 <?php
 namespace app\modules\gateway\controllers\v1\inner;
 
-use app\common\models\model\LogApiRequest;
-use app\common\models\model\User;
 use app\common\models\model\Remit;
+use app\common\models\model\User;
 use app\components\Macro;
 use app\components\Util;
 use app\jobs\RemitQueryJob;
 use app\lib\helpers\ControllerParameterValidator;
 use app\lib\helpers\ResponseHelper;
 use app\modules\gateway\controllers\v1\BaseInnerController;
-use app\modules\gateway\models\logic\LogicOrder;
 use app\modules\gateway\models\logic\LogicRemit;
 use Yii;
 
@@ -41,6 +39,37 @@ class RemitController extends BaseInnerController
         $isBatch = $remitCount>1;
         $batOrderNo = $isBatch?LogicRemit::generateBatRemitNo():'';
         $remits = $errRemits = $okRemits = [];
+
+        foreach ($rawRemits as $i=>$remitArr) {
+            //单笔大于5w的自动拆分
+            if ($remitArr['amount'] >= 50000) {
+                $minAmount    = 20000;
+                $maxAmount    = 49999;
+                $leftAmount   = $remitArr['amount'];
+                $splitAmounts = [];
+                if ($remitArr['amount'] > Remit::MAX_REMIT_PER_TIME) {
+                    while ($leftAmount > 0) {
+                        if ($maxAmount >= $leftAmount) {
+                            $splitAmounts[] = $leftAmount;
+                            break;
+                        }
+
+                        $per = mt_rand($minAmount,$maxAmount);//bcdiv(mt_rand($minAmount*10,$maxAmount*10),10,2);
+                        $leftAmount=bcsub($leftAmount, $per,2);
+                        $splitAmounts[] = $per;
+                    }
+
+                }
+
+                Yii::info("{$merchantUsername}，{$remitArr['amount']},{$remitArr['bank_no']} split to: ".implode(',',$splitAmounts).' sum is:'.array_sum($splitAmounts));
+                unset($rawRemits[$i]);
+                foreach ($splitAmounts as $sa) {
+                    $rawRemits[] = array_merge($remitArr,['amount'=>$sa]);
+                }
+
+            }
+        }
+
         foreach ($rawRemits as $i=>$remitArr){
             $totalAmount=bcadd($totalAmount,$remitArr['amount'],6);
 
@@ -54,6 +83,7 @@ class RemitController extends BaseInnerController
 //                || empty($remitArr['bank_branch'])
 
             ){
+                $remitArr['msg'] = '银行信息不能为空';
                 $errRemits[] = $remitArr;
                 continue;
             }
@@ -68,7 +98,6 @@ class RemitController extends BaseInnerController
                 $remitArr['bat_count'] = 0;
             }
 
-
             $remits[] = $remitArr;
 
         }
@@ -76,16 +105,19 @@ class RemitController extends BaseInnerController
         //出款账户
         $merchant = User::findOne(['username'=>$merchantUsername]);
         if(empty($merchant)){
-            return ResponseHelper::formatOutput(Macro::ERR_USER_NOT_FOUND,'',['batOrderNo'=>$batOrderNo, 'errRemits'=>$rawRemits, 'okRemits'=>$okRemits]);
+            return ResponseHelper::formatOutput(Macro::ERR_USER_NOT_FOUND,'用户不存在:'.$merchantUsername,['batOrderNo'=>$batOrderNo, 'errRemits'=>$rawRemits,
+                                                                                     'okRemits'=>$okRemits]);
         }
         //初步余额检测
         if($merchant->balance<$totalAmount){
-            return ResponseHelper::formatOutput(Macro::ERR_UNKNOWN,'',['batOrderNo'=>$batOrderNo, 'errRemits'=>$rawRemits, 'okRemits'=>$okRemits]);
+            return ResponseHelper::formatOutput(Macro::ERR_UNKNOWN,"账户余额($merchant->balance)小于总出款金额($totalAmount)",['batOrderNo'=>$batOrderNo, 'errRemits'=>$rawRemits,
+                                                                                     'okRemits'=>$okRemits]);
         }
 
         $channelAccount = $merchant->paymentInfo->remitChannel;
         if(empty($channelAccount)){
-            return ResponseHelper::formatOutput(Macro::ERR_REMIT_BANK_CONFIG,'',['batOrderNo'=>$batOrderNo, 'errRemits'=>$rawRemits, 'okRemits'=>$okRemits]);
+            return ResponseHelper::formatOutput(Macro::ERR_REMIT_BANK_CONFIG,'用户出款通道未配置',['batOrderNo'=>$batOrderNo, 'errRemits'=>$rawRemits,
+                                                                                     'okRemits'=>$okRemits]);
         }
 
         try{

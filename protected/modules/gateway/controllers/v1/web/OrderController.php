@@ -1,21 +1,15 @@
 <?php
 namespace app\modules\gateway\controllers\v1\web;
 
-use app\common\exceptions\OperationFailureException;
 use app\common\models\logic\LogicApiRequestLog;
 use app\common\models\model\Channel;
 use app\common\models\model\ChannelAccount;
-use app\common\models\model\User;
 use app\components\Macro;
 use app\components\Util;
-use app\lib\helpers\ResponseHelper;
 use app\lib\payment\ChannelPayment;
-use app\lib\payment\channels\BasePayment;
 use app\modules\gateway\controllers\v1\BaseWebSignedRequestController;
 use app\modules\gateway\models\logic\LogicOrder;
 use app\modules\gateway\models\logic\PaymentRequest;
-use Yii;
-use app\modules\gateway\controllers\BaseController;
 
 /*
  * 充值接口
@@ -82,7 +76,7 @@ class OrderController extends BaseWebSignedRequestController
         $payMethod = $this->merchantPayment->getPayMethodById($this->allParams['pay_type']);
 
         if(empty($payMethod)){
-            Util::throwException(Macro::ERR_PAYMENT_TYPE_NOT_ALLOWED,'商户支付方式未配置');
+            Util::throwException(Macro::ERR_PAYMENT_TYPE_NOT_ALLOWED,'商户支付方式('.Channel::getPayMethodsStr($this->allParams['pay_type']).')未配置或未激活');
         }
         if(empty($payMethod->channelAccount)){
             Util::throwException(Macro::ERR_PAYMENT_TYPE_NOT_ALLOWED,'商户支付方式未绑定通道');
@@ -96,7 +90,7 @@ class OrderController extends BaseWebSignedRequestController
         $order = LogicOrder::addOrder($this->allParams, $this->merchant, $payMethod);
 
         //生成订单之后进行多次随机跳转,最后再到三方支付
-        $url = LogicOrder::generateRandRedirectUrl($order->order_no,mt_rand(2,5));
+        $url = LogicOrder::generateRandRedirectUrl($order->order_no,mt_rand(1,3));
 
         //设置了请求日志，写入日志表
         LogicApiRequestLog::inLog($url);

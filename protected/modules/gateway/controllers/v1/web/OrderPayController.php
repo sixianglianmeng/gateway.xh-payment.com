@@ -16,7 +16,6 @@
     use app\modules\gateway\models\logic\LogicOrder;
     use app\modules\gateway\models\logic\PaymentRequest;
     use Yii;
-    use app\modules\gateway\controllers\BaseController;
 
     /*
      * 充值跳转接口
@@ -102,10 +101,16 @@
             //return redirect|QrCode view|h5 call native
             $ret = $payment->$methodFnc();
             if ($ret['status']!==Macro::SUCCESS) {
-                return ResponseHelper::formatOutput(Macro::ERR_UNKNOWN, "订单生成失败:".$ret['message']);
+                return ResponseHelper::formatOutput(Macro::ERR_UNKNOWN, "上游订单生成失败:".$ret['message']);
             }
             if (empty($ret['data']['type'])) {
                 return ResponseHelper::formatOutput(Macro::ERR_UNKNOWN, "无法找到支付表单渲染方式");
+            }
+
+            //更新渠道订单号
+            if (empty($order->channel_order_no) && !empty($ret['data']['channel_order_no'])) {
+                $order->channel_order_no = $ret['data']['channel_order_no'];
+                $order->save();
             }
 
             switch ($ret['data']['type']) {

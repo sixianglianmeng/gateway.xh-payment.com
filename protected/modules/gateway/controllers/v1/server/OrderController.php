@@ -2,14 +2,12 @@
 namespace app\modules\gateway\controllers\v1\server;
 
 use app\common\models\model\Channel;
-use app\common\models\model\LogApiRequest;
 use app\common\models\model\Order;
 use app\components\Macro;
 use app\lib\helpers\ResponseHelper;
 use app\modules\gateway\controllers\v1\BaseServerSignedRequestController;
 use app\modules\gateway\models\logic\LogicOrder;
 use app\modules\gateway\models\logic\PaymentRequest;
-use Yii;
 
 /*
  * 后台充值订单接口
@@ -109,6 +107,8 @@ class OrderController extends BaseServerSignedRequestController
                 'trade_status'=>$status,
             ];
             $ret = Macro::SUCCESS;
+        }else{
+            $msg = '订单不存在';
         }
 
         return ResponseHelper::formatOutput($ret,$msg,$data);

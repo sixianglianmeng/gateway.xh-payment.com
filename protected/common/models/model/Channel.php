@@ -1,9 +1,8 @@
 <?php
 namespace app\common\models\model;
 
-use Yii;
 use yii\behaviors\TimestampBehavior;
-use yii\db\ActiveRecord;
+
 /*
  * 第三方支付渠道信息
  */
@@ -21,32 +20,29 @@ class Channel extends BaseModel
     const METHOD_BANK_QUICK = 13;
     const METHOD_JD_H5 = 14;
     const METHOD_BANK_H5 = 15;
-    const METHOD_WECHAT_QUICK_QR = 16;
     const METHOD_JD_QR = 17;
     const METHOD_UNIONPAY_H5 = 18;
 
     const ARR_METHOD = [
         self::METHOD_WEBBANK         => '网银',
+        self::METHOD_BANK_QUICK      => '网银快捷支付',
+        self::METHOD_BANK_H5         => '网银H5',
         self::METHOD_WECHAT_QR       => '微信扫码',
-        self::METHOD_WECHAT_QUICK_QR => '微信快捷扫码',
         self::METHOD_WECHAT_H5       => '微信H5',
         self::METHOD_ALIPAY_QR       => '支付宝扫码',
+        self::METHOD_ALIPAY_H5       => '支付宝H5',
         self::METHOD_QQWALLET_QR     => 'QQ扫码',
-        self::METHOD_JD_QR           => '京东扫码',
         self::METHOD_QQ_H5           => 'QQH5',
+        self::METHOD_JD_QR           => '京东扫码',
+        self::METHOD_JD_H5           => '京东H5',
         self::METHOD_JDWALLET        => 'JD钱包',
         self::METHOD_UNIONPAY_QR     => '银联扫码',
-        self::METHOD_BANK_QUICK      => '网银快捷支付',
-        self::METHOD_ALIPAY_H5       => '支付宝H5',
-        self::METHOD_JD_H5           => '京东H5',
         self::METHOD_UNIONPAY_H5     => '银联H5',
-        self::METHOD_BANK_H5         => '网银H5',
     ];
 
     const ARR_METHOD_EN = [
         self::METHOD_WEBBANK         => 'webBank',
         self::METHOD_WECHAT_QR       => 'wechatQr',
-        self::METHOD_WECHAT_QUICK_QR => 'wechatQuickQr',
         self::METHOD_WECHAT_H5       => 'wechatH5',
         self::METHOD_ALIPAY_QR       => 'alipayQr',
         self::METHOD_ALIPAY_H5       => 'alipayH5',
@@ -120,5 +116,11 @@ class Channel extends BaseModel
     public static function getALLChannel()
     {
         return self::find()->select('id,name')->asArray()->all();
+    }
+
+
+    public function getServerIps()
+    {
+        return empty($this->server_ips)?[]:explode(',',$this->server_ips);
     }
 }

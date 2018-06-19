@@ -8,16 +8,15 @@ use app\common\models\model\BankCodes;
 use app\common\models\model\Channel;
 use app\common\models\model\LogApiRequest;
 use app\common\models\model\Remit;
-use app\components\Util;
-use app\modules\gateway\models\logic\LogicRemit;
-use Yii;
-use app\common\models\model\Order;
 use app\components\Macro;
+use app\components\Util;
 use app\lib\helpers\ControllerParameterValidator;
 use app\lib\payment\channels\BasePayment;
 use app\modules\gateway\models\logic\LogicOrder;
+use app\modules\gateway\models\logic\LogicRemit;
 use power\yii2\net\exceptions\SignatureNotMatchException;
 use Symfony\Component\DomCrawler\Crawler;
+use Yii;
 
 /**
  * 易支宝接口
@@ -146,7 +145,7 @@ class YzbBasePayment extends BasePayment
         }
 
         $ret = self::RECHARGE_NOTIFY_RESULT;
-        if(!empty($request['tradeStatus']) && $request['tradeStatus'] == 'SUCCESS' &&  self::TRADE_STATUS_SUCCESS && $data['orderPrice']>0) {
+        if(!empty($request['tradeStatus']) && $request['tradeStatus'] == 'SUCCESS' && $data['orderPrice']>0) {
             $ret['data']['order'] = $order;
             $ret['data']['order_no'] = $order->order_no;
             $ret['data']['amount'] = $data['orderPrice'];
@@ -183,8 +182,8 @@ class YzbBasePayment extends BasePayment
             'bankCode'=>$bankCode,
             'orderPrice'=>bcadd(0, $this->order['amount'], 2),
             'orderTime'=>date('YmdHis'),
-            'notifyUrl'=>str_replace('https','http',str_replace('https','http',Yii::$app->request->hostInfo))."/gateway/v1/web/yzb/notify",
-            'returnUrl'=>str_replace('https','http',Yii::$app->request->hostInfo)."/gateway/v1/web/yzb/return",
+            'notifyUrl'=>str_replace('https','http',str_replace('https','http',$this->paymentConfig['paymentNotifyBaseUri']))."/gateway/v1/web/yzb/notify",
+            'returnUrl'=>str_replace('https','http',$this->paymentConfig['paymentNotifyBaseUri'])."/gateway/v1/web/yzb/return",
             'productName'=>'账户充值',
 
             'merchantNo'=>$this->order['channel_merchant_id'],
@@ -201,12 +200,12 @@ class YzbBasePayment extends BasePayment
         Yii::$app->params['apiRequestLog'] = [
             'event_id'=>$this->order->order_no,
             'event_type'=> LogApiRequest::EVENT_TYPE_OUT_RECHARGE_ADD,
-            'merchant_id'=>$this->order->channel_merchant_id,
-            'merchant_name'=>'',
-            'channel_account_id'=>$this->order->channel_account_id,
-            'channel_name'=>'',
+            'merchant_id'=>$this->order->merchant_id,
+            'merchant_name'=>$this->order->merchant_account,
+            'channel_account_id'=>$this->order->channelAccount->id,
+            'channel_name'=>$this->order->channelAccount->channel_name,
         ];
-        LogicApiRequestLog::outLog($requestUrl, 'POST', $resTxt, 200);
+        LogicApiRequestLog::outLog($requestUrl, 'POST', $resTxt, 200,0, $params);
 
         $ret = self::RECHARGE_CASHIER_RESULT;
         if (!empty($resTxt)) {
@@ -260,8 +259,8 @@ class YzbBasePayment extends BasePayment
             'version'=>'v100',
             'orderPrice'=>bcadd(0, $this->order['amount'], 2),
             'orderTime'=>date('YmdHis'),
-            'notifyUrl'=>str_replace('https','http',Yii::$app->request->hostInfo)."/gateway/v1/web/yzb/notify",
-            'returnUrl'=>str_replace('https','http',Yii::$app->request->hostInfo)."/gateway/v1/web/yzb/return",
+            'notifyUrl'=>str_replace('https','http',$this->paymentConfig['paymentNotifyBaseUri'])."/gateway/v1/web/yzb/notify",
+            'returnUrl'=>str_replace('https','http',$this->paymentConfig['paymentNotifyBaseUri'])."/gateway/v1/web/yzb/return",
             'productName'=>'账户充值',
             'merchantNo'=>$this->order['channel_merchant_id'],
             'payKey'=>$this->paymentConfig['payKey'],
@@ -271,6 +270,16 @@ class YzbBasePayment extends BasePayment
         $params['sign'] = self::md5Sign($params,trim($this->paymentConfig['key']));
         $requestUrl = $this->paymentConfig['gateway_base_uri'];
         $resTxt = self::post($requestUrl,$params);
+        //接口日志埋点
+        Yii::$app->params['apiRequestLog'] = [
+            'event_id'=>$this->order->order_no,
+            'event_type'=> LogApiRequest::EVENT_TYPE_OUT_RECHARGE_ADD,
+            'merchant_id'=>$this->order->merchant_id,
+            'merchant_name'=>$this->order->merchant_account,
+            'channel_account_id'=>$this->order->channelAccount->id,
+            'channel_name'=>$this->order->channelAccount->channel_name,
+        ];
+        LogicApiRequestLog::outLog($requestUrl, 'POST', $resTxt, 200,0, $params);
 
         $ret = self::RECHARGE_CASHIER_RESULT;
         //{"pl_orderNo":"01d8b14347ae42ad9035ad30da63dc76","codeUrl":"https://qr.95516.com/00010000/62293851777707666543258731823977","code":"00000","orderNo":"10718060713541038112","orderPrice":"70.15","message":"操作成功","productName":"账户充值","status":"SUCCESS"}
@@ -346,8 +355,8 @@ class YzbBasePayment extends BasePayment
             'version'=>'v100',
             'orderPrice'=>bcadd(0, $this->order['amount'], 2),
             'orderTime'=>date('YmdHis'),
-            'notifyUrl'=>str_replace('https','http',Yii::$app->request->hostInfo)."/gateway/v1/web/yzb/notify",
-            'returnUrl'=>str_replace('https','http',Yii::$app->request->hostInfo)."/gateway/v1/web/yzb/return",
+            'notifyUrl'=>str_replace('https','http',$this->paymentConfig['paymentNotifyBaseUri'])."/gateway/v1/web/yzb/notify",
+            'returnUrl'=>str_replace('https','http',$this->paymentConfig['paymentNotifyBaseUri'])."/gateway/v1/web/yzb/return",
             'productName'=>'账户充值',
             'merchantNo'=>$this->order['channel_merchant_id'],
             'payKey'=>$this->paymentConfig['payKey'],
@@ -358,6 +367,16 @@ class YzbBasePayment extends BasePayment
         $params['sign'] = self::md5Sign($params,trim($this->paymentConfig['key']));
         $requestUrl = $this->paymentConfig['gateway_base_uri'];
         $resTxt = self::post($requestUrl,$params);
+        //接口日志埋点
+        Yii::$app->params['apiRequestLog'] = [
+            'event_id'=>$this->order->order_no,
+            'event_type'=> LogApiRequest::EVENT_TYPE_OUT_RECHARGE_ADD,
+            'merchant_id'=>$this->order->merchant_id,
+            'merchant_name'=>$this->order->merchant_account,
+            'channel_account_id'=>$this->order->channelAccount->id,
+            'channel_name'=>$this->order->channelAccount->channel_name,
+        ];
+        LogicApiRequestLog::outLog($requestUrl, 'POST', $resTxt, 200,0, $params);
 
         $ret = self::RECHARGE_CASHIER_RESULT;
         //{"pl_orderNo":"01d8b14347ae42ad9035ad30da63dc76","codeUrl":"https://qr.95516.com/00010000/62293851777707666543258731823977","code":"00000","orderNo":"10718060713541038112","orderPrice":"70.15","message":"操作成功","productName":"账户充值","status":"SUCCESS"}
@@ -455,6 +474,7 @@ class YzbBasePayment extends BasePayment
                     $ret['data']['bank_status'] = Remit::BANK_STATUS_PROCESSING;
                 }else{
                     $ret['data']['bank_status'] = Remit::BANK_STATUS_FAIL;
+                    $ret['message'] = $res['message']??"出款提交失败({$resTxt})";
                 }
                 if($res['pl_orderNo']){
                     $ret['data']['channel_order_no'] = $res['pl_orderNo'];
@@ -462,7 +482,7 @@ class YzbBasePayment extends BasePayment
 
                 $ret['status'] = Macro::SUCCESS;
             } else {
-                $ret['message'] = $res['message']??'出款提交失败';
+                $ret['message'] = $res['message']??"出款提交失败({$resTxt})";
             }
         }
 
@@ -510,6 +530,7 @@ class YzbBasePayment extends BasePayment
                     $ret['data']['bank_status'] = Remit::BANK_STATUS_SUCCESS;
                 }elseif($res['code'] == '00000' && $res['tradeStatus']=='FAILED'){
                     $ret['data']['bank_status'] = Remit::BANK_STATUS_FAIL;
+                    $ret['message'] = '三方返回银行出款失败';
                 }else{
                     $ret['data']['bank_status'] = Remit::BANK_STATUS_PROCESSING;
                 }
@@ -519,7 +540,7 @@ class YzbBasePayment extends BasePayment
 
                 $ret['status'] = Macro::SUCCESS;
             } else {
-                $ret['message'] = $res['message']??'出款查询失败';
+                $ret['message'] = $res['message']??"出款查询失败({$resTxt})";;
             }
         }
 
@@ -607,7 +628,7 @@ class YzbBasePayment extends BasePayment
         $ret['data']['remit'] = $remit;
         $ret['data']['order_no'] = $remit->order_no;
 
-        if(!empty($request['tradeStatus']) && $request['tradeStatus'] =='SUCCESS' && self::TRADE_STATUS_SUCCESS && $data['orderPrice']>0) {
+        if(!empty($request['tradeStatus']) && $request['tradeStatus'] =='SUCCESS' && $data['payAmount']>0) {
             $ret['data']['amount'] = $data['payAmount'];
             $ret['status'] = Macro::SUCCESS;
             $ret['data']['bank_status'] = Remit::BANK_STATUS_SUCCESS;

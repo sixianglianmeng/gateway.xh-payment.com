@@ -40,6 +40,17 @@ class MerchantRechargeMethod extends BaseModel
     }
 
     /**
+     * 获取用户支付方式配置信息
+     *
+     * @param string $appId 商户应用ID
+     * @return array
+     */
+    public static function getMethodConfigByAppId(string $appId)
+    {
+        return self::findAll(['app_id'=>$appId]);
+    }
+
+    /**
      * 获取支付方式配置信息
      *
      * @param string $appId 商户应用ID

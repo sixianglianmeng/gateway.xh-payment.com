@@ -1,10 +1,11 @@
 <?php
 namespace app\modules\gateway\models\logic;
 
+use app\common\models\model\Channel;
 use app\components\Macro;
-use Yii;
-use app\common\models\model\ChannelAccount;
+use app\components\Util;
 use app\lib\payment\ChannelPayment;
+use Yii;
 
 class LogicChannelAccount
 {
@@ -24,5 +25,24 @@ class LogicChannelAccount
             $account->update();
         }
 
+    }
+
+    /**
+     * 检测渠道IP合法性
+     *
+     * @param Channel $channel 渠道类对象
+     * @param string $remoteIp 客户端ip
+     *
+     * @return bool
+     */
+    public static function checkChannelIp(Channel $channel, $remoteIp='')
+    {
+        if(!$remoteIp) $remoteIp = Util::getClientIp();
+        $serverIps = $channel->getServerIps();
+        if($serverIps && $remoteIp && !in_array($remoteIp, $serverIps)){
+            return false;
+        }
+
+        return true;
     }
 }

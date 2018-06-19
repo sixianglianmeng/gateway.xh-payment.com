@@ -1,9 +1,8 @@
 <?php
 namespace app\common\models\model;
 
-use Yii;
 use yii\behaviors\TimestampBehavior;
-use yii\db\ActiveRecord;
+
 /*
  * 帐变表
  */
@@ -13,6 +12,10 @@ class Financial extends BaseModel
     const STATUS_UNFINISHED=0;
     //状态已完成
     const STATUS_FINISHED=10;
+    const ARR_STATUS = [
+        self::STATUS_UNFINISHED => '未成功',
+        self::STATUS_FINISHED => '成功',
+    ];
 
     //账变类型 编号
     const EVENT_TYPE_RECHARGE = 10; # 充值
@@ -75,7 +78,7 @@ class Financial extends BaseModel
     }
 
     /**
-     * 获取订单状态描述
+     * 获取事件类型描述
      *
      * @return string
      * @author bootmall@gmail.com
@@ -83,5 +86,16 @@ class Financial extends BaseModel
     public static function getEventTypeStr($eventType)
     {
         return self::ARR_EVENT_TYPES[$eventType]??'-';
+    }
+
+    /**
+     * 获取状态描述
+     *
+     * @return string
+     * @author bootmall@gmail.com
+     */
+    public static function getStatusStr($status)
+    {
+        return self::ARR_STATUS[$status]??'-';
     }
 }

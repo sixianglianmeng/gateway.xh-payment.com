@@ -1,20 +1,19 @@
 <?php
 namespace app\modules\gateway\controllers\v1\web;
 
+use app\common\exceptions\OperationFailureException;
 use app\common\models\logic\LogicApiRequestLog;
 use app\components\Macro;
 use app\components\WebAppController;
-//use app\lib\payment\channels\ht\HtBasePayment;
-use app\lib\payment\channels\yzb\YzbBasePayment;
+use app\lib\payment\channels\mf\MfBasePayment;
+use app\modules\gateway\controllers\BaseController;
 use app\modules\gateway\models\logic\LogicOrder;
 use Yii;
-use app\modules\gateway\controllers\BaseController;
-use app\common\exceptions\OperationFailureException;
 
 /*
- * 汇通充值回调
+ * 密付充值回调
  */
-class YzbController extends WebAppController
+class MfController extends WebAppController
 {
     /**
      * 前置action
@@ -30,9 +29,7 @@ class YzbController extends WebAppController
      */
     public function actionNotify()
     {
-        //解析订单回调，获取统一的订单id，金额等信息
-//        $payment = new HtBasePayment();
-        $payment = new YzbBasePayment();
+        $payment = new MfBasePayment();
         $noticeResult = $payment->parseReturnRequest($this->allParams);
 
         Yii::info("parseReturnRequest: ".\GuzzleHttp\json_encode($noticeResult));
@@ -43,7 +40,7 @@ class YzbController extends WebAppController
 
         LogicOrder::processChannelNotice($noticeResult);
         
-        $responseStr = YzbBasePayment::createdResponse(true);
+        $responseStr = MfBasePayment::createdResponse(true);
 
         //设置了请求日志，写入日志表
         LogicApiRequestLog::inLog($responseStr);
@@ -58,9 +55,7 @@ class YzbController extends WebAppController
     {
 //        \Yii::$app->response->format = \yii\web\Response::FORMAT_RAW;
 
-        //解析订单回调，获取统一的订单id，金额等信息
-//        $payment = new HtBasePayment();
-        $payment = new YzbBasePayment();
+        $payment = new MfBasePayment();
         $noticeResult = $payment->parseReturnRequest($this->allParams);
         Yii::info("parseReturnRequest: ".\GuzzleHttp\json_encode($noticeResult));
 
@@ -94,9 +89,7 @@ class YzbController extends WebAppController
      */
     public function actionRemitNotify()
     {
-        //解析订单回调，获取统一的订单id，金额等信息
-//        $payment = new HtBasePayment();
-        $payment = new YzbBasePayment();
+        $payment = new MfBasePayment();
         $noticeResult = $payment->parseRemitNotifyRequest($this->allParams);
 
         Yii::info("parseReturnRequest: ".\GuzzleHttp\json_encode($noticeResult));
@@ -107,7 +100,7 @@ class YzbController extends WebAppController
 
         LogicOrder::processRemitQueryStatus($noticeResult);
 
-        $responseStr = YzbBasePayment::createdResponse(true);
+        $responseStr = MfBasePayment::createdResponse(true);
 
         //设置了请求日志，写入日志表
         LogicApiRequestLog::inLog($responseStr);

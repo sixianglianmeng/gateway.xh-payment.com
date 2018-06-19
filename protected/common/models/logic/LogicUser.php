@@ -6,6 +6,7 @@ use app\common\models\model\Financial;
 use app\common\models\model\User;
 use app\components\Macro;
 use Yii;
+use yii\db\Expression;
 
 class LogicUser
 {
@@ -57,8 +58,9 @@ class LogicUser
                 $financial->event_type            = $eventType;
                 $financial->event_amount          = $eventAmount;
                 $financial->amount                = $amount;
-                $financial->balance               = bcadd($this->user->balance, $amount);
-                $financial->balance_before        = $this->user->balance;
+                //变动前后余额在更新余额时写入
+                $financial->balance               = 0;//bcadd($this->user->balance, $amount);
+                $financial->balance_before        = 0;//$this->user->balance;
                 $financial->frozen_balance        = $this->user->frozen_balance;
                 $financial->frozen_balance_before = $this->user->frozen_balance;
                 $financial->created_at            = time();
@@ -78,11 +80,26 @@ class LogicUser
             }
 
             if($financial->status == Financial::STATUS_UNFINISHED){
+                $financial->balance_before = $this->user->balance;
                 //更新账户余额
-                $this->user->updateCounters(['balance' => $amount]);
+//                $balanceUpdateRet = $this->user->updateCounters(['balance' => $amount]);
+                $filter = "id={$this->user->id}";
+                if($amount<0) $filter .= " AND balance>=$amount";
+                $balanceUpdateRet = Yii::$app->db->createCommand()
+                    ->update(User::tableName(),['balance' => new Expression("balance+{$amount}")],$filter)
+                    ->execute();
 
+                if(!$balanceUpdateRet){
+                    $msg = '账户余额更新失败: '.$eventType.':'.$eventId;
+                    Yii::error($msg);
+                    throw new OperationFailureException($msg);
+                }
                 //更新账变状态
                 $financial->status = Financial::STATUS_FINISHED;
+                //重新查询余额,写入帐变记录,便于稽查
+                $newBalance = (new \yii\db\Query())->select(['balance'])->from(User::tableName())->where(['id'=>$this->user->id])->scalar();
+                $financial->balance = $newBalance;
+
                 if (!$financial->update()) {
                     $msg = '帐变记录更新失败: '.$eventType.':'.$eventId;
                     Yii::error($msg);
@@ -184,7 +201,7 @@ class LogicUser
                     throw new OperationFailureException($msg,Macro::ERR_UNKNOWN);
                 }
             }else{
-                throw new OperationFailureException("已经有相同类型的帐变记录,无法更新账户余额!",Macro::ERR_UNKNOWN);
+                throw new OperationFailureException("已经有相同类型且事件ID相同的成功帐变记录,无法更新账户余额!",Macro::ERR_UNKNOWN);
                 Yii::warning("changeUserFrozenBalance already done: uid:{$this->user->id},{$amount},{$eventType},{$eventId}");
             }
 

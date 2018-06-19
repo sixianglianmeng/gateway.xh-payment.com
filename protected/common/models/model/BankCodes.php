@@ -1,15 +1,15 @@
 <?php
 namespace app\common\models\model;
 
-use Yii;
 use yii\behaviors\TimestampBehavior;
-use yii\db\ActiveRecord;
+
 /*
  * 帐变表
  */
 class BankCodes extends BaseModel
 {
-
+    //所有银行列表
+    public static $bankList = null;
 
     public static function tableName()
     {
@@ -33,7 +33,7 @@ class BankCodes extends BaseModel
      */
     public static function getBankList($channelIds)
     {
-        return self::find()->select('platform_bank_code,bank_name')->where(['in','channel_id',$channelIds])->distinct()->asArray()->all();
+        return self::find()->select('platform_bank_code,bank_name')->where(['in','channel_id',$channelIds])->cache(300)->distinct()->asArray()->all();
     }
 
     /**
@@ -51,4 +51,36 @@ class BankCodes extends BaseModel
         return $code?$code->channel_bank_code:'';
     }
 
+    /**
+     * 获取所有银行列表
+     * 
+     * @return array
+     */
+    public static function getAllBankList()
+    {
+        if(self::$bankList){
+            return self::$bankList;
+        }
+
+        $bankList = self::find()->select('platform_bank_code,bank_name')->groupBy('platform_bank_code')
+            ->cache(300)->asArray()->all();
+        foreach ($bankList as $b){
+            self::$bankList[$b['platform_bank_code']] = $b;
+        }
+
+        return self::$bankList;
+    }
+
+    /**
+     * 根据平台银行代码获取银行名称
+     *
+     * @return array
+     */
+    public static function getBankNameByCode($code)
+    {
+        $banks = self::getAllBankList();
+
+        return $banks[$code]['bank_name']??$code;
+
+    }
 }

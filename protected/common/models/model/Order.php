@@ -1,7 +1,6 @@
 <?php
 namespace app\common\models\model;
 
-use Yii;
 use yii\db\ActiveRecord;
 
 /*
@@ -99,6 +98,10 @@ class Order extends BaseModel
 
     public function getMerchant(){
         return $this->hasOne(User::className(), ['id'=>'merchant_id']);
+    }
+
+    public function getChannel(){
+        return $this->hasOne(Channel::className(), ['id'=>'channel_id']);
     }
 
     public function getChannelAccount(){

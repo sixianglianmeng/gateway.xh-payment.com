@@ -1,11 +1,8 @@
 <?php
 
 namespace app\components;
-use app\lib\helpers\ResponseHelper;
-use power\yii2\helpers\HttpCallHelper;
-use power\yii2\helpers\HttpHelper;
-use Yii;
 use app\common\exceptions\OperationFailureException;
+use Yii;
 
 /*
  * 后端支付平台接口，直接调用即可，成功返回json中data数据，不成功抛异常
@@ -61,6 +58,22 @@ class RpcPaymentGateway
 
         return $ret;
     }
+
+    /**
+     * 发送订单通知结果到商户
+     *
+     * @param int $inSeconds 多少小时之内的
+     * @param array $orderNoList 要同步的订单号列表
+     * @throws \Exception
+     * @return array
+     */
+    public static function sendRechargeOrderNotify($inSeconds = 1800, $orderNoList = null)
+    {
+        $ret = self::call('/order/send-notify',['inSeconds'=>$inSeconds,'orderNoList'=>$orderNoList]);
+
+        return $ret;
+    }
+
 
     /**
      * 强制设置订单为成功
@@ -169,7 +182,7 @@ class RpcPaymentGateway
      * @throws \Exception
      * @return
      */
-    public static function call($path, $params)
+    public static function call($path, $params=[])
     {
 
         $params['_nonce_'] = Util::uuid();
@@ -192,7 +205,7 @@ class RpcPaymentGateway
             $jsonRet = self::postMs($api, $jsonData, $timeout, [], $header);
             Yii::info("gateway rpc call({$path}): ".$jsonData.' ret:'.$jsonRet);
 
-            if ($jsonRet === false) {
+            if ($jsonRet === false || empty($jsonRet)) {
                 throw new OperationFailureException('远程服务器操作失败'.$jsonRet);
             }
 

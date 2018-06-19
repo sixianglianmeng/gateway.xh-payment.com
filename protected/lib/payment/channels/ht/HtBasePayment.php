@@ -2,18 +2,18 @@
 
 namespace app\lib\payment\channels\ht;
 
+use app\common\exceptions\OperationFailureException;
 use app\common\models\logic\LogicApiRequestLog;
 use app\common\models\model\BankCodes;
-use app\common\models\model\Remit;
-use app\components\Util;
-use Yii;
-use app\common\models\model\Order;
+use app\common\models\model\LogApiRequest;
 use app\components\Macro;
+use app\components\Util;
 use app\lib\helpers\ControllerParameterValidator;
 use app\lib\payment\channels\BasePayment;
 use app\modules\gateway\models\logic\LogicOrder;
 use power\yii2\net\exceptions\SignatureNotMatchException;
 use Symfony\Component\DomCrawler\Crawler;
+use Yii;
 
 class HtBasePayment extends BasePayment
 {
@@ -114,15 +114,15 @@ class HtBasePayment extends BasePayment
     public function webBank()
     {
 
-        $banCode = BankCodes::getChannelBankCode($this->order['channel_id'],$this->order['bank_code']);
-        if(empty($banCode)){
-            throw new \app\common\exceptions\OperationFailureException("银行代码配置错误:".$this->order['channel_id'].':'.$this->order['bank_code'],Macro::ERR_PAYMENT_BANK_CODE);
+        $bankCode = BankCodes::getChannelBankCode($this->order['channel_id'],$this->order['bank_code']);
+        if(empty($bankCode)){
+            throw new OperationFailureException("银行代码配置错误:".$this->order['channel_id'].':'.$this->order['bank_code'],Macro::ERR_PAYMENT_BANK_CODE);
         }
 
         $params = [
-            'notify_url'=>Yii::$app->request->hostInfo."/gateway/ht/notify",
-            'return_url'=>Yii::$app->request->hostInfo."/gateway/ht/return",
-            'bank_code'=>$banCode,
+            'notify_url'=>$this->paymentConfig['paymentNotifyBaseUri']."/gateway/ht/notify",
+            'return_url'=>$this->paymentConfig['paymentNotifyBaseUri']."/gateway/ht/return",
+            'bank_code'=>$bankCode,
             'merchant_code'=>$this->order['channel_merchant_id'],
             'order_no'=>$this->order['order_no'],
             'pay_type'=>$this->order['pay_method_code'],
@@ -204,8 +204,8 @@ class HtBasePayment extends BasePayment
     public function wechatQr()
     {
         $params = [
-            'notify_url'=>Yii::$app->request->hostInfo."/gateway/v1/web/ht/notify",
-            'return_url'=>Yii::$app->request->hostInfo."/gateway/v1/web/ht/return",
+            'notify_url'=>$this->paymentConfig['paymentNotifyBaseUri']."/gateway/v1/web/ht/notify",
+            'return_url'=>$this->paymentConfig['paymentNotifyBaseUri']."/gateway/v1/web/ht/return",
             'bank_code'=>'',
             'merchant_code'=>$this->order['channel_merchant_id'],
             'order_no'=>$this->order['order_no'],
@@ -340,7 +340,12 @@ class HtBasePayment extends BasePayment
      */
     public function remit(){
         if(empty($this->remit)){
-            throw new \app\common\exceptions\OperationFailureException('未传入出款订单对象',Macro::ERR_UNKNOWN);
+            throw new OperationFailureException('未传入出款订单对象',Macro::ERR_UNKNOWN);
+        }
+
+        $bankCode = BankCodes::getChannelBankCode($this->remit['channel_id'],$this->remit['bank_code']);
+        if(empty($bankCode)){
+            throw new OperationFailureException("银行代码配置错误:".$this->remit['channel_id'].':'.$this->remit['bank_code'],Macro::ERR_PAYMENT_BANK_CODE);
         }
         $params = [
             'merchant_code'=>$this->remit['channel_merchant_id'],
@@ -349,7 +354,7 @@ class HtBasePayment extends BasePayment
             'order_time'=>date("Y-m-d H:i:s"),
             'account_name'=>$this->remit['bank_account'],
             'account_number'=>$this->remit['bank_no'],
-            'bank_code'=>$this->remit['bank_code'],
+            'bank_code'=>$bankCode,//$this->remit['bank_code'],
         ];
         $params['sign'] = self::md5Sign($params, trim($this->paymentConfig['key']));
 
@@ -368,7 +373,7 @@ class HtBasePayment extends BasePayment
                 //0 未处理，1 银行处理中 2 已打款 3 失败
                 $ret['data']['bank_status'] = $res['bank_status'];
             } else {
-                $ret['message'] = $res['errror_msg']??'出款提交失败';
+                $ret['message'] = $res['errror_msg']??"出款提交失败({$resTxt})";
             }
         }
 
@@ -409,10 +414,10 @@ class HtBasePayment extends BasePayment
                 //0 未处理，1 银行处理中 2 已打款 3 失败
                 $ret['data']['bank_status'] = $res['bank_status'];
                 if($res['bank_status']==3){
-                    $ret['message'] = $res['errror_msg']??'银行处理失败';
+                    $ret['message'] = $res['errror_msg']??"银行处理失败({$resTxt})";
                 }
             } else {
-                $ret['message'] = $res['errror_msg']??'出款查询失败';
+                $ret['message'] = $res['errror_msg']??"出款查询失败({$resTxt})";;
             }
         }
 

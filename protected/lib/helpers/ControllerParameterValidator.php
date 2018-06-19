@@ -1,8 +1,6 @@
 <?php
 namespace app\lib\helpers;
 
-use Yii;
-use app\components\Macro;
 use app\components\Util;
 use power\yii2\exceptions\ParameterValidationExpandException;
 
@@ -468,6 +466,8 @@ class ControllerParameterValidator
         if (null === $val && null !== $default) {
             $val = $default;
         }
+
+        if(is_string($val)) $val = trim($val);
 
         return $val;
     }

@@ -4,16 +4,12 @@ namespace app\lib\payment\channels\hx;
 
 use app\common\models\model\BankCodes;
 use app\common\models\model\Channel;
-use app\common\models\model\Remit;
-use app\components\Util;
-use Yii;
-use app\common\models\model\Order;
 use app\components\Macro;
+use app\components\Util;
 use app\lib\helpers\ControllerParameterValidator;
 use app\lib\payment\channels\BasePayment;
 use app\modules\gateway\models\logic\LogicOrder;
 use power\yii2\net\exceptions\SignatureNotMatchException;
-use Symfony\Component\DomCrawler\Crawler;
 
 /**
  * 恒星闪付接口
@@ -118,8 +114,8 @@ class HxBasePayment extends BasePayment
             'version'=>'1.0',
             'signType'=>'MD5',
             'businessType'=>$this->getPayType($this->order['pay_method_code']),
-            'backNotifyUrl'=>Yii::$app->request->hostInfo."/gateway/v1/web/hx/notify",
-            'pageNotifyUrl'=>Yii::$app->request->hostInfo."/gateway/v1/web/hx/return",
+            'backNotifyUrl'=>$this->paymentConfig['paymentNotifyBaseUri']."/gateway/v1/web/hx/notify",
+            'pageNotifyUrl'=>$this->paymentConfig['paymentNotifyBaseUri']."/gateway/v1/web/hx/return",
             'merchantId'=>$this->order['channel_merchant_id'],
             'orderId'=>$this->order['order_no'],
             'tranAmt'=>$this->order['amount'],

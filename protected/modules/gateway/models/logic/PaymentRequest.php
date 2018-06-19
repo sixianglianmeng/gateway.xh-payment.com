@@ -2,15 +2,14 @@
 
 namespace app\modules\gateway\models\logic;
 
-use app\common\exceptions\InValidRequestException;
-use app\common\models\model\UserPaymentInfo;
-use Yii;
-use yii\db\Query;
+use app\common\models\model\User;
 use app\common\models\model\UserBlacklist;
+use app\common\models\model\UserPaymentInfo;
 use app\components\Macro;
 use app\components\Util;
-use app\common\models\model\User;
 use power\yii2\exceptions\ParameterValidationExpandException;
+use Yii;
+use yii\db\Query;
 use yii\web\Cookie;
 
 class PaymentRequest
@@ -33,7 +32,7 @@ class PaymentRequest
         'merchant_code'  => [Macro::CONST_PARAM_TYPE_ALNUM_DASH_UNDERLINE, [1, 32]],
         'order_no'       => [Macro::CONST_PARAM_TYPE_ALNUM_DASH_UNDERLINE, [1, 32]],
         'pay_type'       => [Macro::CONST_PARAM_TYPE_PAYTYPE, []],
-        'bank_code'      => [Macro::CONST_PARAM_TYPE_BANKCODE, [], true],
+        'bank_code'      => [Macro::CONST_PARAM_TYPE_STRING, [0, 32]],//[Macro::CONST_PARAM_TYPE_BANKCODE, [], true],
         'order_amount'   => [Macro::CONST_PARAM_TYPE_DECIMAL, [1, 32]],
         'order_time'     => [Macro::CONST_PARAM_TYPE_INT],
         'req_referer'    => [Macro::CONST_PARAM_TYPE_STRING, [1, 255]],
@@ -47,6 +46,9 @@ class PaymentRequest
         'now_date'       => [Macro::CONST_PARAM_TYPE_INT],
         'account_name'   => [Macro::CONST_PARAM_TYPE_STRING, [1, 32]],
         'account_number' => [Macro::CONST_PARAM_TYPE_NUMERIC_STRING, [10, 32]],
+        'bank_province'  => [Macro::CONST_PARAM_TYPE_CHINESE, [0, 32]],
+        'bank_city'      => [Macro::CONST_PARAM_TYPE_CHINESE, [0, 32]],
+        'bank_branch'    => [Macro::CONST_PARAM_TYPE_CHINESE, [0, 32]],
     ];
 
     public function __construct(User $merchant,UserPaymentInfo $merchantPayment)

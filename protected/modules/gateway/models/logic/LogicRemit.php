@@ -4,31 +4,27 @@
 namespace app\modules\gateway\models\logic;
 
 use app\common\exceptions\InValidRequestException;
-use app\common\models\logic\LogicApiRequestLog;
+use app\common\exceptions\OperationFailureException;
 use app\common\models\logic\LogicUser;
 use app\common\models\model\ChannelAccount;
 use app\common\models\model\Financial;
 use app\common\models\model\LogApiRequest;
+use app\common\models\model\Remit;
 use app\common\models\model\SiteConfig;
+use app\common\models\model\User;
 use app\common\models\model\UserPaymentInfo;
+use app\components\Macro;
 use app\components\Util;
-use app\jobs\PaymentNotifyJob;
-use app\lib\helpers\SignatureHelper;
 use app\lib\payment\ChannelPayment;
 use app\lib\payment\channels\BasePayment;
-use app\lib\payment\ObjectNoticeResult;
-use app\common\models\model\Remit;
-use power\yii2\exceptions\ParameterValidationExpandException;
 use Yii;
-use app\common\models\model\User;
-use app\components\Macro;
-use app\common\exceptions\OperationFailureException;
 
 class LogicRemit
 {
     //通知失败后间隔通知时间
     const NOTICE_DELAY = 300;
     const REDIS_CACHE_KEY = 'lt_remit';
+    const MAX_TIME_COMMIT_TO_BANK = 1;
 
     /*
      * 添加提款记录
@@ -50,16 +46,19 @@ class LogicRemit
             return $hasRemit;
         }
 
-        $remitData['amount']            = $request['order_amount'];
-        $remitData['bat_order_no']      = $request['bat_order_no'] ?? '';
-        $remitData['bat_index']         = $request['bat_index'] ?? 0;
-        $remitData['bat_count']         = $request['bat_count'] ?? 0;
-        $remitData['bank_code']         = $request['bank_code'];
-        $remitData['bank_account']      = $request['account_name'];
-        $remitData['bank_no']           = $request['account_number'];
-        $remitData['client_ip']   = $request['client_ip'] ?? '';
-        $remitData['op_uid']      = $request['op_uid'] ?? 0;
-        $remitData['op_username'] = $request['op_username'] ?? '';
+        $remitData['amount']        = $request['order_amount'];
+        $remitData['bat_order_no']  = $request['bat_order_no'] ?? '';
+        $remitData['bat_index']     = $request['bat_index'] ?? 0;
+        $remitData['bat_count']     = $request['bat_count'] ?? 0;
+        $remitData['bank_province'] = $request['bank_province'] ?? '';
+        $remitData['bank_city']     = $request['bank_city'] ?? '';
+        $remitData['bank_branch']   = $request['bank_branch'] ?? '';
+        $remitData['bank_code']     = $request['bank_code'];
+        $remitData['bank_account']  = $request['account_name'];
+        $remitData['bank_no']       = $request['account_number'];
+        $remitData['client_ip']     = $request['client_ip'] ?? '';
+        $remitData['op_uid']        = $request['op_uid'] ?? 0;
+        $remitData['op_username']   = $request['op_username'] ?? '';
 
         $remitData['status']    = Remit::STATUS_NONE;
         $remitData['remit_fee'] = $merchant->paymentInfo->remit_fee;
@@ -126,17 +125,15 @@ class LogicRemit
 
         $newRemit->save();
 
-        if(empty($remitData['op_uid']) && empty($remitData['op_username'])){
-            //接口日志埋点
-            Yii::$app->params['apiRequestLog'] = [
-                'event_id'=>$newRemit->order_no,
-                'event_type'=> LogApiRequest::EVENT_TYPE_IN_REMIT_ADD,
-                'merchant_id'=>$newRemit->merchant_id??$merchant->id,
-                'merchant_name'=>$newRemit->merchant_account??$merchant->username,
-                'channel_account_id'=>$paymentChannelAccount->id,
-                'channel_name'=>$paymentChannelAccount->channel_name,
-            ];
-        }
+        //接口日志埋点
+        Yii::$app->params['apiRequestLog'] = [
+            'event_id'=>$newRemit->order_no,
+            'event_type'=> LogApiRequest::EVENT_TYPE_IN_REMIT_ADD,
+            'merchant_id'=>$newRemit->merchant_id??$merchant->id,
+            'merchant_name'=>$newRemit->merchant_account??$merchant->username,
+            'channel_account_id'=>$paymentChannelAccount->id,
+            'channel_name'=>$paymentChannelAccount->channel_name,
+        ];
 
         self::updateToRedis($newRemit);
 
@@ -309,18 +306,33 @@ class LogicRemit
             'channel_account_id'=>$remit->channel_account_id,
             'channel_name'=>$remit->channelAccount->channel_name,
         ];
-
+        //账户未扣款的先扣款
         if($remit->status == Remit::STATUS_CHECKED){
             $remit = self::deduct($remit);
         }
 
         if($remit->status == Remit::STATUS_DEDUCT){
+            //最大出款提交次数检测
+            if($remit->commit_to_bank_times>=self::MAX_TIME_COMMIT_TO_BANK){
+                $remit->status = Remit::STATUS_NOT_REFUND;
+                $remit->bank_status =  Remit::BANK_STATUS_FAIL;
+                $remit->bank_ret = $remit->bank_ret.date('Y-m-d H:i:s')."超过银行最大提交次数:".self::MAX_TIME_COMMIT_TO_BANK."\n";
+
+                return $remit;
+            }
+
             //提交到银行
             //银行状态说明：00处理中，04成功，05失败或拒绝
             $payment = new ChannelPayment($remit, $paymentChannelAccount);
-            $ret = $payment->remit();
+            try{
+                $ret = $payment->remit();
+            }catch (\Exception $e){
+                $ret = BasePayment::REMIT_RESULT;
+                $ret['message'] = $e->getMessage();
+            }
 
             Yii::info('remit commitToBank ret: '.$remit->order_no.' '.json_encode($ret,JSON_UNESCAPED_UNICODE));
+            $remit->last_commit_to_bank_at = time();
             if($ret['status'] === Macro::SUCCESS){
                 switch ($ret['data']['bank_status']){
                     case Remit::BANK_STATUS_PROCESSING:
@@ -345,22 +357,22 @@ class LogicRemit
                     $remit->channel_order_no = $ret['data']['channel_order_no'];
                 }
 
-                $remit->save();
-
-                return $remit;
             }
-            //提交失败暂不处理,等待重新提交
+            //提交失败暂不处理,记录失败原因
             else{
                 if($ret['message']){
-                    $remit->bank_ret = date('Y-m-d H:i:s').''.$ret['message']."\n";
-                    $remit->save();
+                    $remit->bank_ret = $remit->bank_ret.date('Y-m-d H:i:s').' '.$ret['message']."\n";
                 }
             }
 
+            $remit->save();
+            $remit->updateCounters(['commit_to_bank_times' => 1]);
+
+            return $remit;
 
         }else{
             Yii::error(__CLASS__.':'.__FUNCTION__.' '.$remit->order_no." 订单状态错误，无法提交到银行:".$remit->status);
-            throw new \app\common\exceptions\OperationFailureException('订单状态错误，无法提交到银行');
+            throw new OperationFailureException('订单状态错误，无法提交到银行');
         }
     }
 
@@ -447,7 +459,7 @@ class LogicRemit
                     case  Remit::BANK_STATUS_FAIL:
                         $remitRet['data']['remit']->status = Remit::STATUS_NOT_REFUND;
                         $remitRet['data']['remit']->bank_status =  Remit::BANK_STATUS_FAIL;
-                        if($remitRet['message']) $remitRet['data']['remit']->bank_ret = date('Y-m-d H:i:s').''.$ret['message']."\n";
+                        if($remitRet['message']) $remitRet['data']['remit']->bank_ret = date('Y-m-d H:i:s').' '.$remitRet['message']."\n";
                         break;
                 }
 
@@ -485,12 +497,12 @@ class LogicRemit
 
             $logicUser->changeUserBalance($amount, Financial::EVENT_TYPE_REFUND_REMIT_FEE, $remit->order_no, $remit->amount, $ip);
 
-            //退回分润
-            $parentRebate = Financial::findAll(['event_id'=>$remit->id,
-                'event_type'=>Financial::EVENT_TYPE_REMIT_BONUS,'uid'=>$remit->merchant_id]);
-            foreach ($parentRebate as $pr){
-                $logicUser->changeUserBalance((0-$remit->amount), Financial::EVENT_TYPE_REFUND_REMIT_BONUS,$remit->order_no, $remit->amount, $ip, $reason);
-            }
+            //退回分润,暂不退
+//            $parentRebate = Financial::findAll(['event_id'=>$remit->id,
+//                'event_type'=>Financial::EVENT_TYPE_REMIT_BONUS,'uid'=>$remit->merchant_id]);
+//            foreach ($parentRebate as $pr){
+//                $logicUser->changeUserBalance((0-$remit->amount), Financial::EVENT_TYPE_REFUND_REMIT_BONUS,$remit->order_no, $remit->amount, $ip, $reason);
+//            }
 
             $remit->status = Remit::STATUS_REFUND;
             $remit->save();

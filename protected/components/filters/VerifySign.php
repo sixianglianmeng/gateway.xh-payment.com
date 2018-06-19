@@ -1,15 +1,13 @@
 <?php
 namespace app\components\filters;
 
-use app\common\models\model\UserPaymentInfo;
+use app\common\models\model\User;
 use app\components\Macro;
 use app\lib\helpers\ControllerParameterValidator;
-use Yii;
 use app\lib\helpers\SignatureHelper;
 use power\yii2\net\exceptions\SignatureNotMatchException;
-use power\yii2\helpers\ParameterValidatorHelper;
+use Yii;
 use yii\base\ActionFilter;
-use app\common\models\model\User;
 
 class VerifySign extends ActionFilter
 {
@@ -28,7 +26,7 @@ class VerifySign extends ActionFilter
             throw new SignatureNotMatchException("商户:{$merchantId}信息不存在或未激活");
         }
         if(!$merchant->isMerchant()){
-            throw new SignatureNotMatchException("不属于可收款商户组:({$merchantId}-{$merchant->group_id})");
+            throw new SignatureNotMatchException("不属于可收付款商户组:({$merchantId}-{$merchant->group_id})");
         }
         Yii::$app->params['merchant'] = $merchant;
         Yii::$app->controller->merchant = $merchant;

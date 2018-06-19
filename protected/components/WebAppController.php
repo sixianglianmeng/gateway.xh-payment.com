@@ -2,18 +2,12 @@
 namespace app\components;
 
 use app\common\exceptions\OperationFailureException;
-use Yii;
-use yii\filters\Cors;
-use yii\filters\RateLimiter;
-use yii\filters\auth\CompositeAuth;
-use yii\filters\auth\HttpBasicAuth;
-use yii\filters\auth\HttpBearerAuth;
-use yii\filters\auth\QueryParamAuth;
-use yii\rest\Controller;
-use power\yii2\log\LogHelper;
-use power\yii2\exceptions\ParameterValidationExpandException;
-use power\yii2\net\exceptions\SignatureNotMatchException;
 use app\lib\helpers\ResponseHelper;
+use power\yii2\exceptions\ParameterValidationExpandException;
+use power\yii2\log\LogHelper;
+use power\yii2\net\exceptions\SignatureNotMatchException;
+use Yii;
+use yii\rest\Controller;
 use yii\web\UnauthorizedHttpException;
 
 /**
@@ -51,7 +45,7 @@ class WebAppController extends Controller
         return \yii\helpers\ArrayHelper::merge(
             [
                 'allow' => true,
-                'roles' => ['?']
+                'roles' => ['?'],
             ],
             parent::accessRules()
         );
@@ -95,17 +89,17 @@ class WebAppController extends Controller
 
         if ($errCode === Macro::SUCCESS) $errCode = Macro::FAIL;
         if (YII_DEBUG) {
-            throw $e;
-            //                return ResponseHelper::formatOutput($errCode, $e->getMessage());
-        } else {
-            $code = Macro::INTERNAL_SERVER_ERROR;
-            if (property_exists($e, 'statusCode')) {
-                $code                           = $e->statusCode;
-                Yii::$app->response->statusCode = $code;
+                throw $e;
+                return ResponseHelper::formatOutput($errCode, $msg);
+            } else {
+                $code = Macro::INTERNAL_SERVER_ERROR;
+                if (property_exists($e, 'statusCode')) {
+                    $code                           = $e->statusCode;
+                    Yii::$app->response->statusCode = $code;
+                }
+                return ResponseHelper::formatOutput($errCode, $msg);
             }
-            return ResponseHelper::formatOutput($errCode, $e->getMessage());
         }
-    }
 
 
     protected function getAllParams()

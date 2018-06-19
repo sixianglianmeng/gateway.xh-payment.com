@@ -3,9 +3,9 @@
 namespace app\common\models\logic;
 
 use app\common\models\model\LogApiRequest;
+use app\common\models\model\Order;
 use app\modules\gateway\models\logic\PaymentRequest;
 use Yii;
-use yii\data\ActiveDataProvider;
 
 /*
  * api请求日志
@@ -87,5 +87,28 @@ class LogicApiRequestLog
             $apiRequestLog->setAttributes($logData,false);
             $apiRequestLog->save();
         }
+    }
+
+    /**
+     * 记录收款订单提交到三方日志
+     *
+     * @param Order $order 收款订单对象
+     * @param string $url 请求地址
+     * @param string $response 响应数据
+     * @param array $requestData 请求数据
+     */
+    public static function rechargeAddLog(Order $order, string $url, string $response, array $requestData=[])
+    {
+        //接口日志埋点
+        Yii::$app->params['apiRequestLog'] = [
+            'event_id'=>$order->order_no,
+            'event_type'=> LogApiRequest::EVENT_TYPE_OUT_RECHARGE_ADD,
+            'merchant_id'=>$order->merchant_id,
+            'merchant_name'=>$order->merchant_account,
+            'channel_account_id'=>$order->channelAccount->id,
+            'channel_name'=>$order->channelAccount->channel_name,
+        ];
+
+        LogicApiRequestLog::outLog($url, 'POST', $response, 200,0, $requestData);
     }
 }

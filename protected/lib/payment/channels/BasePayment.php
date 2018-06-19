@@ -3,14 +3,14 @@
 namespace app\lib\payment\channels;
 
 use app\common\exceptions\OperationFailureException;
-use app\common\models\model\Remit;
-use Yii;
 use app\common\models\model\ChannelAccount;
+use app\common\models\model\Order;
+use app\common\models\model\Remit;
+use app\common\models\model\SiteConfig;
 use app\common\models\model\User;
 use app\common\models\model\UserPaymentInfo;
 use app\components\Macro;
-use app\common\models\model\Order;
-use yii\base\Request;
+use Yii;
 
 class BasePayment
 {
@@ -188,6 +188,12 @@ class BasePayment
 
         $paymentConfig['merchantId'] = $channelAccount->merchant_id;
         $paymentConfig['appId']      = $channelAccount->app_id;
+
+        //充值回调域名
+        $notifyBase = SiteConfig::cacheGetContent('payment_notify_base_uri');
+        if(!$notifyBase && isset(Yii::$app->request->hostInfo)) $notifyBase = Yii::$app->request->hostInfo;
+        $paymentConfig['paymentNotifyBaseUri'] =  $notifyBase;
+
         $this->paymentConfig          = $paymentConfig;
     }
 
@@ -257,6 +263,45 @@ class BasePayment
 
     /**
      *
+     * curl发送post请求
+     *
+     * @param string $url 请求地址
+     * @param array $postData 请求数据
+     *
+     * @return bool|string
+     */
+    public static function curlPost(string $url, array $postData, $header = [], $timeout = 5)
+    {
+        $headers = [];
+        try {
+            $ch        = curl_init();
+            $headers[] = "Accept-Charset: utf-8";
+            curl_setopt($ch, CURLOPT_URL, $url);
+            curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+            curl_setopt($ch, CURLOPT_SSLVERSION, CURL_SSLVERSION_TLSv1);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+            curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (compatible; MSIE 5.01; Windows NT 5.0)');
+            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
+            curl_setopt($ch, CURLOPT_AUTOREFERER, 1);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $postData);
+            curl_setopt($ch, CURLOPT_TIMEOUT, $timeout);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            $body = curl_exec($ch);
+            curl_close($ch);
+        } catch (\Exception $e) {
+            Yii::error('request to channel: ' . $url . ' ' . json_encode($postData,JSON_UNESCAPED_UNICODE). ' ' . $body.' '.curl_error($ch));
+            $body     = $e->getMessage();
+        }
+
+        Yii::info('request to channel: ' . $url . ' ' . json_encode($postData,JSON_UNESCAPED_UNICODE). ' ' . $body);
+
+        return $body;
+    }
+
+    /**
+     *
      * 发送http get 请求
      *
      * @param sttring $url 请求地址
@@ -292,7 +337,7 @@ class BasePayment
      */
     public static function buildForm(array $params, string $url, bool $autoSubmit=true, $method='post', $buttonName='确定') {
 
-        $sHtml = "<form id='allscoresubmit' name='allscoresubmit' action='".$url."' method='".$method."'>";
+        $sHtml = "<form id='paymentForm' name='paymentForm' action='".$url."' method='".$method."'>";
 
         foreach($params as $key=>$value){
             $sHtml.= "<input type='hidden' name='".$key."' value='".$value."'/>";
@@ -300,9 +345,9 @@ class BasePayment
 
         if($autoSubmit){
             $sHtml = $sHtml."<input type='submit' value='".$buttonName."' style='display:none;'></form>";
-            $sHtml = $sHtml."<script>document.forms['allscoresubmit'].submit();</script>";
+            $sHtml = $sHtml."<script>document.forms['paymentForm'].submit();</script>";
         }else{
-            $sHtml = $sHtml."<input type='submit' value='".$buttonName."></form>";
+            $sHtml = $sHtml."<input type='submit' value='".$buttonName."' /></form>";
         }
 
         return $sHtml;
@@ -331,7 +376,7 @@ class BasePayment
 
         //get order id and result from request
 
-        throw new OperationFailureException("通道暂不支持解析同步通知", Macro::ERR_UNKNOWN);
+        throw new OperationFailureException("通道暂不支持解析同步通知:".$this->getCallChildClassName(), Macro::ERR_UNKNOWN);
     }
 
      /**
@@ -341,7 +386,7 @@ class BasePayment
       */
     public function remit()
     {
-        throw new OperationFailureException("通道暂不支持出款", Macro::ERR_UNKNOWN);
+        throw new OperationFailureException("通道暂不支持出款:".$this->getCallChildClassName(), Macro::ERR_UNKNOWN);
     }
 
     /**
@@ -350,7 +395,7 @@ class BasePayment
      * @return array BasePayment::REMIT_QUERY_RESULT
      */
     public function remitStatus(){
-        throw new OperationFailureException("通道暂不支持查询出款状态", Macro::ERR_UNKNOWN);
+        throw new OperationFailureException("通道暂不支持查询出款状态:".$this->getCallChildClassName(), Macro::ERR_UNKNOWN);
     }
 
     /**
@@ -360,16 +405,15 @@ class BasePayment
       */
     public function balance()
     {
-        throw new OperationFailureException("通道暂不支持查询余额", Macro::ERR_UNKNOWN);
+        throw new OperationFailureException("通道暂不支持查询余额:".$this->getCallChildClassName(), Macro::ERR_UNKNOWN);
     }
-
 
     /**
      * 网银支付
      */
     public function webBank()
     {
-        throw new OperationFailureException("通道暂不支持此支付方式:".__FUNCTION__, Macro::ERR_UNKNOWN);
+        throw new OperationFailureException("通道程序暂不支持此支付方式:".$this->getCallChildClassName().':'.__FUNCTION__, Macro::ERR_UNKNOWN);
     }
 
     /**
@@ -377,7 +421,7 @@ class BasePayment
      */
     public function bankH5()
     {
-        throw new OperationFailureException("通道暂不支持此支付方式:".__FUNCTION__, Macro::ERR_UNKNOWN);
+        throw new OperationFailureException("通道程序暂不支持此支付方式:".$this->getCallChildClassName().':'.__FUNCTION__, Macro::ERR_UNKNOWN);
     }
 
     /**
@@ -385,7 +429,7 @@ class BasePayment
      */
     public function bankQuickPay()
     {
-        throw new OperationFailureException("通道暂不支持此支付方式:".__FUNCTION__, Macro::ERR_UNKNOWN);
+        throw new OperationFailureException("通道程序暂不支持此支付方式:".$this->getCallChildClassName().':'.__FUNCTION__, Macro::ERR_UNKNOWN);
     }
 
     /**
@@ -393,7 +437,7 @@ class BasePayment
      */
     public function wechatQr()
     {
-        throw new OperationFailureException("通道暂不支持此支付方式:".__FUNCTION__, Macro::ERR_UNKNOWN);
+        throw new OperationFailureException("通道程序暂不支持此支付方式:".$this->getCallChildClassName().':'.__FUNCTION__, Macro::ERR_UNKNOWN);
     }
 
     /**
@@ -401,7 +445,7 @@ class BasePayment
      */
     public function wechatQuickQr()
     {
-        throw new OperationFailureException("通道暂不支持此支付方式:".__FUNCTION__, Macro::ERR_UNKNOWN);
+        throw new OperationFailureException("通道程序暂不支持此支付方式:".$this->getCallChildClassName().':'.__FUNCTION__, Macro::ERR_UNKNOWN);
     }
 
     /**
@@ -409,7 +453,7 @@ class BasePayment
      */
     public function wechatH5()
     {
-        throw new OperationFailureException("通道暂不支持此支付方式:".__FUNCTION__, Macro::ERR_UNKNOWN);
+        throw new OperationFailureException("通道程序暂不支持此支付方式:".$this->getCallChildClassName().':'.__FUNCTION__, Macro::ERR_UNKNOWN);
 
     }
 
@@ -418,7 +462,7 @@ class BasePayment
      */
     public function alipayQr()
     {
-        throw new OperationFailureException("通道暂不支持此支付方式:".__FUNCTION__, Macro::ERR_UNKNOWN);
+        throw new OperationFailureException("通道程序暂不支持此支付方式:".$this->getCallChildClassName().':'.__FUNCTION__, Macro::ERR_UNKNOWN);
     }
 
     /**
@@ -426,7 +470,7 @@ class BasePayment
      */
     public function alipayH5()
     {
-        throw new OperationFailureException("通道暂不支持此支付方式:".__FUNCTION__, Macro::ERR_UNKNOWN);
+        throw new OperationFailureException("通道程序暂不支持此支付方式:".$this->getCallChildClassName().':'.__FUNCTION__, Macro::ERR_UNKNOWN);
     }
 
     /**
@@ -434,7 +478,7 @@ class BasePayment
      */
     public function qqQr()
     {
-        throw new OperationFailureException("通道暂不支持此支付方式:".__FUNCTION__, Macro::ERR_UNKNOWN);
+        throw new OperationFailureException("通道程序暂不支持此支付方式:".$this->getCallChildClassName().':'.__FUNCTION__, Macro::ERR_UNKNOWN);
     }
 
     /**
@@ -442,7 +486,7 @@ class BasePayment
      */
     public function qqH5()
     {
-        throw new OperationFailureException("通道暂不支持此支付方式:".__FUNCTION__, Macro::ERR_UNKNOWN);
+        throw new OperationFailureException("通道程序暂不支持此支付方式:".$this->getCallChildClassName().':'.__FUNCTION__, Macro::ERR_UNKNOWN);
     }
 
     /**
@@ -450,7 +494,7 @@ class BasePayment
      */
     public function jdWallet()
     {
-        throw new OperationFailureException("通道暂不支持此支付方式:".__FUNCTION__, Macro::ERR_UNKNOWN);
+        throw new OperationFailureException("通道程序暂不支持此支付方式:".$this->getCallChildClassName().':'.__FUNCTION__, Macro::ERR_UNKNOWN);
     }
 
     /**
@@ -458,7 +502,7 @@ class BasePayment
      */
     public function unoinPayQr()
     {
-        throw new OperationFailureException("通道暂不支持此支付方式:".__FUNCTION__, Macro::ERR_UNKNOWN);
+        throw new OperationFailureException("通道程序暂不支持此支付方式:".$this->getCallChildClassName().':'.__FUNCTION__, Macro::ERR_UNKNOWN);
     }
 
     /**
@@ -466,7 +510,7 @@ class BasePayment
      */
     public function unionPayH5()
     {
-        throw new OperationFailureException("通道暂不支持此支付方式:".__FUNCTION__, Macro::ERR_UNKNOWN);
+        throw new OperationFailureException("通道程序暂不支持此支付方式:".$this->getCallChildClassName().':'.__FUNCTION__, Macro::ERR_UNKNOWN);
     }
 
 
@@ -475,7 +519,7 @@ class BasePayment
      */
     public function jdH5()
     {
-        throw new OperationFailureException("通道暂不支持此支付方式:".__FUNCTION__, Macro::ERR_UNKNOWN);
+        throw new OperationFailureException("通道程序暂不支持此支付方式:".$this->getCallChildClassName().':'.__FUNCTION__, Macro::ERR_UNKNOWN);
     }
 
     /**
@@ -483,7 +527,14 @@ class BasePayment
      */
     public function jdQr()
     {
-        throw new OperationFailureException("通道暂不支持此支付方式:".__FUNCTION__, Macro::ERR_UNKNOWN);
+        throw new OperationFailureException("通道程序暂不支持此支付方式:".$this->getCallChildClassName().':'.__FUNCTION__, Macro::ERR_UNKNOWN);
+    }
+
+    protected  function getCallChildClassName(){
+        $class = $this->getCallChildClassName();
+        $clsArr = explode('\\',$class);
+        $class = array_pop($clsArr);
+        return $class;
     }
 
 }

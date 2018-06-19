@@ -173,6 +173,7 @@ class Macro
     const FORMAT_PAYMENT_GATEWAY_JSON = 'payment_json';
 
     const SELECT_OPTION_ALL = '__ALL__';
+    const PAGINATION_DEFAULT_PAGE_SIZE = 15;
 
     const CACHE_HSET_USER_PERMISSION = "user_permission";
     const CACHE_HSET_SITE_CONFIG = "site_config";

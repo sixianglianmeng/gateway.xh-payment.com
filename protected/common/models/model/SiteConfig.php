@@ -3,7 +3,6 @@ namespace app\common\models\model;
 
 use app\components\Macro;
 use Yii;
-use yii\db\ActiveRecord;
 
 class SiteConfig extends BaseModel
 {
@@ -73,9 +72,34 @@ class SiteConfig extends BaseModel
         return $content;
     }
 
+    /**
+     *
+     * 删除所有站点缓存配置
+     *
+     * @return string
+     */
+    public static function delAllCache()
+    {
+        Yii::$app->redis->del(Macro::CACHE_HSET_SITE_CONFIG);
+
+        return true;
+    }
+
     public function setContent($content)
     {
         $this->content = $content;
         Yii::$app->redis->hset(Macro::CACHE_HSET_SITE_CONFIG,$this->title,$content);
     }
+
+    /**
+     * 获取管理员IP白名单列表
+     *
+     * @return array
+     */
+    public static function getAdminIps()
+    {
+        $ipList = SiteConfig::cacheGetContent('admin_ip_list');
+        return empty($ipList)?[]:explode(',',$ipList);
+    }
+
 }

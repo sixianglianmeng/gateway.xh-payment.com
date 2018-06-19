@@ -4,7 +4,6 @@ namespace app\common\models\model;
 use Yii;
 use yii\behaviors\TimestampBehavior;
 use yii\db\ActiveRecord;
-use yii\helpers\ArrayHelper;
 
 /*
  * 商户支付配置信息
@@ -38,11 +37,6 @@ class UserPaymentInfo extends BaseModel
     {
         return [];
     }
-
-//    public function getPaymentChannel()
-//    {
-//        return $this->hasOne(ChannelAccount::className(), ['id'=>'channel_account_id']);
-//    }
 
     public function getRemitChannel()
     {
@@ -170,9 +164,11 @@ class UserPaymentInfo extends BaseModel
         //批量写入每种支付类型配置
         foreach ($methods as $i=>$pm){
             $methodConfig = MerchantRechargeMethod::find()->where(['method_id'=>$pm['id'],'app_id'=>$this->app_id])->limit(1)->one();
+
             if(!$methodConfig){
                 $methodConfig = new MerchantRechargeMethod();
 
+                $methodConfig->method_id = $pm['id'];
                 $methodConfig->app_id = $this->app_id;
                 $methodConfig->merchant_id = $this->user_id;
                 $methodConfig->merchant_account = $this->username;

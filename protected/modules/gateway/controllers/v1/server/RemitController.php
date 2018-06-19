@@ -3,15 +3,12 @@ namespace app\modules\gateway\controllers\v1\server;
 
 use app\common\exceptions\InValidRequestException;
 use app\common\models\model\ChannelAccount;
-use app\common\models\model\LogApiRequest;
 use app\common\models\model\Remit;
 use app\components\Macro;
 use app\lib\helpers\ResponseHelper;
 use app\modules\gateway\controllers\v1\BaseServerSignedRequestController;
-use app\modules\gateway\models\logic\LogicChannelAccount;
 use app\modules\gateway\models\logic\LogicRemit;
 use app\modules\gateway\models\logic\PaymentRequest;
-use Yii;
 
 /*
  * 提现代付接口
@@ -32,7 +29,8 @@ class RemitController extends BaseServerSignedRequestController
      */
     public function actionSingle()
     {
-        $needParams = ['merchant_code', 'trade_no', 'order_amount', 'order_time', 'bank_code', ' account_name', 'account_number', 'sign'];
+       $needParams = ['merchant_code', 'trade_no', 'order_amount', 'order_time', 'bank_code', ' account_name', 'account_number',
+            'bank_province','bank_city','bank_branch','sign'];
 
         $paymentRequest = new  PaymentRequest($this->merchant, $this->merchantPayment);
         //检测参数合法性，判断用户合法性

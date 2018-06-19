@@ -2,8 +2,6 @@
 
 namespace app\common\models\model;
 
-use Yii;
-
 /**
  * This is the model class for table "p_remit".
  *
@@ -38,6 +36,8 @@ use Yii;
  */
 class Remit extends BaseModel
 {
+    //默认单次最大提款金额
+    const MAX_REMIT_PER_TIME = 49999;
     //0未处理 10 已审核 20账户已扣款 30银行处理中 40 成功已出款 50处理失败已退款 60处理失败未退款 -10 提交银行失败 -20 银行处理失败
     const STATUS_BANK_PROCESS_FAIL=-20;
     const STATUS_BANK_NET_FAIL=-10;

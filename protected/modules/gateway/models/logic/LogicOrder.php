@@ -4,24 +4,23 @@
 namespace app\modules\gateway\models\logic;
 
 use app\common\exceptions\InValidRequestException;
+use app\common\exceptions\OperationFailureException;
 use app\common\models\logic\LogicUser;
 use app\common\models\model\ChannelAccount;
 use app\common\models\model\ChannelAccountRechargeMethod;
 use app\common\models\model\Financial;
 use app\common\models\model\LogApiRequest;
 use app\common\models\model\MerchantRechargeMethod;
+use app\common\models\model\Order;
 use app\common\models\model\SiteConfig;
+use app\common\models\model\User;
 use app\common\models\model\UserPaymentInfo;
+use app\components\Macro;
 use app\components\Util;
 use app\jobs\PaymentNotifyJob;
 use app\lib\helpers\SignatureHelper;
 use app\lib\payment\ChannelPayment;
-use power\yii2\exceptions\ParameterValidationExpandException;
 use Yii;
-use app\common\models\model\User;
-use app\common\models\model\Order;
-use app\components\Macro;
-use app\common\exceptions\OperationFailureException;
 
 class LogicOrder
 {
@@ -229,6 +228,10 @@ class LogicOrder
             throw new InValidRequestException('支付结果对象错误',Macro::ERR_PAYMENT_NOTICE_RESULT_OBJECT);
         }
 
+        if(!LogicChannelAccount::checkChannelIp($noticeResult['data']['order']->channel)){
+            throw new OperationFailureException("服务器IP未在白名单中!");
+        }
+
         $order = $noticeResult['data']['order'];
 
         //接口日志埋点
@@ -246,16 +249,26 @@ class LogicOrder
         ];
 
         //未处理
-        if( $noticeResult['status'] === Macro::SUCCESS && $order->status !== Order::STATUS_PAID){
+        if( $noticeResult['status'] === Macro::SUCCESS
+            && $order->status !== Order::STATUS_PAID
+            && bccomp($order->amount, $noticeResult['data']['amount'], 2)===0
+        ){
             $order = self::paySuccess($order,$noticeResult['data']['amount'],$noticeResult['data']['channel_order_no']);
+
+            if($order->notify_status != Order::NOTICE_STATUS_SUCCESS){
+                self::notify($order);
+            }
         }
+        //订单状态成功但是金额不对
+        elseif($noticeResult['status'] === Macro::SUCCESS
+            && bccomp($order->amount, $noticeResult['data']['amount'], 2)!==0
+        ){
+            $order = self::payFail($order, "三方回调金额({$noticeResult['data']['amount']})与订单金额({$order->amount})不一致!");
+        }
+        //订单失败
         elseif( $noticeResult['status'] === Macro::FAIL){
             $order = self::payFail($order,$noticeResult['msg']);
             Yii::info(__FUNCTION__.' order not paid: '.$noticeResult['data']['order_no']);
-        }
-
-        if($order->notify_status != Order::NOTICE_STATUS_SUCCESS){
-            self::notify($order);
         }
     }
 
@@ -290,10 +303,12 @@ class LogicOrder
         if($order->status != Order::STATUS_PAID){
             //更改订单状态
             $order->paid_amount = $paidAmount;
-            if($order->amount>$order->paid_amount){
+            //实际付款金额必须大于订单金额
+            if(bccomp($order->amount, $order->paid_amount, 2)!==1){
 //                $order->amount = $order->paid_amount;
+                Yii::error("{$order->order_no} paid amount($order->paid_amount) is not equal origin amount($order->amount)");
             }
-            $order->channel_order_no = $channelOrderNo;
+            if($channelOrderNo && !$order->channel_order_no) $order->channel_order_no = $channelOrderNo;
             $order->status = Order::STATUS_PAID;
             $order->paid_at = time();
 //            $order->op_uid = $opUid;
@@ -508,11 +523,12 @@ class LogicOrder
      */
     static public function notify(Order $order){
         Yii::trace((new \ReflectionClass(__CLASS__))->getShortName().'-'.__FUNCTION__.' '.$order->order_no);
-        if(!$order->notify_url){
+        if(!$order->notify_url
+            || $order->status != Order::STATUS_PAID
+        ){
             return true;
         }
 
-        //TODO: add task queue
         $arrParams = self::createNotifyParameters($order);
         $job = new PaymentNotifyJob([
             'orderNo'=>$order->order_no,
@@ -525,14 +541,22 @@ class LogicOrder
     /**
      * 获取订单状态
      *
+     * @param string $orderNo 平台订单号
+     * @param string $merchantOrderNo 商户订单号
+     * @param User   $merchant 商户User对象
+     *
+     * @return Order|null
+     * @throws OperationFailureException
      */
-    public static function getStatus($orderNo = '',$merchantOrderNo = '', $merchant)
+    public static function getStatus(string $orderNo = '', string $merchantOrderNo = '', User $merchant)
     {
         if($merchantOrderNo && !$orderNo){
             $order = Order::findOne(['merchant_order_no'=>$merchantOrderNo,'merchant_id'=>$merchant->id]);
         }
         elseif($orderNo){
             $order = Order::findOne(['order_no'=>$merchantOrderNo]);
+        }else{
+            throw new OperationFailureException("参数错误,平台订单号及商户订单号不能都为空.");
         }
 
         //接口日志埋点
@@ -541,12 +565,12 @@ class LogicOrder
             'event_type'=>LogApiRequest::EVENT_TYPE_IN_RECHARGE_QUERY,
             'merchant_id'=>$merchant->id,
             'merchant_name'=>$merchant->username,
-            'channel_account_id'=>Yii::$app->params['merchantPayment']->remitChannel->id,
-            'channel_name'=>Yii::$app->params['merchantPayment']->remitChannel->channel_name,
+            'channel_account_id'=>$order->channel_merchant_id,
+            'channel_name'=>$order->channelAccount->channel_name,
         ];
 
         if(!$order){
-            throw new \app\common\exceptions\OperationFailureException("订单不存在('platform_order_no:{$orderNo}','merchant_order_no:{$merchantOrderNo}')");
+            throw new OperationFailureException("订单不存在('platform_order_no:{$orderNo}','merchant_order_no:{$merchantOrderNo}')");
         }
 
         return $order;
@@ -559,35 +583,32 @@ class LogicOrder
         Yii::info([(new \ReflectionClass(__CLASS__))->getShortName().':'.__FUNCTION__,$order->order_no]);
 
         $paymentChannelAccount = $order->channelAccount;
-        //提交到银行
-        //银行状态说明：00处理中，04成功，05失败或拒绝
+
         $payment = new ChannelPayment($order, $paymentChannelAccount);
+        //RECHARGE_QUERY_RESULT
         $ret = $payment->orderStatus();
 
         Yii::info('order status check: '.json_encode($ret,JSON_UNESCAPED_UNICODE));
         if($ret['status'] === 0){
-            switch ($ret['data']['status']){
-                case '00':
-                    $order->status = Order::STATUS_BANK_PROCESSING;
-                    $order->bank_status =  Order::BANK_STATUS_PROCESSING;
-                    $order->channel_order_no = $ret['order_id'];
-                    break;
-                case '04':
-                    $order->status = Order::STATUS_SUCCESS;
-                    $order->bank_status =  Order::BANK_STATUS_SUCCESS;
-                    break;
-                case '05':
-                    $order->status = Order::STATUS_NOT_REFUND;
-                    $order->bank_status =  Order::BANK_STATUS_FAIL;
-                    break;
+
+            if(!empty($ret['data']['channel_order_no']) && empty($order->channel_order_no)){
+                $order->channel_order_no = $ret['data']['channel_order_no'];
             }
 
-            if(!empty($ret['order_id']) && empty($order->channel_order_no)){
-                $order->channel_order_no = $ret['order_id'];
-            }
-            $order->save();
+            switch ($ret['data']['trade_status']){
+                case Order::STATUS_PAID:
 
-            self::processOrder($order, $paymentChannelAccount);
+                    if($ret['data']['amount']>0){
+                        $order->status = Order::STATUS_PAID;
+                        $order = self::paySuccess( $order,$ret['data']['amount'],$ret['data']['channel_order_no']);
+                    }
+
+                    break;
+                case Order::STATUS_FAIL:
+                    $msg = $ret['message']?$ret['message']:'订单查询返回订单失败';
+                    self::payFail($order,$msg);
+                    break;
+            }
         }
         //失败
         else{

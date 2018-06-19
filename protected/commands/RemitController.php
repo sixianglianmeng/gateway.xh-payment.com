@@ -66,6 +66,7 @@ class RemitController extends BaseConsoleCommand
                 $remits = Remit::find()
                     ->andWhere(['status'=>[Remit::STATUS_DEDUCT,Remit::STATUS_CHECKED]])
                     ->andWhere(['>=', 'updated_at', $startTs])
+                    ->andWhere(['<', 'commit_to_bank_times', LogicRemit::MAX_TIME_COMMIT_TO_BANK])
                     ->limit(100)->all();
 
                 Yii::info('find remit to commit bank: '.count($remits));
