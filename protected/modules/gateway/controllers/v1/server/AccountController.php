@@ -40,7 +40,6 @@ class AccountController extends BaseServerSignedRequestController
         //余额查询
         $data = [
             'money'=>$this->merchant->amount,
-            'freeze_money'=>$this->merchant->frozen_balance,
             'merchant_code'=>$this->merchant->merchant_id,
         ];
 

@@ -68,7 +68,7 @@ class OrderController extends BaseServerSignedRequestController
      */
     public function actionStatus()
     {
-        $needParams = ['merchant_code', 'trade_no', 'order_no', 'sign'];
+        $needParams = ['merchant_code', 'trade_no', 'order_no', 'query_time', 'sign'];
         $rules =     [
             'order_no'             => [Macro::CONST_PARAM_TYPE_ALNUM_DASH_UNDERLINE, [1, 32], true],
             'trade_no'             => [Macro::CONST_PARAM_TYPE_ALNUM_DASH_UNDERLINE, [1, 32], true],

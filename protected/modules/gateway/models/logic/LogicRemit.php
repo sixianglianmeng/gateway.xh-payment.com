@@ -37,11 +37,11 @@ class LogicRemit
     static public function addRemit(array $request, User $merchant, ChannelAccount $paymentChannelAccount, $skipCheck=false)
     {
         $remitData                      = [];
-        $remitData['app_id']              = $request['app_id'] ?? $merchant->id;
-        $remitData['merchant_order_no'] = $request['trade_no'];
+        $remitData['app_id']            = $request['app_id'] ?? $merchant->id;
+        $remitData['merchant_order_no'] = $request['order_no'];
 
-        $hasRemit = Remit::findOne(['app_id' => $remitData['app_id'], 'merchant_order_no'=>$request['trade_no']]);
-        if($hasRemit){
+        $hasRemit = Remit::findOne(['app_id' => $remitData['app_id'], 'merchant_order_no' => $request['order_no']]);
+        if ($hasRemit) {
             throw new OperationFailureException('请不要重复下单');
             return $hasRemit;
         }
@@ -152,6 +152,11 @@ class LogicRemit
         $userPaymentConfig = $merchant->paymentInfo;
         //站点是否允许费率设置为0
         $feeCanBeZero = SiteConfig::cacheGetContent('remit_fee_can_be_zero');
+
+        $bankCode = BankCodes::getChannelBankCode($remit['channel_id'],$remit['bank_code'],'remit');
+        if(empty($bankCode)){
+            throw new OperationFailureException("商户绑定的通道暂不支持此银行出款,银行代码配置错误:".$remit['channel_id'].':'.$remit['bank_code'],Macro::ERR_PAYMENT_BANK_CODE);
+        }
 
         //账户费率检测
         if(!$feeCanBeZero && $userPaymentConfig->remit_fee <= 0){
@@ -271,24 +276,34 @@ class LogicRemit
         Yii::info(__CLASS__.':'.__FUNCTION__.' '.$remit->order_no);
         //账户余额扣款
         if($remit->status == Remit::STATUS_CHECKED){
-            //账户扣款
-            $logicUser = new LogicUser($remit->merchant);
-            $amount =  0-$remit->amount;
-            $ip = Yii::$app->request->userIP??'';
-            $logicUser->changeUserBalance($amount, Financial::EVENT_TYPE_REMIT, $remit->order_no, $remit->amount, $ip);
-            //手续费
-            $amount =  0-$remit->remit_fee;
-            $logicUser->changeUserBalance($amount, Financial::EVENT_TYPE_REMIT_FEE, $remit->order_no, $remit->amount, $ip);
+            try{
+                //账户扣款
+                $logicUser = new LogicUser($remit->merchant);
+                $amount =  0-$remit->amount;
+                $ip = Yii::$app->request->userIP??'';
+                $logicUser->changeUserBalance($amount, Financial::EVENT_TYPE_REMIT, $remit->order_no, $remit->amount, $ip);
+                //手续费
+                $amount =  0-$remit->remit_fee;
+                $logicUser->changeUserBalance($amount, Financial::EVENT_TYPE_REMIT_FEE, $remit->order_no, $remit->amount, $ip);
 
-            //出款分润
-            self::bonus($remit);
+                //出款分润
+                self::bonus($remit);
 
-            $remit->status = Remit::STATUS_DEDUCT;
-            $remit->save();
+                $remit->status = Remit::STATUS_DEDUCT;
+                $remit->save();
 
-            return $remit;
+                return $remit;
+            }catch (\Exception $ex){
+                $remit->status = Remit::STATUS_REFUND;
+                $remit->bank_status =  Remit::BANK_STATUS_FAIL;
+                $remit->save();
+                $remit->bank_ret = $remit->bank_ret.date('Y-m-d H:i:s')." 账户扣款失败:".$ex->getMessage()."\n";
+
+                throw $ex;
+            }
+
         }else{
-            throw new \app\common\exceptions\OperationFailureException('订单未审核，无法扣款 '.$remit->order_no);
+            throw new OperationFailureException('订单未审核，无法扣款 '.$remit->order_no);
         }
     }
 
@@ -312,6 +327,7 @@ class LogicRemit
         }
 
         if($remit->status == Remit::STATUS_DEDUCT){
+            Yii::info('commit_to_bank_times '.$remit->order_no.' '.$remit->commit_to_bank_times);
             //最大出款提交次数检测
             if($remit->commit_to_bank_times>=self::MAX_TIME_COMMIT_TO_BANK){
                 $remit->status = Remit::STATUS_NOT_REFUND;
@@ -383,7 +399,7 @@ class LogicRemit
             'event_id'=>$remit->order_no,
             'event_type'=> LogApiRequest::EVENT_TYPE_OUT_REMIT_QUERY,
             'merchant_id'=>$remit->channel_merchant_id,
-            'merchant_name'=>$remit->channelAccount->channel_name,
+            'merchant_name'=>$remit->channelAccount->merchant_account,
             'channel_account_id'=>$remit->channel_account_id,
             'channel_name'=>$remit->channelAccount->channel_name,
         ];
@@ -441,8 +457,8 @@ class LogicRemit
         Yii::info(__CLASS__ . ':' . __FUNCTION__ . ' ' . json_encode($remitRet));
 
         if(
-            !isset($remitRet['data']['bank_status'])
-            || empty($remitRet['data']['remit'])
+            isset($remitRet['data']['bank_status'])
+            && !empty($remitRet['data']['remit'])
         ){
 
             if($remitRet['status'] === Macro::SUCCESS){

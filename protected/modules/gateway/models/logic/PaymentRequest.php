@@ -35,7 +35,7 @@ class PaymentRequest
         'bank_code'      => [Macro::CONST_PARAM_TYPE_STRING, [0, 32]],//[Macro::CONST_PARAM_TYPE_BANKCODE, [], true],
         'order_amount'   => [Macro::CONST_PARAM_TYPE_DECIMAL, [1, 32]],
         'order_time'     => [Macro::CONST_PARAM_TYPE_INT],
-        'req_referer'    => [Macro::CONST_PARAM_TYPE_STRING, [1, 255]],
+        'req_referer'    => [Macro::CONST_PARAM_TYPE_STRING, [0, 255]],
         'customer_ip'    => [Macro::CONST_PARAM_TYPE_IPv4, [], true],
         'notify_url'     => [Macro::CONST_PARAM_TYPE_STRING, [1, 255]],
         'return_url'     => [Macro::CONST_PARAM_TYPE_STRING, [1, 255]],

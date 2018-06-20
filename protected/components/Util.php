@@ -345,6 +345,22 @@ class Util
             return iconv('gbk', 'utf-8', $word);
         }
     }
+
+    /*
+     * unicode字符串转换为utf8字符串
+     */
+    public static function unicode2utf8($str)
+    {
+        if (!$str) return $str;
+        $decode = json_decode($str);
+        if ($decode) return $decode;
+        $str    = '["' . $str . '"]';
+        $decode = json_decode($str);
+        if (count($decode) == 1) {
+            return $decode[0];
+        }
+        return $str;
+    }
     /**
      * 获取客户端IP地址
      * @param integer $type 返回类型 0 返回IP地址 1 返回IPV4地址数字

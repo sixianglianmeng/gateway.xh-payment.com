@@ -82,6 +82,7 @@ $config = [
                 /********商户接口URL重写开始*******/
                 //收银台
                 '/cashier.html' => '/gateway/v1/web/order/cashier',
+                '/api/v1/cashier' => '/gateway/v1/web/order/cashier',
                 //订单付款
                 '/order/pay.html' => '/gateway/v1/web/order-pay/pay',
                 //下单后随机跳转多次再到上游
@@ -89,19 +90,19 @@ $config = [
                 '/order/go/<sign:\S+>.html' => '/gateway/v1/web/order-pay/rand-redirect',
                 //扫码界面循环检测订单状态
                 '/order/check_status.html' => '/gateway/v1/web/order-pay/check-status',
-                //v1支付接口
-                '/pay.html' => '/gateway/v1/web/order/web-bank',
-                //v1 支付宝微信下单接口
-                '/order.html' => '/gateway/v1/web/order/order',
+
                 //收款查询
                 '/query.html' => '/gateway/v1/server/order/status',
+                '/api/v1/query' => '/gateway/v1/server/order/status',
                 //出款
                 '/remit.html' => '/gateway/v1/server/remit/single',
+                '/api/v1/remit' => '/gateway/v1/server/remit/single',
                 //出款查询
                 '/remit_query.html' => '/gateway/v1/server/remit/status',
+                '/api/v1/remit_query' => '/gateway/v1/server/remit/status',
                 //余额查询
                 '/balance.html' => '/gateway/v1/server/account/balance',
-                '/gateway/ht/notify' => '/gateway/v1/web/ht/notify',
+                '/api/v1/balance' => '/gateway/v1/server/account/balance',
                 /********商户接口URL重写结束*******/
 
                 [

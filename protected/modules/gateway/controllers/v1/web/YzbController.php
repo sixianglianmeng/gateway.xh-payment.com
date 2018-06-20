@@ -1,15 +1,15 @@
 <?php
 namespace app\modules\gateway\controllers\v1\web;
 
+use app\common\exceptions\OperationFailureException;
 use app\common\models\logic\LogicApiRequestLog;
 use app\components\Macro;
 use app\components\WebAppController;
-//use app\lib\payment\channels\ht\HtBasePayment;
 use app\lib\payment\channels\yzb\YzbBasePayment;
-use app\modules\gateway\models\logic\LogicOrder;
-use Yii;
 use app\modules\gateway\controllers\BaseController;
-use app\common\exceptions\OperationFailureException;
+use app\modules\gateway\models\logic\LogicOrder;
+use app\modules\gateway\models\logic\LogicRemit;
+use Yii;
 
 /*
  * 汇通充值回调
@@ -105,7 +105,7 @@ class YzbController extends WebAppController
             throw new OperationFailureException("无法解析订单信息：".$noticeResult['message']);
         }
 
-        LogicOrder::processRemitQueryStatus($noticeResult);
+        LogicRemit::processRemitQueryStatus($noticeResult);
 
         $responseStr = YzbBasePayment::createdResponse(true);
 

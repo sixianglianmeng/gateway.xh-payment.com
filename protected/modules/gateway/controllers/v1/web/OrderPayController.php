@@ -87,7 +87,7 @@
 
                     $ret['token'] = $this->setOrderStatusQueryCsrfToken($order->order_no);
                     $ret['order'] = $order->toArray();
-                    $ret['banks'] = BankCodes::getBankList($order->channel_id);
+                    $ret['banks'] = BankCodes::getRechargeBankList($order->channel_id);
 
                     $response = $this->render('@app/modules/gateway/views/cashier/bank_select', [
                         'data' => $ret,

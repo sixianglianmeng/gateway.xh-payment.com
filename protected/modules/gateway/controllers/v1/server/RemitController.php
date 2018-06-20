@@ -15,6 +15,14 @@ use app\modules\gateway\models\logic\PaymentRequest;
  */
 class RemitController extends BaseServerSignedRequestController
 {
+    //响应给商户的银行状态
+    const RESP_BANK_STATUS = [
+        Remit::BANK_STATUS_NONE       => 'pending',
+        Remit::BANK_STATUS_PROCESSING => 'processing',
+        Remit::BANK_STATUS_SUCCESS    => 'done',
+        Remit::BANK_STATUS_FAIL       => 'failed',
+    ];
+
     /**
      * 前置action
      *
@@ -29,7 +37,7 @@ class RemitController extends BaseServerSignedRequestController
      */
     public function actionSingle()
     {
-       $needParams = ['merchant_code', 'trade_no', 'order_amount', 'order_time', 'bank_code', ' account_name', 'account_number',
+       $needParams = ['merchant_code', 'order_no', 'order_amount', 'order_time', 'bank_code', ' account_name', 'account_number',
             'bank_province','bank_city','bank_branch','sign'];
 
         $paymentRequest = new  PaymentRequest($this->merchant, $this->merchantPayment);
@@ -48,9 +56,9 @@ class RemitController extends BaseServerSignedRequestController
         $remit = LogicRemit::processRemit($remit,$paymentChannelAccount);
         $msg = '';
         $data = [
-            'transid'=>$remit->merchant_order_no,
-            'order_id'=>$remit->order_no,
-            'bank_status'=>$remit->bank_status,
+            'order_no'=>$remit->merchant_order_no,
+            'trade_no'=>$remit->order_no,
+            'bank_status'=>self::getRespBankStatus($remit->bank_status),
         ];
         if($remit->bank_status!==Remit::BANK_STATUS_SUCCESS){
             $msg = $remit->fail_msg;
@@ -64,7 +72,7 @@ class RemitController extends BaseServerSignedRequestController
      */
     public function actionStatus()
     {
-        $needParams = ['merchant_code', 'trade_no', 'order_no', 'now_date','sign'];
+        $needParams = ['merchant_code', 'trade_no', 'order_no', 'query_time','sign'];
         $rules =     [
             'order_no'             => [Macro::CONST_PARAM_TYPE_ALNUM_DASH_UNDERLINE, [1, 32], true],
             'trade_no'             => [Macro::CONST_PARAM_TYPE_ALNUM_DASH_UNDERLINE, [1, 32], true],
@@ -77,8 +85,8 @@ class RemitController extends BaseServerSignedRequestController
         $msg = '';
         $data = [];
         $ret = Macro::FAIL;
-        $orderNo = $this->allParams['order_no']??'';
-        $merchantOrderNo = $this->allParams['trade_no']??'';
+        $orderNo = $this->allParams['trade_no']??'';
+        $merchantOrderNo = $this->allParams['order_no']??'';
         if(empty($orderNo) && empty($merchantOrderNo)){
             throw new InValidRequestException('请求参数错误');
         }
@@ -88,13 +96,17 @@ class RemitController extends BaseServerSignedRequestController
 
         if($remit){
             $data = [
-                'transid'=>$remit->merchant_order_no,
-                'order_id'=>$remit->order_no,
-                'bank_status'=>$remit->bank_status,
+                'order_no'=>$remit->merchant_order_no,
+                'trade_no'=>$remit->order_no,
+                'bank_status'=>self::getRespBankStatus($remit->bank_status),
             ];
             $ret = Macro::SUCCESS;
         }
 
         return ResponseHelper::formatOutput($ret,$msg,$data);
+    }
+
+   static protected function getRespBankStatus($status){
+        return self::RESP_BANK_STATUS[$status]??'error:'.$status;
     }
 }

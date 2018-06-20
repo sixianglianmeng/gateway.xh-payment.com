@@ -8,6 +8,7 @@ use app\components\WebAppController;
 use app\lib\payment\channels\mf\MfBasePayment;
 use app\modules\gateway\controllers\BaseController;
 use app\modules\gateway\models\logic\LogicOrder;
+use app\modules\gateway\models\logic\LogicRemit;
 use Yii;
 
 /*
@@ -98,7 +99,7 @@ class MfController extends WebAppController
             throw new OperationFailureException("无法解析订单信息：".$noticeResult['message']);
         }
 
-        LogicOrder::processRemitQueryStatus($noticeResult);
+        LogicRemit::processRemitQueryStatus($noticeResult);
 
         $responseStr = MfBasePayment::createdResponse(true);
 

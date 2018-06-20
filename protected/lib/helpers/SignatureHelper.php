@@ -28,9 +28,11 @@ class SignatureHelper extends SecurityHelper
 
     public static function md5Sign($params, $strSecret){
         if (is_array($params)) {
+            unset($params['key']);
             $a      = $params;
             $params = array();
             foreach ($a as $key => $value) {
+                if($value=='') continue;
                 $params[] = "$key=$value";
             }
             sort($params,SORT_STRING);
@@ -42,7 +44,7 @@ class SignatureHelper extends SecurityHelper
         }
 
         $signStr = md5($params.'&key='.$strSecret);
-//        Yii::info(['md5Sign string: ',$signStr,$params]);
+//        Yii::info('md5Sign string: '.$signStr.' raw: '.$params.'&key='.$strSecret);
         return $signStr;
     }
 }

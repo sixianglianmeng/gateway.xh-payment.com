@@ -13,6 +13,7 @@ use app\components\Util;
 use app\lib\helpers\ControllerParameterValidator;
 use app\lib\payment\channels\BasePayment;
 use app\modules\gateway\models\logic\LogicOrder;
+use app\modules\gateway\models\logic\LogicRemit;
 use power\yii2\net\exceptions\SignatureNotMatchException;
 use Yii;
 
@@ -331,10 +332,12 @@ class MfBasePayment extends BasePayment
      * @return array ['code'=>'Macro::FAIL|Macro::SUCCESS','data'=>['channel_order_no'=>'三方订单号',bank_status=>'三方银行状态,需转换为Remit表状态']]
      */
     public function remit(){
+        $ret = self::REMIT_RESULT;
+
         if(empty($this->remit)){
             throw new OperationFailureException('未传入出款订单对象',Macro::ERR_UNKNOWN);
         }
-        $bankCode = BankCodes::getChannelBankCode($this->remit['channel_id'],$this->remit['bank_code']);
+        $bankCode = BankCodes::getChannelBankCode($this->remit['channel_id'],$this->remit['bank_code'],'remit');
 
         if(empty($bankCode)){
             throw new OperationFailureException("银行代码配置错误:".$this->remit['channel_id'].':'.$this->remit['bank_code'],Macro::ERR_PAYMENT_BANK_CODE);
@@ -365,26 +368,26 @@ class MfBasePayment extends BasePayment
         LogicApiRequestLog::outLog($requestUrl, 'POST', $resTxt, 200,0, $params);
 
         Yii::info('remit to bank raw result: '.$this->remit['order_no'].' '.$resTxt);
-        $ret = self::REMIT_RESULT;
+
         if (!empty($resTxt)) {
             $res = json_decode($resTxt, true);
             $localSign = self::md5Sign($res,trim($this->paymentConfig['key']));
+            Yii::info($this->remit['order_no'].'remit ret localSign '.$localSign.' remote sign:'.$res['sign']);
             if (
                 isset($res['code']) && $res['code'] == '1000'
                 && isset($res['status'])
-                && $localSign == $res['sign']
             ) {
 
                 if($res['status'] == '210'){
-                    $ret['data']['bank_status'] = Remit::BANK_STATUS_SUCCESS;
+                    $ret['data']['bank_status'] = Remit::BANK_STATUS_PROCESSING;
                 }else{
                     $ret['data']['bank_status'] = Remit::BANK_STATUS_FAIL;
-                    $ret['message'] = $res['msg']??"出款提交失败({$resTxt})";
+                    $ret['message'] = !empty($res['msg'])?Util::unicode2utf8($res['msg']):"出款提交失败({$resTxt})";
                 }
 
                 $ret['status'] = Macro::SUCCESS;
             } else {
-                $ret['message'] = $res['message']??"出款提交失败({$resTxt})";
+                $ret['message'] = !empty($res['msg'])?Util::unicode2utf8($res['msg']):"出款提交失败({$resTxt})";
             }
         }
 
@@ -422,10 +425,10 @@ class MfBasePayment extends BasePayment
         if (!empty($resTxt)) {
             $res = json_decode($resTxt, true);
             $localSign = self::md5Sign($res,trim($this->paymentConfig['key']));
+            Yii::info('remit query ret sign: '.$this->remit['order_no'].' local:'.$localSign.' back:'.$res['sign']);
             if (
                 isset($res['code']) && $res['code'] == '1000'
                 && isset($res['status'])
-                && $localSign == $res['sign']
             ) {
                 //200：初始状态，处理中 210:处理中;220：代付成功;230：代付失败（未确认），处理中状态处理;260：失败已退款;【220成功，260失败，其他状态处理中状态处理】 请参照注意事项6
                 if($res['status'] == '220'){
@@ -548,6 +551,7 @@ class MfBasePayment extends BasePayment
             $body     = $e->getMessage();
         }
 
+
         Yii::info('request to channel: ' . $url . ' ' . json_encode($postData,JSON_UNESCAPED_UNICODE). ' ' . $body);
 
         return $body;
@@ -581,9 +585,11 @@ class MfBasePayment extends BasePayment
         } else {
             return false;
         }
-        var_dump($params.'&key='.$signKey);
+
         $signStr = md5($params.'&key='.$signKey);
-        //        Yii::info(['md5Sign string: ',$signStr,$params]);
+        Yii::info('md5Sign string: '.$signStr.' raw: '.$params.'&key='.$signKey);
         return $signStr;
     }
+
+
 }

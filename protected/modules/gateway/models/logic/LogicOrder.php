@@ -270,6 +270,8 @@ class LogicOrder
             $order = self::payFail($order,$noticeResult['msg']);
             Yii::info(__FUNCTION__.' order not paid: '.$noticeResult['data']['order_no']);
         }
+
+        return $order;
     }
 
     /*
@@ -304,9 +306,10 @@ class LogicOrder
             //更改订单状态
             $order->paid_amount = $paidAmount;
             //实际付款金额必须大于订单金额
-            if(bccomp($order->amount, $order->paid_amount, 2)!==1){
+            if(bccomp($order->amount, $order->paid_amount, 2)===1){
 //                $order->amount = $order->paid_amount;
-                Yii::error("{$order->order_no} paid amount($order->paid_amount) is not equal origin amount($order->amount)");
+                Yii::error("{$order->order_no} paid amount($order->paid_amount) is not equal origin amount($order->amount):".bccomp($order->amount, $order->paid_amount, 2));
+//                return self::payFail($order,"付款金额{$order->paid_amount}小于订单金额{$order->amount}");
             }
             if($channelOrderNo && !$order->channel_order_no) $order->channel_order_no = $channelOrderNo;
             $order->status = Order::STATUS_PAID;

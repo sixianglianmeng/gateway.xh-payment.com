@@ -41,6 +41,8 @@ class LogicApiRequestLog
             $uuid = empty($cookies[PaymentRequest::CLIENT_ID_IN_COOKIE])?'':$cookies[PaymentRequest::CLIENT_ID_IN_COOKIE]->value;
             $logData['device_id'] = $uuid;
             $logData['cost_time'] = ceil(Yii::getLogger()->getElapsedTime()*1000);
+            $logData['channel_account_id'] = $logData['channel_account_id']??0;
+            $logData['channel_name'] = $logData['channel_name']??'';
 
             $apiRequestLog = new LogApiRequest();
             $apiRequestLog->setAttributes($logData,false);
@@ -81,7 +83,9 @@ class LogicApiRequestLog
             $logData['referer'] = '';
             $logData['useragent'] = '';
             $logData['device_id'] = '';
+            $logData['channel_account_id'] = $logData['channel_account_id']??0;
             $logData['cost_time'] = $costTime;
+            $logData['channel_name'] = $logData['channel_name']??'';
 
             $apiRequestLog = new LogApiRequest();
             $apiRequestLog->setAttributes($logData,false);
