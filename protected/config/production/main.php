@@ -17,6 +17,17 @@ $config = \yii\helpers\ArrayHelper::merge(
                 'schemaCache' => 'cache',
                 // Duration of schema cache.
                 'schemaCacheDuration' => 86400, // 24H it is in seconds
+//
+//                'slaveConfig' => [
+//                    'username' => 'root',
+//                    'password' => 'z4wIxIJtgH7wouBO',
+//                    'attributes' => [
+//                        PDO::ATTR_TIMEOUT => 10,
+//                    ],
+//                ],
+//                'slaves' => [
+//                    ['dsn' => 'mysql:host=127.0.0.1;dbname=payment_com'],
+//                ],
             ],
             'redis' => [
                 'class' => 'yii\redis\Connection',
@@ -33,16 +44,5 @@ $config = \yii\helpers\ArrayHelper::merge(
         ],
     ]
 );
-
-$config['components']['log']['targets'][] = [
-    'class' => 'yii\log\EmailTarget',
-    'mailer' => 'mailer',
-    'levels' => ['error', 'warning'],
-    'message' => [
-        'from' => ['webmaster@payment.com'],
-        'to' => ['master@payment.com'],
-        'subject' => '系统异常',
-    ],
-];
 
 return $config;

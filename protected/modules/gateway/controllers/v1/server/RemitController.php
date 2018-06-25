@@ -19,7 +19,7 @@ class RemitController extends BaseServerSignedRequestController
     const RESP_BANK_STATUS = [
         Remit::BANK_STATUS_NONE       => 'pending',
         Remit::BANK_STATUS_PROCESSING => 'processing',
-        Remit::BANK_STATUS_SUCCESS    => 'done',
+        Remit::BANK_STATUS_SUCCESS    => 'success',
         Remit::BANK_STATUS_FAIL       => 'failed',
     ];
 
@@ -51,6 +51,9 @@ class RemitController extends BaseServerSignedRequestController
         if($paymentChannelAccount->status!=ChannelAccount::STATUS_ACTIVE && $paymentChannelAccount->status!=ChannelAccount::STATUS_RECHARGE_BANED){
             Util::throwException(Macro::ERR_REMIT_CHANNEL_NOT_ENOUGH,"出款渠道状态不正确:".$paymentChannelAccount->getStatusStr());
         }
+
+        //兼容多平台参数
+        $this->allParams['trade_no'] = $this->allParams['order_no'];
         //生成订单
         $remit = LogicRemit::addRemit($this->allParams,$this->merchant,$paymentChannelAccount);
         $remit = LogicRemit::processRemit($remit,$paymentChannelAccount);

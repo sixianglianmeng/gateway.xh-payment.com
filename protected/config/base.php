@@ -1,5 +1,5 @@
 <?php
-!defined('SYSTEM_NAME') && define('SYSTEM_NAME', 'gateway_payment');
+!defined('SYSTEM_NAME') && define('SYSTEM_NAME', 'gateway_pub_payment');
 //redis key前缀，用于在同一个redis实例部署多套相同程序时使用
 !defined('REDIS_PREFIX') && define('REDIS_PREFIX', 'gp_');
 !defined('WWW_DIR') && define('WWW_DIR', realpath(__DIR__ . '/../../'));
@@ -35,19 +35,14 @@ $config = [
             ]
         ],
         'cache' => [
-//            'class'     => 'yii\caching\FileCache',
-//            'cachePath' => '@runtime/cache.dat',
             'class' => 'yii\redis\Cache',
             'redis' => 'redis'
         ],
         'db' => [
             'class' => 'yii\db\Connection',
-//            'dsn' => 'mysql:host=127.0.0.1;dbname=lt_payment',
-            'dsn' => 'mysql:host=35.201.165.143;dbname=payment_com',
-//            'username' => 'root',
-            'username' => 'payment',
-//            'password' => '',
-            'password' => 'jWyd2pdHKqWAc7FF',
+            'dsn' => 'mysql:host=127.0.0.1;dbname=pub_payment',
+            'username' => 'root',
+            'password' => '',
             'charset' => 'utf8',
             'tablePrefix' => 'p_',
 //            'enableLogging'=>true,
@@ -90,7 +85,11 @@ $config = [
                 '/order/go/<sign:\S+>.html' => '/gateway/v1/web/order-pay/rand-redirect',
                 //扫码界面循环检测订单状态
                 '/order/check_status.html' => '/gateway/v1/web/order-pay/check-status',
-
+                //v1支付接口
+                '/pay.html' => '/gateway/v1/web/order/web-bank',
+                //后台下单接口
+                '/order.html' => '/gateway/v1/server/order/order',
+                '/api/v1/order' => '/gateway/v1/server/order/order',
                 //收款查询
                 '/query.html' => '/gateway/v1/server/order/status',
                 '/api/v1/query' => '/gateway/v1/server/order/status',
@@ -122,7 +121,7 @@ $config = [
                 'file' => [
                     'class' => '\power\yii2\log\FileTarget',
                     'levels' => ['error', 'warning'],
-                    'logFile' => '@runtime/log/err.log',
+                    'logFile' => '@runtime/log/err'.date('md').'.log',
                     'enableRotation' => true,
                     'maxFileSize' => 1024 * 100,
                     'logVars' => [],
@@ -130,10 +129,27 @@ $config = [
                 'notice' => [
                     'class' => '\power\yii2\log\FileTarget',
                     'levels' => ['notice', 'trace','info','warning','error'],//'profile',
-                    'logFile' => '@runtime/log/common.log',
+                    'logFile' => '@runtime/log/common'.date('md').'.log',
                     'enableRotation' => true,
                     'maxFileSize' => 1024 * 100,
                     'logVars' => [],
+                ],
+                'db_log' => [
+                    'levels' => ['warning','error'],
+                    'class' => '\yii\log\DbTarget',
+                    'exportInterval' => 1,
+                    'logVars' => [],
+                    'logTable' => '{{%system_log}}',
+                ],
+                'mail_log'=>[
+                    'enabled'=>true,
+                    'class' => '\yii\log\EmailTarget',
+                    'levels' => ['error'],
+                    'message' => [
+                        'from' => ['mail.booter.ui@gmail.com'],
+                        'to' => ['booter.ui@gmail.com'],
+                        'subject' => SYSTEM_NAME.' errors',
+                    ],
                 ],
             ],
         ],
@@ -144,9 +160,8 @@ $config = [
             'transport' => [
                 'class' => 'Swift_SmtpTransport',
                 'encryption' => 'tls',
-                'host' => 'ssl://smtp.gmail.com:465',//ssl://smtp.gmail.com:465
-                //阿里云连接必须使用80端口
-                'port' => '465',
+                'host' => 'smtp.gmail.com',
+                'port' => '587',
                 'username' => 'mail.booter.ui@gmail.com',
                 'password' => 'htXb7wyFhDDEu74Y',
             ],

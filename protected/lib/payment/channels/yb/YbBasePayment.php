@@ -60,7 +60,7 @@ class YbBasePayment extends BasePayment
         $sign                = ControllerParameterValidator::getRequestParam($request, 'hmac', null, Macro::CONST_PARAM_TYPE_STRING, 'sign错误！', [3]);
         $signHmacSafe                = ControllerParameterValidator::getRequestParam($request, 'hmac_safe', null, Macro::CONST_PARAM_TYPE_STRING, 'hmac_safe错误！', [3]);
 
-        $order = LogicOrder::getOrderByOrderNo($data['orderNo']);
+        $order = LogicOrder::getOrderByOrderNo($data['r6_Order']);
         $this->setPaymentConfig($order->channelAccount);
         $this->setOrder($order);
 
@@ -80,12 +80,16 @@ class YbBasePayment extends BasePayment
         }
 
         $ret = self::RECHARGE_NOTIFY_RESULT;
-        if(!empty($request['tradeStatus']) && $request['tradeStatus'] == 'SUCCESS' && $data['orderPrice']>0) {
+        if(
+            !empty($request['r1_Code']) && $request['r1_Code'] == '1'
+            && !empty($request['r0_Cmd']) && $request['r0_Cmd'] == 'Buy'
+            && $data['r3_Amt']>0
+        ) {
             $ret['data']['order'] = $order;
             $ret['data']['order_no'] = $order->order_no;
-            $ret['data']['amount'] = $data['orderPrice'];
+            $ret['data']['amount'] = $data['r3_Amt'];
             $ret['status'] = Macro::SUCCESS;
-            $ret['data']['channel_order_no'] = $data['trxNo'];
+            $ret['data']['channel_order_no'] = $data['r2_TrxId'];
         }
 
         return $ret;
@@ -112,16 +116,17 @@ class YbBasePayment extends BasePayment
                    'p3_Amt' => bcadd(0, $this->order['amount'], 2),
                    'p4_Cur' => 'CNY', 'p5_Pid' => '', 'p6_Pcat' => '', 'p7_Pdesc' => '',
                    'p8_Url' => str_replace('https','http',Yii::$app->request->hostInfo)."/gateway/v1/web/yb/return",
-                   'p9_SAF' => '0', 'pb_ServerNotifyUrl' => NULL, 'pa_MP' => '',
+                   'p9_SAF' => '0',
+                   'pb_ServerNotifyUrl' => str_replace('https','http',Yii::$app->request->hostInfo)."/gateway/v1/web/yb/notify",
+                   'pa_MP' => '',
 //                   'pd_FrpId' => $bankCode,
                    'pm_Period' => '7','pn_Unit' => 'day', 'pr_NeedResponse' => '1', 'pt_UserName' => '', 'pt_PostalCode' => '', 'pt_Address' => '',
                    'pt_TeleNo' => '','pt_Mobile' => '', 'pt_Email' => '', 'pt_LeaveMessage' => ''
         ];
         $params['hmac'] = self::hmacMd5(implode($params),trim($this->paymentConfig['key']));
         $params['hmac_safe'] = self::getHamcSafe($params,trim($this->paymentConfig['key']));
-        $requestUrl = $this->paymentConfig['gateway_base_uri'];
-var_dump($requestUrl);
-var_dump($params);exit;
+        $requestUrl = $this->paymentConfig['gateway_base_uri'].'/app-merchant-proxy/node';
+
         $formTxt = self::buildForm($params,$requestUrl);
 
         //接口日志埋点
@@ -155,30 +160,35 @@ var_dump($params);exit;
             'orderNo'=>$this->order['order_no'],
             'serviceType'=>'Q001',
         ];
-        $params['sign'] = self::md5Sign($params,trim($this->paymentConfig['key']));
+        $params = ['p0_Cmd' => 'QueryOrdDetail',
+                   'p1_MerId' => $this->order['channel_merchant_id'],
+                   'p2_Order' => $this->order['order_no'],
+                   'pv_Ver' => '3.0',
+                   'p3_ServiceType' => '2',
+        ];
 
-        $requestUrl = $this->paymentConfig['gateway_base_uri'];
+        $params['hmac'] = self::hmacMd5(implode($params),trim($this->paymentConfig['key']));
+        $params['hmac_safe'] = self::getHamcSafe($params,trim($this->paymentConfig['key']));
+
+        $requestUrl = 'https://cha.yeepay.com/app-merchant-proxy/command';
         $resTxt = self::post($requestUrl, $params);
-        Yii::info('remit query result: '.$this->remit['order_no'].' '.$resTxt);
+        Yii::info('order query result: '.$this->order['order_no'].' '.$resTxt);
         $ret = self::RECHARGE_QUERY_RESULT;
         if (!empty($resTxt)) {
             $res = json_decode($resTxt, true);
 
             if (
-                isset($res['status']) && $res['status'] == 'SUCCESS'
-                && isset($res['code'])
-                && isset($res['isPaid'])
+                !empty($res['r1_Code']) && $res['r1_Code'] == '1'
+                && !empty($res['r0_Cmd']) && $res['r0_Cmd'] == 'QueryOrdDetail'
             ) {
-                //交易状态  SUCCESS 打款成功 UNKNOW  未知的结果， 请继续轮询 FAILED 打款失败
-                //注意：任何未明确返回tradeStatus状态为FAILED都不能认为失败！！！
-                if($res['code'] == '00000' && $res['isPaid']=='YES' && $res['orderPrice']>0){
+                if($res['rb_PayStatus'] == 'SUCCESS' && $res['r3_Amt']>0){
                     $ret['data']['trade_status'] = Macro::SUCCESS;
-                    $ret['data']['amount'] = $res['orderPrice'];
+                    $ret['data']['amount'] = $res['r3_Amt'];
                 }
 
                 $ret['status'] = Macro::SUCCESS;
             } else {
-                $ret['message'] = $res['message']??'订单查询失败';
+                $ret['message'] = $res['message']??'订单查询失败:'.$resTxt;
             }
         }
 

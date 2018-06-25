@@ -231,8 +231,6 @@ class Util
                 $exp = (!empty($val) && !empty(Macro::BANK_LIST[$val]));
                 break;
             case Macro::CONST_PARAM_TYPE_PAYTYPE:
-//                $codes = Macro::getAllBankCode();
-                $val = intval($val);
                 $exp = (!empty($val) && !empty(Channel::ARR_METHOD[$val]));
                 break;
             default:

@@ -636,7 +636,13 @@ class LogicOrder
         $order->save();
     }
 
-
+    /**
+     * 生成订单随机跳转地址
+     *
+     * @param $orderNo
+     * @param int $leftRedirectTimes
+     * @return string
+     */
     public static function generateRandRedirectUrl($orderNo, $leftRedirectTimes = 1)
     {
         $data          = [
@@ -647,5 +653,16 @@ class LogicOrder
         $encryptedData = urlencode(base64_encode($encryptedData));
 
         return Yii::$app->request->hostInfo . "/order/go/{$encryptedData}.html";//'/order/go.html?sign=' . $encryptedData;
+    }
+
+    /**
+     * 获取收银台地址
+     *
+     * @param $orderNo
+     * @return string
+     */
+    public static function getCashierUrl($orderNo)
+    {
+        return Yii::$app->request->hostInfo . '/order/pay.html?orderNo=' . $orderNo;
     }
 }

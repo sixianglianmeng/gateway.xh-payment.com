@@ -6,6 +6,7 @@ namespace app\modules\gateway\models\logic;
 use app\common\exceptions\InValidRequestException;
 use app\common\exceptions\OperationFailureException;
 use app\common\models\logic\LogicUser;
+use app\common\models\model\BankCodes;
 use app\common\models\model\ChannelAccount;
 use app\common\models\model\Financial;
 use app\common\models\model\LogApiRequest;
@@ -37,10 +38,10 @@ class LogicRemit
     static public function addRemit(array $request, User $merchant, ChannelAccount $paymentChannelAccount, $skipCheck=false)
     {
         $remitData                      = [];
-        $remitData['app_id']            = $request['app_id'] ?? $merchant->id;
-        $remitData['merchant_order_no'] = $request['order_no'];
+        $remitData['app_id']              = $request['app_id'] ?? $merchant->id;
+        $remitData['merchant_order_no'] = $request['trade_no'];
 
-        $hasRemit = Remit::findOne(['app_id' => $remitData['app_id'], 'merchant_order_no' => $request['order_no']]);
+        $hasRemit = Remit::findOne(['app_id' => $remitData['app_id'], 'merchant_order_no'=>$request['trade_no']]);
         if ($hasRemit) {
             throw new OperationFailureException('请不要重复下单');
             return $hasRemit;

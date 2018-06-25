@@ -169,7 +169,7 @@
                 return $this->redirect(LogicOrder::generateRandRedirectUrl($data['orderNo'], $data['leftRedirectTimes']), 302);
             }
 
-            return $this->redirect('/order/pay.html?orderNo=' . $data['orderNo'], 302);
+            return $this->redirect(LogicOrder::getCashierUrl($data['orderNo']), 302);
         }
 
         /*
