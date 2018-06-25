@@ -652,7 +652,9 @@ class LogicOrder
         $encryptedData = Yii::$app->getSecurity()->encryptByPassword(json_encode($data), self::RAND_REDIRECT_SECRET_KEY);
         $encryptedData = urlencode(base64_encode($encryptedData));
 
-        return Yii::$app->request->hostInfo . "/order/go/{$encryptedData}.html";//'/order/go.html?sign=' . $encryptedData;
+        $baseUri = SiteConfig::cacheGetContent('payment_web_base_uri');
+        $baseUri = $baseUri?$baseUri:Yii::$app->request->hostInfo;
+        return $baseUri . "/order/go/{$encryptedData}.html";//'/order/go.html?sign=' . $encryptedData;
     }
 
     /**
@@ -663,6 +665,8 @@ class LogicOrder
      */
     public static function getCashierUrl($orderNo)
     {
-        return Yii::$app->request->hostInfo . '/order/pay.html?orderNo=' . $orderNo;
+        $baseUri = SiteConfig::cacheGetContent('payment_web_base_uri');
+        $baseUri = $baseUri?$baseUri:Yii::$app->request->hostInfo;
+        return $baseUri . '/order/pay.html?orderNo=' . $orderNo;
     }
 }
