@@ -30,10 +30,10 @@ class OrderController extends BaseInnerController
      */
     public function actionAdd()
     {
-        $payeeName = ControllerParameterValidator::getRequestParam($this->allParams, 'merchant_username', null,Macro::CONST_PARAM_TYPE_USERNAME,'充值账户错误');
-        $request['order_amount'] = ControllerParameterValidator::getRequestParam($this->allParams, 'amount', null,Macro::CONST_PARAM_TYPE_DECIMAL,'充值金额错误');
-        $request['pay_type'] = ControllerParameterValidator::getRequestParam($this->allParams, 'pay_type', null,Macro::CONST_PARAM_TYPE_INT,'充值渠道错误');
-        $request['bank_code'] = ControllerParameterValidator::getRequestParam($this->allParams, 'bank_code', '',Macro::CONST_PARAM_TYPE_INT,'银行代码错误');
+        $payeeName = ControllerParameterValidator::getRequestParam($this->allParams, 'merchant_username', null,Macro::CONST_PARAM_TYPE_USERNAME,'充值账户格式错误');
+        $request['order_amount'] = ControllerParameterValidator::getRequestParam($this->allParams, 'amount', null,Macro::CONST_PARAM_TYPE_DECIMAL,'充值金额格式错误');
+        $request['pay_type'] = ControllerParameterValidator::getRequestParam($this->allParams, 'pay_type', null,Macro::CONST_PARAM_TYPE_ALNUM,'充值渠道格式错误');
+        $request['bank_code'] = ControllerParameterValidator::getRequestParam($this->allParams, 'bank_code', '',Macro::CONST_PARAM_TYPE_INT,'银行代码格式错误');
 
         $merchant = User::findOne(['username'=>$payeeName]);
         if(empty($merchant)){
