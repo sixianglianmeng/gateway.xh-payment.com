@@ -27,7 +27,7 @@ class MfBasePayment extends BasePayment
     const  PAY_TYPE_MAPS = [
         Channel::METHOD_WECHAT_QR   => 'WECHAT',
         Channel::METHOD_ALIPAY_QR   => 'ALIPAY',
-        Channel::METHOD_QQWALLET_QR => 'QQ',
+        Channel::METHOD_QQ_QR       => 'QQ',
         Channel::METHOD_UNIONPAY_QR => 'UNION',
         Channel::METHOD_WECHAT_H5   => 'H5_WECHAT',
         Channel::METHOD_ALIPAY_H5   => 'H5_ALIPAY',

@@ -164,19 +164,6 @@ class BasePayment
         $channel = $channelAccount->channel;
         $baseConfig = $envConfig = [];
 
-        //渠道代码(英文)，用于配置文件目录名等。配置文件真实地址为/config/payment/目录名/config.php,且payment目录可放置于不同环境目录下。
-        //全部从数据库读取配置
-//        $baseConfigFile = Yii::getAlias("@app/config/payment/{$channel->channel_code}/config.php");
-//        if(file_exists(Yii::getAlias("@app/config/payment/{$channel->channel_code}/config.php"))){
-//            $baseConfig = require $baseConfigFile;
-//        }
-//        $envFile = Yii::getAlias("@app/config/payment/{$channel->channel_code}/config_").strtolower(APPLICATION_ENV) .".php";
-//        if(file_exists($envFile)){
-//            $envConfig = require $envFile;
-//        }
-        //        $paymentConfig                = \yii\helpers\ArrayHelper::merge($baseConfig, $envConfig);
-
-
         $paymentConfig = $channelAccount->getAppSectets();
         if(empty($paymentConfig) || !is_array($paymentConfig) || empty($channelAccount->merchant_id)){
             throw new OperationFailureException("收款渠道KEY配置错误:channelAccountId:{$channelAccount->id}",Macro::ERR_PAYMENT_CHANNEL_CONFIG);

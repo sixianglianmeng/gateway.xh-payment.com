@@ -23,7 +23,7 @@ class HxBasePayment extends BasePayment
     const  PAY_TYPE_MAPS = [
         Channel::METHOD_WECHAT_QUICK_QR => 'qqrDynamicQR',
         Channel::METHOD_UNIONPAY_QR     => 'unionPayQR',
-        Channel::METHOD_QQWALLET_QR     => 'tencentQQ',
+        Channel::METHOD_QQ_QR     => 'tencentQQ',
         Channel::METHOD_WECHAT_QR       => 'wechatQR',
         Channel::METHOD_ALIPAY_QR       => 'aliPayQR',
         Channel::METHOD_UNIONPAY_H5     => 'unionQuickH5',

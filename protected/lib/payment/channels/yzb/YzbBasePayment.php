@@ -33,7 +33,7 @@ class YzbBasePayment extends BasePayment
         Channel::METHOD_WEBBANK => 'S005A',
         Channel::METHOD_BANK_QUICK => 'S001A',
         Channel::METHOD_UNIONPAY_QR     => 'S010',
-        Channel::METHOD_QQWALLET_QR     => 'S004',
+        Channel::METHOD_QQ_QR     => 'S004',
         Channel::METHOD_WECHAT_QR       => 'S002',
         Channel::METHOD_ALIPAY_QR       => 'S003',
         Channel::METHOD_BANK_H5     => 'S006',
