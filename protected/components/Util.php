@@ -155,7 +155,7 @@ class Util
                 $exp =  "/^[0-9a-z]{32}$/i";
                 break;
             case Macro::CONST_PARAM_TYPE_BANK_NO:
-                $exp =  "/^\d{6,24}$/i";
+                $exp = preg_match("/^\d{6,24}$/i",$val) && self::checkLuhn($val);
                 break;
             case Macro::CONST_PARAM_TYPE_DATE:
                 $ts = strtotime($val.' 0:0');
@@ -376,7 +376,7 @@ class Util
         foreach (['HTTP_CF_CONNECTING_IP','HTTP_X_FORWARDED_FOR', 'HTTP_X_FORWARDED', 'HTTP_X_CLUSTER_CLIENT_IP', 'HTTP_FORWARDED_FOR', 'HTTP_FORWARDED',  'REMOTE_ADDR', 'HTTP_CLIENT_IP'] as $key) {
             if (array_key_exists($key, $_SERVER) === true) {
                 foreach (explode(',', $_SERVER[$key]) as $ip) {
-                    $ip = trim($ip); // just to be safe
+                    $ip = trim($ip);
 
                     if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false) {
                         $ip = '';
@@ -867,5 +867,32 @@ class Util
         }
 
         return $list;
+    }
+
+    /**
+     * 银行卡Luhn算法校验
+     *
+     * @param string $num
+     * @return bool
+     */
+    public static function checkLuhn($num){
+        if(empty($num)) return false;
+        $num_arr = str_split($num);
+        krsort($num_arr);
+        foreach ($num_arr as $key=>&$value){
+            if(($key+1)%2 == 0){
+                $value = $value*2;
+                if($value>=10){
+                    $value = 1 + ($value % 10);
+                }
+            }
+        }
+        $total = array_sum($num_arr);
+        if(($total%10) == 0){
+            // 符合Luhn算法
+            return true;
+        }else{
+            return false;
+        }
     }
 }

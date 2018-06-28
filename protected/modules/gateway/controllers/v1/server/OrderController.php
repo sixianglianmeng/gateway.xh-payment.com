@@ -30,7 +30,7 @@ class OrderController extends BaseServerSignedRequestController
      */
     public function actionOrder()
     {
-        $needParams = ['merchant_code', 'order_no', 'pay_type', 'bank_code', 'order_amount', 'order_time', 'req_referer', 'customer_ip', 'notify_url', 'return_url', 'return_params', 'sign'];
+        $needParams = ['merchant_code', 'order_no', 'pay_type', 'bank_code', 'order_amount', 'order_time', 'customer_ip', 'notify_url', 'return_url', 'return_params', 'sign'];
 
         $paymentRequest = new  PaymentRequest($this->merchant, $this->merchantPayment);
         //检测参数合法性，判断用户合法性
@@ -46,10 +46,15 @@ class OrderController extends BaseServerSignedRequestController
         //生成订单
         $order = LogicOrder::addOrder($this->allParams, $this->merchant, $payMethod);
 
-        //返回收银台地址
-        $data['url'] =  LogicOrder::getCashierUrl($order->order_no);
+        $data = [
+            //收银台地址
+            'url'          => LogicOrder::getCashierUrl($order->order_no),
+            'trade_no'     => $order->order_no,
+            'order_no'     => $order->merchant_order_no,
+            'order_amount' => $order->amount,
+        ];
 
-        return ResponseHelper::formatOutput(Macro::SUCCESS,'',$data);
+        return ResponseHelper::formatOutput(Macro::SUCCESS,'下单成功',$data);
     }
 
     /*
@@ -67,7 +72,7 @@ class OrderController extends BaseServerSignedRequestController
         //检测参数合法性，判断用户合法性
         $paymentRequest->validate($this->allParams, $needParams, $rules);
 
-        $msg = '';
+        $msg = '订单查询成功';
         $data = [];
         $ret = Macro::FAIL;
         $orderNo = $this->allParams['trade_no']??'';

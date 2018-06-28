@@ -53,6 +53,6 @@ class AccountController extends BaseServerSignedRequestController
             'channel_name'=>Yii::$app->params['merchantPayment']->remitChannel->channel_name,
         ];
 
-        return ResponseHelper::formatOutput( Macro::SUCCESS,'查询成功',$data);
+        return ResponseHelper::formatOutput( Macro::SUCCESS,'余额查询成功',$data);
     }
 }

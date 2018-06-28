@@ -10,6 +10,7 @@ use app\common\models\model\Remit;
 use app\common\models\model\User;
 use app\components\Macro;
 use app\components\RpcPaymentGateway;
+use app\components\Util;
 use app\lib\helpers\SignatureHelper;
 use app\lib\payment\channels\mf\MfBasePayment;
 use app\modules\gateway\models\logic\LogicChannelAccount;
@@ -30,26 +31,6 @@ class SiteController extends \yii\web\Controller
     {
 
         exit;
-
-        //        $filter = ['!=','notify_status',Order::NOTICE_STATUS_SUCCESS];
-        //
-        //        $orders = Order::find($filter)->all();
-        //var_dump($orders);
-        //        exit;
-        //        $order = Order::findOne(['order_no'=>'P18052922491788078']);
-        //
-        //
-        //        LogicOrder::queryChannelOrderStatus($order);
-
-        $remit = Remit::findOne(['order_no'=>'218060419094760767']);
-        //        $remit = LogicRemit::processRemit($remit,$remit->channelAccount);
-
-        //
-        $ret = LogicRemit::queryChannelRemitStatus($remit);
-
-        //        $accounts = ChannelAccount::findOne(['id'=>13]);
-        //        LogicChannelAccount::syncBalance($accounts);
-
 
     }
 

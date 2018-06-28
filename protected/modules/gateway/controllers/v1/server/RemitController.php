@@ -46,7 +46,7 @@ class RemitController extends BaseServerSignedRequestController
 
         $paymentChannelAccount = $this->merchantPayment->remitChannel;
         if(!$paymentChannelAccount){
-            throw new InValidRequestException('提款渠道配置错误');
+            throw new InValidRequestException('商户提款通道配置错误，请联系平台客服');
         }
         if($paymentChannelAccount->status!=ChannelAccount::STATUS_ACTIVE && $paymentChannelAccount->status!=ChannelAccount::STATUS_RECHARGE_BANED){
             Util::throwException(Macro::ERR_REMIT_CHANNEL_NOT_ENOUGH,"出款渠道状态不正确:".$paymentChannelAccount->getStatusStr());
@@ -57,7 +57,7 @@ class RemitController extends BaseServerSignedRequestController
         //生成订单
         $remit = LogicRemit::addRemit($this->allParams,$this->merchant,$paymentChannelAccount);
         $remit = LogicRemit::processRemit($remit,$paymentChannelAccount);
-        $msg = '';
+        $msg = '代付订单提交成功';
         $data = [
             'order_no'=>$remit->merchant_order_no,
             'trade_no'=>$remit->order_no,
@@ -85,7 +85,7 @@ class RemitController extends BaseServerSignedRequestController
         //检测参数合法性，判断用户合法性
         $paymentRequest->validate($this->allParams, $needParams, $rules);
 
-        $msg = '';
+        $msg = '代付查询成功';
         $data = [];
         $ret = Macro::FAIL;
         $orderNo = $this->allParams['trade_no']??'';

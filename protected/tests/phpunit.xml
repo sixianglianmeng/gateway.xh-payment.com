@@ -20,13 +20,10 @@
 
     <testsuites>
         <testsuite name="api">
-            <directory suffix="Test.php" phpVersion="5.6.0" phpVersionOperator=">=">../modules/api/tests/unit/</directory>
+            <directory suffix="Test.php" phpVersion="7.2.0" phpVersionOperator=">=">../modules/api/tests/unit/</directory>
         </testsuite>
-        <testsuite name="manage">
-            <directory suffix="Test.php" phpVersion="5.6.0" phpVersionOperator=">=">../modules/manage/tests/unit/</directory>
-        </testsuite>
-        <testsuite name="track">
-            <directory suffix="Test.php" phpVersion="5.6.0" phpVersionOperator=">=">../modules/track/tests/unit/</directory>
+        <testsuite name="gateway">
+            <directory suffix="Test.php" phpVersion="7.2.0" phpVersionOperator=">=">../modules/gateway/tests/unit/</directory>
         </testsuite>
     </testsuites>
 </phpunit>

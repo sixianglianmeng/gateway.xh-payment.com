@@ -4,17 +4,7 @@
 require(__DIR__ . '/../../protected/config/mode.php');
 require(__DIR__ . '/../../vendor/autoload.php');
 
-// $testEnv = getenv('APPLICATION_ENV');
 $moduleName = getenv('MODULE_NAME');
-// $idcNum = @intval(getenv('IDC_NUM'));
-// $idcId = @intval(getenv('IDC_ID'));
-// if ($idcNum <= 0) {
-//     throw new \app\common\exceptions\OperationFailureException("IDC_NUM is invalid! please export it in shell");
-// }
-// !defined('MODULE_NAME') && define('MODULE_NAME', $moduleName);
-// !defined('APPLICATION_ENV') && define('APPLICATION_ENV', $testEnv);
-// !defined('IDC_NUM') && define('IDC_NUM', $idcNum); // 机房数
-// !defined('IDC_ID') && define('IDC_ID', $idcId); // idc数字编号，编号从0开始
 
 \power\yii2\log\LogHelper::init();
 

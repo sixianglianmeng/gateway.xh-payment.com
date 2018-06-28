@@ -294,7 +294,7 @@ class MfBasePayment extends BasePayment
 
         $requestUrl = $this->paymentConfig['gateway_base_uri']."/query";
         $resTxt = self::post($requestUrl, $params);
-        Yii::info('remit query result: '.$this->remit['order_no'].' '.$resTxt);
+        Yii::info('order query result: '.$this->order['order_no'].' '.$resTxt);
         $ret = self::RECHARGE_QUERY_RESULT;
         if (!empty($resTxt)) {
             $res = json_decode($resTxt, true);
@@ -341,6 +341,11 @@ class MfBasePayment extends BasePayment
 
         if(empty($bankCode)){
             throw new OperationFailureException("银行代码配置错误:".$this->remit['channel_id'].':'.$this->remit['bank_code'],Macro::ERR_PAYMENT_BANK_CODE);
+        }
+
+        if(empty($this->remit['bank_branch'])){
+//            throw new OperationFailureException("银行卡开户网点不能为空！",Macro::ERR_PAYMENT_BANK_CODE);
+            $this->remit['bank_branch'] = $this->remit['bank_name'].'北京市中关村分行';
         }
 
         $params = [
@@ -433,6 +438,12 @@ class MfBasePayment extends BasePayment
                 //200：初始状态，处理中 210:处理中;220：代付成功;230：代付失败（未确认），处理中状态处理;260：失败已退款;【220成功，260失败，其他状态处理中状态处理】 请参照注意事项6
                 if($res['status'] == '220'){
                     $ret['data']['bank_status'] = Remit::BANK_STATUS_SUCCESS;
+
+                    //成功金额小于订单金额
+                    if(empty($res['amount']) || $res['amount'] < $this->remit->amount){
+                        $ret['data']['bank_status'] = Remit::BANK_STATUS_FAIL;
+                        $ret['message'] = $res['msg']??"三方出款成功金额{$res['amount']}小于订单金额{$this->remit->amount}，请手工确认！";
+                    }
                 }elseif($res['status'] == '260'){
                     $ret['data']['bank_status'] = Remit::BANK_STATUS_FAIL;
                     $ret['message'] = $res['msg']??"出款失败({$resTxt})";
