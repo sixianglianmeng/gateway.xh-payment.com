@@ -8,8 +8,8 @@ $config = \yii\helpers\ArrayHelper::merge(
             'db' => [
                 'class' => 'yii\db\Connection',
                 'dsn' => 'mysql:host=127.0.0.1;dbname=payment_com',
-                'username' => 'root',
-                'password' => 'z4wIxIJtgH7wouBO',
+                'username' => 'suhui_paymemt',
+                'password' => 'z4wIx7wouBOJi90A',
                 'charset' => 'utf8',
                 'tablePrefix' => 'p_',
                 'enableSchemaCache' => true,
@@ -19,7 +19,7 @@ $config = \yii\helpers\ArrayHelper::merge(
                 'schemaCacheDuration' => 86400, // 24H it is in seconds
 //
 //                'slaveConfig' => [
-//                    'username' => 'root',
+//                    'username' => 'suhui_paymemt',
 //                    'password' => 'z4wIxIJtgH7wouBO',
 //                    'attributes' => [
 //                        PDO::ATTR_TIMEOUT => 10,
