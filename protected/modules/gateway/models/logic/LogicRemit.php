@@ -6,6 +6,7 @@ namespace app\modules\gateway\models\logic;
 use app\common\exceptions\InValidRequestException;
 use app\common\exceptions\OperationFailureException;
 use app\common\models\logic\LogicUser;
+use app\common\models\model\BankCardIssuer;
 use app\common\models\model\BankCodes;
 use app\common\models\model\ChannelAccount;
 use app\common\models\model\Financial;
@@ -114,17 +115,22 @@ class LogicRemit
             $remitData['plat_fee_profit']     = bcsub($remitData['remit_fee'],$remitData['plat_fee_amount'],6);
 
         }
-
         unset($parentConfigs);
         unset($parentConfigModels);
 
         $newRemit = new Remit();
         $newRemit->setAttributes($remitData,false);
+        //批量提款可跳过检测，先写入订单
         if(!$skipCheck){
-            self::beforeAddRemit($newRemit, $merchant, $paymentChannelAccount);
-        }
 
-        $newRemit->save();
+            try{
+                self::beforeAddRemit($newRemit, $merchant, $paymentChannelAccount);
+                $newRemit->save();
+            }catch (\Exception $e) {
+                $newRemit->save();
+                $newRemit = self::setFail($newRemit,$e->getMessage());
+            }
+        }
 
         //接口日志埋点
         Yii::$app->params['apiRequestLog'] = [
@@ -145,7 +151,7 @@ class LogicRemit
      * 提款前置操作
      * 可进行额度校验的等操作
      *
-     * @param array $request 请求数组
+     * @param Remit $remit remit对象
      * @param User $merchant 提款账户
      * @param ChannelAccount $paymentChannelAccount 提款的三方渠道账户
      */
@@ -153,6 +159,10 @@ class LogicRemit
         $userPaymentConfig = $merchant->paymentInfo;
         //站点是否允许费率设置为0
         $feeCanBeZero = SiteConfig::cacheGetContent('remit_fee_can_be_zero');
+
+        if(!BankCardIssuer::checkBankNoBankCode($remit->bank_no, $remit->bank_code)){
+            throw new OperationFailureException("银行卡号与银行不匹配",Macro::ERR_PAYMENT_BANK_CODE);
+        }
 
         $bankCode = BankCodes::getChannelBankCode($remit['channel_id'],$remit['bank_code'],'remit');
         if(empty($bankCode)){
@@ -299,6 +309,7 @@ class LogicRemit
                 $remit->bank_status =  Remit::BANK_STATUS_FAIL;
                 $remit->save();
                 $remit->bank_ret = $remit->bank_ret.date('Y-m-d H:i:s')." 账户扣款失败:".$ex->getMessage()."\n";
+                self::updateToRedis($remit);
 
                 throw $ex;
             }
@@ -598,7 +609,24 @@ class LogicRemit
     }
 
     /*
-     * 订单失败
+     * 设置订单失败并退款
+     *
+     * @param Remit $remit 订单对象
+     * @param String $failMsg 失败描述信息
+     */
+    public static function setFailAndRefund(Remit $remit, $failMsg='', $opUid=0, $opUsername='')
+    {
+        Yii::info(__CLASS__ . ':' . __FUNCTION__ . ' ' . $remit->order_no);
+
+        self::setFail($remit, $failMsg, $opUid, $opUsername);
+
+        $remit = self::refund($remit);
+
+        return $remit;
+    }
+
+    /*
+     * 设置订单失败
      *
      * @param Remit $remit 订单对象
      * @param String $failMsg 失败描述信息
@@ -607,7 +635,7 @@ class LogicRemit
     {
         Yii::info(__CLASS__ . ':' . __FUNCTION__ . ' ' . $remit->order_no);
 
-        if($failMsg) $remit->fail_msg = $remit->fail_msg.$failMsg.date('Ymd H:i:s')."\n";
+        if($failMsg) $remit->fail_msg = $remit->fail_msg.date('Ymd H:i:s').' '.$failMsg."\n";
         $remit->status = Remit::STATUS_BANK_PROCESS_FAIL;
         $remit->bank_status =  Remit::BANK_STATUS_FAIL;
         if($opUsername) $failMsg="{$opUsername} set fail at ".date('Ymd H:i:s')."\n";
@@ -615,8 +643,6 @@ class LogicRemit
         $remit->save();
 
         self::updateToRedis($remit);
-
-        $remit = self::refund($remit);
 
         return $remit;
     }
@@ -644,10 +670,10 @@ class LogicRemit
     /**
      * 更新订单信息到redis
      *
-     * @param
+     * @param Remit $remit 订单对象
      * @return
      */
-    public static function updateToRedis($remit)
+    public static function updateToRedis(Remit $remit)
     {
         $data = [
             'merchant_order_no'=>$remit->merchant_order_no,

@@ -41,7 +41,7 @@ class ResponseHelper extends \power\yii2\helpers\ResponseHelper
         ){
             $result = [
                 'is_success'        => $code==0?'TRUE':'FALSE',
-                'error_msg'       => $message,
+                'msg'       => $message,
             ];
             $result = ArrayHelper::merge($result,$data);
             $logResponse = $result;

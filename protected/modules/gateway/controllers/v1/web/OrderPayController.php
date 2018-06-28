@@ -56,6 +56,17 @@
             //更新客户端信息
             LogicOrder::updateClientInfo($order);
 
+            //检测用户或者IP是否在黑名单中
+            if(!PaymentRequest::checkBlackListUser()){
+                $msg = '对不起，IP网络安全检测异常，暂时无法提供服务:'.Macro::ERR_USER_BAN;
+                return ResponseHelper::formatOutput(Macro::ERR_USER_BAN, $msg);
+            }
+
+            //检测referer
+            if(!PaymentRequest::checkReferrer($order->userPaymentInfo)){
+                $msg = '对不起，来路域名错误，请联系您的商户:'.Macro::ERR_REFERRER;
+                return ResponseHelper::formatOutput(Macro::ERR_REFERRER, $msg);
+            }
             //生成跳转连接
             $payment = new ChannelPayment($order, $order->channelAccount);
 

@@ -252,7 +252,7 @@ class RemitController extends BaseInnerController
         $orders = Remit::findAll($filter);
         foreach ($orders as $order){
             $bak = $opOrderList[$order->order_no]['bak']??'';
-            LogicRemit::setFail($order,$bak,$this->allParams['op_uid'],$this->allParams['op_username']);
+            LogicRemit::setFailAndRefund($order,$bak,$this->allParams['op_uid'],$this->allParams['op_username']);
         }
 
         return ResponseHelper::formatOutput(Macro::SUCCESS);
@@ -265,7 +265,6 @@ class RemitController extends BaseInnerController
     {
         $rawOrderList = ControllerParameterValidator::getRequestParam($this->allParams, 'orderNoList', '',Macro::CONST_PARAM_TYPE_ARRAY,'订单号列表错误');
 
-        Yii::info($rawOrderList);
         if(empty($rawOrderList)){
             Util::throwException(Macro::PARAMETER_VALIDATION_FAILED);
         }

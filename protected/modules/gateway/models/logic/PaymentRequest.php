@@ -20,7 +20,7 @@ class PaymentRequest
     const DEFAULT_JSON_RESPONSE = [
         'is_success' => self::FAIL,
         'sign'       => '',
-        'error_msg' => '',
+        'msg' => '',
     ];
     const CLIENT_ID_IN_COOKIE = 'x_client_id';
 
@@ -87,16 +87,19 @@ class PaymentRequest
             }
         }
 
-        //检测用户或者IP是否在黑名单中
-        if(!$this->checkBlackListUser()){
-            $msg = '对不起，银行安全检测异常，暂时无法充值:'.Macro::ERR_USER_BAN;
-            throw  new ParameterValidationExpandException($msg);
-        }
+        //终端用户请求web接口，检测用户是否在黑名单
+        if(substr(Yii::$app->controller->id,2,5)=='/web/'){
+            //检测用户或者IP是否在黑名单中
+            if(!self::checkBlackListUser()){
+                $msg = '对不起，IP网络安全检测异常，暂时无法提供服务:'.Macro::ERR_USER_BAN;
+                throw  new ParameterValidationExpandException($msg);
+            }
 
-        //检测referer
-        if(!$this->checkReferrer()){
-            $msg = '对不起，来路域名错误，请联系您的商户:'.Macro::ERR_REFERRER;
-            throw  new ParameterValidationExpandException($msg);
+            //检测referer
+            if(!self::checkReferrer($this->merchantPayment)){
+                $msg = '对不起，来路域名错误，请联系您的商户:'.Macro::ERR_REFERRER;
+                throw  new ParameterValidationExpandException($msg);
+            }
         }
 
         return true;
@@ -131,8 +134,15 @@ class PaymentRequest
         return $cookies[self::CLIENT_ID_IN_COOKIE]??'';
     }
 
-    public function checkReferrer(){
-        $domains = $this->merchantPayment->app_server_domains;
+    /**
+     * 根据商户配置的来路域名检测来源referrer
+     *
+     * @param UserPaymentInfo $merchantPayment
+     * @return bool
+     *
+     */
+    static public function checkReferrer(UserPaymentInfo $merchantPayment){
+        $domains = $merchantPayment->app_server_domains;
         $referer = Yii::$app->request->referrer;
         $refDomain = parse_url($referer,PHP_URL_HOST);
 

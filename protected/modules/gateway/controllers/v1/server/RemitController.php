@@ -64,7 +64,7 @@ class RemitController extends BaseServerSignedRequestController
             'bank_status'=>self::getRespBankStatus($remit->bank_status),
         ];
         if($remit->bank_status!==Remit::BANK_STATUS_SUCCESS){
-            $msg = $remit->fail_msg;
+            $msg = trim($remit->fail_msg);
         }
         return ResponseHelper::formatOutput(0,$msg,$data);
     }
