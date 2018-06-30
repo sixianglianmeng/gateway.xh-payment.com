@@ -26,7 +26,7 @@ class HtBasePayment extends BasePayment
         "WXQR"=>2,
         "ALIQR"=>3,
         "QQQR"=>5,
-        "U,NQR"=>7,
+        "UNQR"=>7,
         "WXH5"=>10,
         "ALIH5"=>11,
         "QQH5"=>12,
@@ -38,6 +38,7 @@ class HtBasePayment extends BasePayment
 
     public function __construct(...$arguments)
     {
+
         parent::__construct(...$arguments);
     }
 
