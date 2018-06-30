@@ -16,7 +16,11 @@ class CheckCommonParameters extends \yii\base\ActionFilter
      */
     public function beforeAction($action)
     {
-        $merchantId = ControllerParameterValidator::getRequestParam($_REQUEST, 'merchant_code',null,Macro::CONST_PARAM_TYPE_INT_GT_ZERO, '商户号错误！');
+        $arrQueryParams  = Yii::$app->getRequest()->getQueryParams();
+        $arrBodyParams   = Yii::$app->getRequest()->getBodyParams();
+        $allParams = $arrQueryParams + $arrBodyParams;
+
+        $merchantId = ControllerParameterValidator::getRequestParam($allParams, 'merchant_code',null,Macro::CONST_PARAM_TYPE_INT_GT_ZERO, '商户号错误！');
         if(!$merchantId){
             return false;
         }else{
