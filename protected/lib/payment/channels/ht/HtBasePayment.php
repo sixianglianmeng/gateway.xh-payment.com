@@ -223,13 +223,17 @@ class HtBasePayment extends BasePayment
      */
     public function wechatQr()
     {
+        if(empty(self::PAY_TYPE_MAP[$this->order['pay_method_code']])){
+            throw new OperationFailureException("HT通道配置不支持此支付方式:".$this->order['pay_method_code'],Macro::ERR_PAYMENT_TYPE_NOT_ALLOWED);
+        }
+
         $params = [
             'notify_url'=>$this->paymentConfig['paymentNotifyBaseUri']."/gateway/v1/web/ht/notify",
             'return_url'=>$this->paymentConfig['paymentNotifyBaseUri']."/gateway/v1/web/ht/return",
             'bank_code'=>'',
             'merchant_code'=>$this->order['channel_merchant_id'],
             'order_no'=>$this->order['order_no'],
-            'pay_type'=>$this->order['pay_method_code'],
+            'pay_type'=>self::PAY_TYPE_MAP[$this->order['pay_method_code']],
             'order_amount'=>$this->order['amount'],
             'req_referer'=>Yii::$app->request->referrer?Yii::$app->request->referrer:Yii::$app->request->getHostInfo().Yii::$app->request->url,
             'order_time'=>date("Y-m-d H:i:s"),
