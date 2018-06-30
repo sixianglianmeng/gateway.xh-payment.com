@@ -1,6 +1,7 @@
 <?php
 namespace app\modules\gateway\controllers\v1\server;
 
+Use Yii;
 use app\common\models\model\Channel;
 use app\common\models\model\ChannelAccount;
 use app\common\models\model\Order;
@@ -22,6 +23,9 @@ class OrderController extends BaseServerSignedRequestController
      * @author booter.ui@gmail.com
      */
     public function beforeAction($action){
+        Yii::$app->response->format = Macro::FORMAT_JSON;
+        Yii::$app->params['jsonFormatType'] = Macro::FORMAT_PAYMENT_GATEWAY_JSON;
+
         return parent::beforeAction($action);
     }
 

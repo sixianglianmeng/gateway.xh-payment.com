@@ -19,6 +19,9 @@ class AccountController extends BaseServerSignedRequestController
      * @author booter.ui@gmail.com
      */
     public function beforeAction($action){
+        Yii::$app->response->format = Macro::FORMAT_JSON;
+        Yii::$app->params['jsonFormatType'] = Macro::FORMAT_PAYMENT_GATEWAY_JSON;
+        
         return parent::beforeAction($action);
     }
 
