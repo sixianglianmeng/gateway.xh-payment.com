@@ -45,7 +45,7 @@ class ResponseHelper extends \power\yii2\helpers\ResponseHelper
             ];
             $result = ArrayHelper::merge($result,$data);
             $logResponse = $result;
-            if(Yii::$app->params['merchantPayment'] && Yii::$app->params['merchantPayment'] instanceof UserPaymentInfo){
+            if(isset(Yii::$app->params['merchantPayment']) && Yii::$app->params['merchantPayment'] instanceof UserPaymentInfo){
                 $result['sign'] = SignatureHelper::calcSign($result, Yii::$app->params['merchantPayment']->app_key_md5, Macro::CONST_PAYMENT_GETWAY_SIGN_TYPE);
             }
         }elseif($response->format == Response::FORMAT_HTML) {
