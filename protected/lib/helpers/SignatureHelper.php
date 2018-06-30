@@ -44,7 +44,7 @@ class SignatureHelper extends SecurityHelper
         }
 
         $signStr = md5($params.'&key='.$strSecret);
-//        Yii::info('md5Sign string: '.$signStr.' raw: '.$params.'&key='.$strSecret);
+        Yii::info('md5Sign string: '.$signStr.' raw: '.$params.'&key='.$strSecret);
         return $signStr;
     }
 }
