@@ -49,7 +49,7 @@ class VerifySign extends ActionFilter
             }
         }
 
-        $arrParams = array_merge($_POST, $_GET);
+        $arrParams = $allParams;
         foreach ($arrParams as $strKey => $strVal) {
             if (in_array($strKey, $this->keysBlackList) == true) {
                 unset($arrParams[$strKey]);
