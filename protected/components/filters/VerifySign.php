@@ -18,8 +18,12 @@ class VerifySign extends ActionFilter
     
     public function beforeAction($action)
     {
-        $strSig = ControllerParameterValidator::getRequestParam($_REQUEST, 'sign', null, Macro::CONST_PARAM_TYPE_MD5,"签名错误");
-        $merchantId = ControllerParameterValidator::getRequestParam($_REQUEST, 'merchant_code',null,Macro::CONST_PARAM_TYPE_INT_GT_ZERO, '商户号错误');
+        $arrQueryParams  = Yii::$app->getRequest()->getQueryParams();
+        $arrBodyParams   = Yii::$app->getRequest()->getBodyParams();
+        $allParams = $arrQueryParams + $arrBodyParams;
+
+        $strSig = ControllerParameterValidator::getRequestParam($allParams, 'sign', null, Macro::CONST_PARAM_TYPE_MD5,"签名错误");
+        $merchantId = ControllerParameterValidator::getRequestParam($allParams, 'merchant_code',null,Macro::CONST_PARAM_TYPE_INT_GT_ZERO, '商户号错误');
 
         $merchant = User::findActive($merchantId);
         if(empty($merchant)){
