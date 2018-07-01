@@ -482,7 +482,7 @@ class LogicRemit
             $logicUser->changeUserBalance($amount, Financial::EVENT_TYPE_REFUND_REMIT_FEE, $remit->order_no, $remit->amount, $ip);
 
             //退回分润
-            $parentRebate = Financial::findAll(['event_id'=>$remit->id,'event_type'=>Financial::EVENT_TYPE_REMIT_BONUS]);
+            $parentRebate = Financial::findAll(['event_id'=>$remit->id,'event_type'=>Financial::EVENT_TYPE_REMIT_BONUS,'status'=>Financial::STATUS_FINISHED]);
             foreach ($parentRebate as $pr){
                 $logicUser->changeUserBalance((0-$remit->amount), Financial::EVENT_TYPE_REFUND_REMIT_BONUS,$remit->order_no, $remit->amount, $ip, $reason);
             }
@@ -681,7 +681,7 @@ class LogicRemit
 
         $statusArr = [];
         if(!empty($statusJson[0])){
-            $statusArr = \GuzzleHttp\json_decode($statusJson[0]);
+            $statusArr = json_decode($statusJson[0], true);
         }
 
         return $statusArr;
