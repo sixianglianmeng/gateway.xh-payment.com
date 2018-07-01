@@ -35,6 +35,8 @@ class Financial extends BaseModel
     const EVENT_TYPE_TRANSFER_IN = 34; # 转账入款
     const EVENT_TYPE_TRANSFER_OUT = 35; # 转账出款
     const EVENT_TYPE_TRANSFER_FEE = 36; # 转账手续费
+    const EVENT_TYPE_SYSTEM_FROZEN = 37; # 冻结
+    const EVENT_TYPE_SYSTEM_UNFROZEN = 38; # 解冻
 
     //账变类型 编号=>描述
     const ARR_EVENT_TYPES = [
@@ -52,6 +54,8 @@ class Financial extends BaseModel
         self::EVENT_TYPE_SYSTEM_MINUS       => '系统扣款',
         self::EVENT_TYPE_RECHARGE_FROZEN    => '订单冻结',
         self::EVENT_TYPE_RECHARGE_UNFROZEN  => '订单解冻',
+        self::EVENT_TYPE_SYSTEM_FROZEN      => '系统冻结',
+        self::EVENT_TYPE_SYSTEM_UNFROZEN    => '系统解冻',
         self::EVENT_TYPE_TRANSFER_IN        => '转账入款',
         self::EVENT_TYPE_TRANSFER_OUT       => '转账出款',
         self::EVENT_TYPE_TRANSFER_FEE       => '转账手续费',
