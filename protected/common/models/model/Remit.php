@@ -143,6 +143,11 @@ class Remit extends BaseModel
         return $this->hasOne(ChannelAccount::className(), ['id'=>'channel_account_id']);
     }
 
+    public function getUserPaymentInfo()
+    {
+        return $this->hasOne(UserPaymentInfo::className(), ['user_id'=>'merchant_id']);
+    }
+
     /**
      * 获取订单状态描述
      *

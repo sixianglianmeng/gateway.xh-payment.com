@@ -77,7 +77,7 @@ class BankCardIssuer extends BaseModel
         {
             $ret = true;
         }else{
-            Yii::info("bank no info err: bankno:{$bankNo}, platcode:{$platFormBankCode}, alicode:{$json['bank']}");
+            Yii::info("bank no info err: bankno:{$bankNo}, platcode:{$platFormBankCode}");
         }
 
         return $ret;

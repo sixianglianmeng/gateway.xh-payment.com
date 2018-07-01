@@ -76,6 +76,8 @@ class LogicOrder
         $orderData['channel_app_id']      = $channelAccount->app_id;
 
         $orderData['fee_rate']   = $rechargeMethod->fee_rate;
+        //防止费率填写错误，手续费不大于订单金额
+        if($orderData['fee_rate']>1) $orderData['fee_rate']=1;
         $orderData['fee_amount'] = bcmul($rechargeMethod->fee_rate, $orderData['amount'], 6);
         $orderData['order_no']   = self::generateOrderNo($orderData);
         $channelAccountRechargeConfig = $rechargeMethod->getChannelAccountMethodConfig();
@@ -406,35 +408,6 @@ class LogicOrder
     }
 
     /*
-     * 订单退款
-     * 注意退款未退回分润
-     *
-     * @param Order $order 订单对象
-     * @param String $bak 备注
-     */
-    static public function refund(Order $order, $opUid, $opUsername, $bak='', $ip=''){
-        Yii::info(__FUNCTION__.' '.$order->order_no.' '.$bak);
-        if($order->status === Order::STATUS_FREEZE){
-            return $order;
-        }
-
-        $logicUser = new LogicUser($order->merchant);
-        if(!$ip) $ip = Yii::$app->request->userIP;
-        $order->status = Order::STATUS_PAID;
-        $logicUser = new LogicUser($order->merchant);
-        //更新充值金额
-        bcscale(9);
-        $logicUser->changeUserBalance($order->paid_amount, Financial::EVENT_TYPE_RECHARGE, $order->order_no, $order->amount, $ip);
-
-        if(empty($bak) && $opUsername) $bak="{$opUsername} set refund at ".date('Ymd H:i:s')."\n";
-        $order->bak .=$bak;
-        $order->status = Order::STATUS_REFUND;
-        $order->save();
-
-        return $order;
-    }
-
-    /*
      * 订单分红
      */
     static public function bonus(Order $order){
@@ -539,6 +512,9 @@ class LogicOrder
      */
     static public function updateNotifyResult($orderNo, $retCode, $retContent){
         $order = self::getOrderByOrderNo($orderNo);
+        if(!$order){
+            throw new OperationFailureException("updateNotifyResult 订单不存在：{$orderNo}");
+        }
 
         $order->notify_at = time();
         $order->notify_status = $retCode;

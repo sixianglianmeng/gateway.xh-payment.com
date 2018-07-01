@@ -159,7 +159,7 @@ class RemitController extends BaseInnerController
             Util::throwException(Macro::PARAMETER_VALIDATION_FAILED);
         }
 
-        $filter = ['status',[Remit::STATUS_DEDUCT,Remit::STATUS_BANK_PROCESSING]];
+        $filter = ['status',[Remit::STATUS_CHECKED,Remit::STATUS_BANK_PROCESSING]];
         //最长一天
         if($inSeconds>14400) $inSeconds = 14400;
         if($inSeconds){

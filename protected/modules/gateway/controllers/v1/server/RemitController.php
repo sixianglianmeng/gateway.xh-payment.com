@@ -1,6 +1,7 @@
 <?php
 namespace app\modules\gateway\controllers\v1\server;
 
+use Yii;
 use app\common\exceptions\InValidRequestException;
 use app\common\models\model\ChannelAccount;
 use app\common\models\model\Remit;
@@ -29,6 +30,7 @@ class RemitController extends BaseServerSignedRequestController
      * @author booter.ui@gmail.com
      */
     public function beforeAction($action){
+        //设置响应格式为商户接口json格式
         Yii::$app->response->format = Macro::FORMAT_JSON;
         Yii::$app->params['jsonFormatType'] = Macro::FORMAT_PAYMENT_GATEWAY_JSON;
 
@@ -59,7 +61,7 @@ class RemitController extends BaseServerSignedRequestController
         $this->allParams['trade_no'] = $this->allParams['order_no'];
         //生成订单
         $remit = LogicRemit::addRemit($this->allParams,$this->merchant,$paymentChannelAccount);
-        $remit = LogicRemit::processRemit($remit,$paymentChannelAccount);
+
         $msg = '代付订单提交成功';
         $data = [
             'order_no'=>$remit->merchant_order_no,

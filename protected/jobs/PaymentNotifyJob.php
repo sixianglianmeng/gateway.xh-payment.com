@@ -22,14 +22,21 @@ class PaymentNotifyJob extends BaseObject implements RetryableJobInterface
         $ts = microtime(true);
         $orderNo = $this->orderNo;
 
-        $url = $this->url.'?'.http_build_query($this->data);
+        $url = $this->url;//.'?'.http_build_query($this->data);
         try{
-            $client = new \GuzzleHttp\Client();
-//            $response = $client->request('POST', $this->url, [
-//                'timeout' => 5,
-//                'body' => http_build_query($this->data)
-//            ]);
-            $response = $client->get($url);
+            $client = new \GuzzleHttp\Client(
+                [
+                    'timeout' => 10,
+                    'defaults' => [
+                        'verify' => false
+                    ]
+                ]
+            );
+            $response = $client->request('POST', $url, [
+                'timeout' => 10,
+                'body' => json_encode($this->data,JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE),
+            ]);
+//            $response = $client->get($url);
             $httpCode = $response->getStatusCode();
             $body = (string)$response->getBody();
         }catch (\Exception $e){
