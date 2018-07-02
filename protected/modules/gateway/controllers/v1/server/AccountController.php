@@ -40,11 +40,10 @@ class AccountController extends BaseServerSignedRequestController
         //检测参数合法性，判断用户合法性
         $paymentRequest->validate($this->allParams, $needParams, $rules);
 
-
         //余额查询
         $data = [
-            'money'=>$this->merchant->amount,
-            'merchant_code'=>$this->merchant->merchant_id,
+            'money'=>$this->merchant->balance,
+            'merchant_code'=>$this->merchant->id,
         ];
 
         //接口日志埋点

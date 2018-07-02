@@ -195,22 +195,19 @@ class BasePayment
      * @return bool|string
      */
     public static function md5Sign(array $params, string $signKey){
-        if (is_array($params)) {
-            $a      = $params;
-            $params = array();
-            foreach ($a as $key => $value) {
-                $params[] = "$key=$value";
-            }
-            sort($params,SORT_STRING);
-            $params = implode('&', $params);
-        } elseif (is_string($params)) {
+        unset($params['key']);
 
-        } else {
-            return false;
+        $signParams      = [];
+        foreach ($params as $key => $value) {
+            if($value == '') continue;
+            $signParams[] = "$key=$value";
         }
 
-        $signStr = md5($params.'&key='.$signKey);
-        //        Yii::info(['md5Sign string: ',$signStr,$params]);
+        sort($signParams,SORT_STRING);
+        $strToSign = implode('&', $signParams);
+
+        $signStr = md5($strToSign.'&key='.$signKey);
+
         return $signStr;
     }
 
