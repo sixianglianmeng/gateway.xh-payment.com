@@ -1,6 +1,7 @@
 <?php
 namespace app\jobs;
 
+use app\components\Util;
 use Yii;
 use app\common\models\logic\LogicApiRequestLog;
 use app\common\models\model\LogApiRequest;
@@ -22,23 +23,26 @@ class PaymentNotifyJob extends BaseObject implements RetryableJobInterface
         $ts = microtime(true);
         $orderNo = $this->orderNo;
 
-        $url = $this->url;//.'?'.http_build_query($this->data);
+        $url = $this->url;
         try{
-            $client = new \GuzzleHttp\Client(
-                [
-                    'timeout' => 10,
-                    'defaults' => [
-                        'verify' => false
-                    ]
-                ]
-            );
-            $response = $client->request('POST', $url, [
-                'timeout' => 10,
-                'json' => json_encode($this->data,JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE),
-            ]);
-//            $response = $client->get($url);
-            $httpCode = $response->getStatusCode();
-            $body = (string)$response->getBody();
+            $body = Util::curlPostJson($url,$this->data);
+
+//            $client = new \GuzzleHttp\Client(
+//                [
+//                    'timeout' => 10,
+//                    'defaults' => [
+//                        'verify' => false
+//                    ]
+//                ]
+//            );
+//            $response = $client->request('POST', $url, [
+//                'timeout' => 10,
+//                'json' => json_encode($this->data,JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE),
+//            ]);
+////            $response = $client->get($url);
+//            $httpCode = $response->getStatusCode();
+//            $body = (string)$response->getBody();
+
         }catch (\Exception $e){
             $httpCode = $e->getCode();
             $body = $e->getMessage();
