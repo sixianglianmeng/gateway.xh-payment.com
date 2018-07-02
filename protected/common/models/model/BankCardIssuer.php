@@ -66,7 +66,7 @@ class BankCardIssuer extends BaseModel
                     $issuser->bank_name = $bank->bank_name;
                     $issuser->platform_bank_code = $bank->platform_bank_code;
                 }else{
-                    Yii::error("can not found bank info from ali code: {$json['bank']}");
+                    Yii::error("can not found bank info({$bankNo}) from ali code: {$json['bank']}");
                 }
 
                 $issuser->save();
@@ -77,7 +77,7 @@ class BankCardIssuer extends BaseModel
         {
             $ret = true;
         }else{
-            Yii::info("bank no info err: bankno:{$bankNo}, platcode:{$platFormBankCode}");
+            Yii::error("bank no info err: bankno:{$bankNo}, platcode:{$platFormBankCode}");
         }
 
         return $ret;

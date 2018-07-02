@@ -649,7 +649,7 @@ class LogicRemit
             'bank_status'=>$remit->bank_status,
         ];
         $json = \GuzzleHttp\json_encode($data);
-        Yii::$app->redis->hmset(self::REDIS_CACHE_KEY, $remit->order_no, $json);
+        Yii::$app->redis->hmset(self::REDIS_CACHE_KEY, $remit->merchant_id.'-'.$remit->merchant_order_no, $json);
     }
 
     /**
@@ -658,9 +658,9 @@ class LogicRemit
      */
     public static function getStatus($orderNo = '',$merchantOrderNo = '', User $merchant)
     {
-        if($merchantOrderNo && !$orderNo){
-            $remit = Remit::findOne(['merchant_order_no'=>$merchantOrderNo,'merchant_id'=>$merchant->id]);
-            if($remit) $orderNo = $remit->order_no;
+        if(!$merchantOrderNo && $orderNo){
+            $remit = Remit::findOne(['order_no'=>$orderNo,'merchant_id'=>$merchant->id]);
+            if($remit) $merchantOrderNo = $remit->merchant_order_no;
         }
 
         //接口日志埋点
@@ -673,11 +673,11 @@ class LogicRemit
             'channel_name'=>Yii::$app->params['merchantPayment']->remitChannel->channel_name,
         ];
 
-        if(!$orderNo){
-            Util::throwException(Macro::ERR_REMIT_NOT_FOUND);
+        if(!$merchantOrderNo){
+            return [];
         }
 
-        $statusJson = Yii::$app->redis->hmget(self::REDIS_CACHE_KEY, $orderNo);
+        $statusJson = Yii::$app->redis->hmget(self::REDIS_CACHE_KEY, $merchant->id.'-'.$orderNo);
 
         $statusArr = [];
         if(!empty($statusJson[0])){

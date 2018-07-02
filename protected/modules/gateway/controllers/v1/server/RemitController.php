@@ -104,11 +104,19 @@ class RemitController extends BaseServerSignedRequestController
 
         if($remit){
             $data = [
-                'order_no'=>$remit->merchant_order_no,
-                'trade_no'=>$remit->order_no,
-                'bank_status'=>self::getRespBankStatus($remit->bank_status),
+                'order_no'=>$remit['merchant_order_no'],
+                'trade_no'=>$remit['order_no'],
+                'bank_status'=>self::getRespBankStatus($remit['bank_status']),
             ];
             $ret = Macro::SUCCESS;
+        }else{
+            $data = [
+                'order_no'=>$merchantOrderNo,
+                'trade_no'=>$orderNo,
+                'bank_status'=>'',
+            ];
+
+            $msg = "代付记录不存在！";
         }
 
         return ResponseHelper::formatOutput($ret,$msg,$data);
