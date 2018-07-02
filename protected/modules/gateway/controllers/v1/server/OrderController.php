@@ -100,7 +100,7 @@ class OrderController extends BaseServerSignedRequestController
                 'order_no'=>$order->merchant_order_no,
                 'trade_no'=>$order->order_no,
                 'merchant_code'=>$order->merchant_id,
-                'trade_time'=>$order->created_at,
+                'trade_time'=>$order->paid_at,
                 'order_time'=>$order->merchant_order_time,
                 'order_amount'=>$order->amount,
                 'trade_status'=>$status,
