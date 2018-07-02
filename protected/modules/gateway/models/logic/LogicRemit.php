@@ -677,7 +677,7 @@ class LogicRemit
             return [];
         }
 
-        $statusJson = Yii::$app->redis->hmget(self::REDIS_CACHE_KEY, $merchant->id.'-'.$orderNo);
+        $statusJson = Yii::$app->redis->hmget(self::REDIS_CACHE_KEY, $merchant->id.'-'.$merchantOrderNo);
 
         $statusArr = [];
         if(!empty($statusJson[0])){
