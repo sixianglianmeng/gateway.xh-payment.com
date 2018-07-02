@@ -34,7 +34,7 @@ class PaymentNotifyJob extends BaseObject implements RetryableJobInterface
             );
             $response = $client->request('POST', $url, [
                 'timeout' => 10,
-                'body' => json_encode($this->data,JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE),
+                'json' => json_encode($this->data,JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE),
             ]);
 //            $response = $client->get($url);
             $httpCode = $response->getStatusCode();
