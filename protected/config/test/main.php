@@ -14,12 +14,6 @@ $config = \yii\helpers\ArrayHelper::merge(
                 'tablePrefix' => 'p_',
                 'enableLogging'=>true,
             ],
-            'redis' => [
-                'class' => 'yii\redis\Connection',
-                'hostname' => '127.0.0.1',
-                'port' => 63780,
-                'database' => 0,
-            ],
             'log' => [
                 'targets' => [
                     'file' => [
