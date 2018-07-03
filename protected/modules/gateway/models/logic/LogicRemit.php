@@ -476,16 +476,18 @@ class LogicRemit
             $amount =  $remit->amount;
             $ip = Yii::$app->request->userIP??'';
             $logicUser->changeUserBalance($amount, Financial::EVENT_TYPE_REFUND_REMIT, $remit->order_no, $remit->amount,$ip);
-            //退回手续费
-            $amount =  $remit->remit_fee;
 
-            $logicUser->changeUserBalance($amount, Financial::EVENT_TYPE_REFUND_REMIT_FEE, $remit->order_no, $remit->amount, $ip);
+            //退回手续费
+            //手续费不退
+//            $amount =  $remit->remit_fee;
+//            $logicUser->changeUserBalance($amount, Financial::EVENT_TYPE_REFUND_REMIT_FEE, $remit->order_no, $remit->amount, $ip);
 
             //退回分润
-            $parentRebate = Financial::findAll(['event_id'=>$remit->id,'event_type'=>Financial::EVENT_TYPE_REMIT_BONUS,'status'=>Financial::STATUS_FINISHED]);
-            foreach ($parentRebate as $pr){
-                $logicUser->changeUserBalance((0-$remit->amount), Financial::EVENT_TYPE_REFUND_REMIT_BONUS,$remit->order_no, $remit->amount, $ip, $reason);
-            }
+            //!!!!不需退回，因为目前为成功后才分润
+//            $parentRebate = Financial::findAll(['event_id'=>$remit->id,'event_type'=>Financial::EVENT_TYPE_REMIT_BONUS,'status'=>Financial::STATUS_FINISHED]);
+//            foreach ($parentRebate as $pr){
+//                $logicUser->changeUserBalance((0-$remit->amount), Financial::EVENT_TYPE_REFUND_REMIT_BONUS,$remit->order_no, $remit->amount, $ip, $reason);
+//            }
 
             $remit->status = Remit::STATUS_REFUND;
             $remit->bank_ret.=date('Ymd H:i:s')." 订单失败已退款"."\n";

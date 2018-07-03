@@ -226,4 +226,27 @@ class OrderController extends BaseInnerController
 
         return ResponseHelper::formatOutput(Macro::SUCCESS);
     }
+
+    /**
+     * 订单退款
+     */
+    public function actionRefund()
+    {
+        $orderNo = ControllerParameterValidator::getRequestParam($this->allParams, 'order_no', null,Macro::CONST_PARAM_TYPE_ORDER_NO,'订单号格式错误');
+        $bak = ControllerParameterValidator::getRequestParam($this->allParams, 'bak',null,Macro::CONST_PARAM_TYPE_STRING,'退款原因错误',[1]);
+
+        $filter = ['order_no'=>$orderNo];
+
+        $order = Order::findOne($filter);
+        if(empty($order)){
+            Util::throwException(Macro::FAIL,'订单不存在');
+        }
+        if($order->status!=Order::STATUS_PAID){
+            Util::throwException(Macro::FAIL,'只有成功订单才能退款');
+        }
+
+        LogicOrder::refund($order,$bak,$this->allParams['op_ip'],$this->allParams['op_uid'],$this->allParams['op_username']);
+
+        return ResponseHelper::formatOutput(Macro::SUCCESS);
+    }
 }

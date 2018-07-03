@@ -407,6 +407,50 @@ class LogicOrder
         return $order;
     }
 
+    /**
+     * 订单退款
+     *
+     * @param Order $order 订单对象
+     * @param string $reason 退款原因
+     * @param string $ip 操作人员$ip
+     * @param int $opUid 操作人员uid
+     * @param string $opUsername 操作人员用户名
+     * @return mixed
+     * @throws OperationFailureException
+     * @throws \Throwable
+     */
+    static public function refund(Order &$order, string $reason, string $ip='', int $opUid=0, string $opUsername=''){
+        Yii::info(__CLASS__ . ':' . __FUNCTION__ . ' ' . $order->order_no);
+        if(
+            $order->status == order::STATUS_PAID
+        ){
+            //退回账户扣款
+            $logicUser = new LogicUser($order->merchant);
+            $amount =  $order->amount;
+            $logicUser->changeUserBalance((0-$amount), Financial::EVENT_TYPE_RECHARGE_REFUND, $order->order_no, $order->amount,$ip);
+
+            //退回手续费给用户
+            //手续费不退
+//            $logicUser->changeUserBalance($order->order_fee, Financial::EVENT_TYPE_RECHARGE_REFUND, $order->order_no, $order->amount, $ip, $reason, $opUid, $opUsername);
+
+            //扣除帐户分润
+            //分润不退
+//            $parentRebate = Financial::findAll(['event_id'=>$order->id,'event_type'=>Financial::EVENT_TYPE_RECHARGE_BONUS,'status'=>Financial::STATUS_FINISHED]);
+//            foreach ($parentRebate as $pr){
+//                $logicUser->changeUserBalance((0-$pr->amount), Financial::EVENT_TYPE_RECHARGE_BONUS_REFUND,$order->order_no, $order->amount, $ip, $reason, $opUid, $opUsername);
+//            }
+
+            $order->status = order::STATUS_REFUND;
+            $order->bak.=date('Ymd H:i:s')." 订单退款:{$reason}\n";
+            $order->save();
+
+            return $order;
+        }else{
+            Yii::error([__CLASS__.':'.__FUNCTION__,$order->order_no,"订单状态错误，无法退款:".$order->status]);
+            throw new OperationFailureException('订单状态错误，无法退款:'.$order->status);
+        }
+    }
+
     /*
      * 订单分红
      */
@@ -440,7 +484,7 @@ class LogicOrder
             Yii::info(["order bonus parent",$pUser->id,$pUser->username,$pUser->parentAgent->id,$pUser->parentAgent->username]);
             $logicUser =  new LogicUser($pUser->parentAgent);
             $rechargeFee =  bcmul($rechargeConfig['parent_rebate_rate'],$order->paid_amount);
-            $logicUser->changeUserBalance($rechargeFee, Financial::EVENT_TYPE_BONUS, $order->order_no, $order->amount, Yii::$app->request->userIP);
+            $logicUser->changeUserBalance($rechargeFee, Financial::EVENT_TYPE_RECHARGE_BONUS, $order->order_no, $order->amount, Yii::$app->request->userIP);
         }
 
         //更新订单账户处理状态

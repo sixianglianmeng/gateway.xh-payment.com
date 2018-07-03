@@ -25,8 +25,6 @@ class AccountController extends BaseInnerController
     {
         $userId = ControllerParameterValidator::getRequestParam($this->allParams, 'user_id', null, Macro::CONST_PARAM_TYPE_INT, '用户id错误');
         $amount = ControllerParameterValidator::getRequestParam($this->allParams, 'amount',null,Macro::CONST_PARAM_TYPE_DECIMAL,'金额错误');
-        $opUserId = ControllerParameterValidator::getRequestParam($this->allParams, 'op_userid',null,Macro::CONST_PARAM_TYPE_INT,'操作者ID错误');
-        $opUsername = ControllerParameterValidator::getRequestParam($this->allParams, 'op_username',null,Macro::CONST_PARAM_TYPE_USERNAME,'操作者用户名错误');
         $bak = ControllerParameterValidator::getRequestParam($this->allParams, 'bak',null,Macro::CONST_PARAM_TYPE_STRING,'调整原因错误',[1]);
         $balanceType = ControllerParameterValidator::getRequestParam($this->allParams, 'type',null,Macro::CONST_PARAM_TYPE_ENUM,'金额类型错误',[1,2]);
 
@@ -48,12 +46,12 @@ class AccountController extends BaseInnerController
         if($balanceType==1){
             $type = $amount>0?Financial::EVENT_TYPE_SYSTEM_PLUS:Financial::EVENT_TYPE_SYSTEM_MINUS;
             $logicUser->changeUserBalance($amount, $type, date('YmdHis').mt_rand(10000,99999),
-                $amount,$ip,$bak,$opUserId,$opUsername);
+                $amount,$ip,$bak,$this->allParams['op_uid'],$this->allParams['op_username']);
         }
         elseif($balanceType==2){
             $type = $amount>0?Financial::EVENT_TYPE_SYSTEM_FROZEN:Financial::EVENT_TYPE_SYSTEM_UNFROZEN;
             $logicUser->changeUserFrozenBalance($amount, $type, date('YmdHis').mt_rand(10000,99999),
-                $amount,$ip,$bak,$opUserId,$opUsername);
+                $amount,$ip,$bak,$this->allParams['op_uid'],$this->allParams['op_username']);
         }
 
         return ResponseHelper::formatOutput(Macro::SUCCESS,'余额修改成功');
