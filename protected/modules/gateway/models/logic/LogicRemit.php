@@ -306,7 +306,7 @@ class LogicRemit
     /*
      * 提交提款请求到银行
      */
-    static public function commitToBank(Remit &$remit, ChannelAccount $paymentChannelAccount){
+    static public function commitToBank(Remit &$remit){
         Yii::info(__CLASS__.':'.__FUNCTION__.' '.$remit->order_no);
         //接口日志埋点
         Yii::$app->params['apiRequestLog'] = [
@@ -335,7 +335,7 @@ class LogicRemit
 
             //提交到银行
             //银行状态说明：00处理中，04成功，05失败或拒绝
-            $payment = new ChannelPayment($remit, $paymentChannelAccount);
+            $payment = new ChannelPayment($remit, $remit->channelAccount);
             try{
                 $ret = $payment->remit();
             }catch (\Exception $e){
