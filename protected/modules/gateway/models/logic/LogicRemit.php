@@ -20,6 +20,7 @@ use app\components\Util;
 use app\lib\payment\ChannelPayment;
 use app\lib\payment\channels\BasePayment;
 use Yii;
+use app\lib\helpers\SignatureHelper;
 
 class LogicRemit
 {
@@ -27,6 +28,14 @@ class LogicRemit
     const NOTICE_DELAY = 300;
     const REDIS_CACHE_KEY = 'lt_remit';
     const MAX_TIME_COMMIT_TO_BANK = 1;
+
+    //响应给商户的银行状态
+    const RESP_BANK_STATUS = [
+        Remit::BANK_STATUS_NONE       => 'pending',
+        Remit::BANK_STATUS_PROCESSING => 'processing',
+        Remit::BANK_STATUS_SUCCESS    => 'success',
+        Remit::BANK_STATUS_FAIL       => 'failed',
+    ];
 
     /*
      * 添加提款记录
@@ -708,5 +717,25 @@ class LogicRemit
     {
         $enable = SiteConfig::cacheGetContent('enable_remit_commit');
         return $enable==1;
+    }
+
+    /*
+     * 生成通知参数
+     */
+    static public function createNotifyParameters(Remit $remit){
+        $arrParams = [
+            'merchant_code'=>$remit->merchant_id,
+            'order_no'=>$remit->merchant_order_no,
+            'order_amount'=>$remit->amount,
+            'order_time'=>$remit->created_at,
+            'trade_no'=>$remit->order_no,
+            'bank_status'=>self::RESP_BANK_STATUS[$remit->bank_status]??'error:'.$remit->bank_status,
+        ];
+
+        $signType = Yii::$app->params['paymentGateWayApiDefaultSignType'];
+        $key = $remit->merchant->paymentInfo->app_key_md5;
+        $arrParams['sign'] = SignatureHelper::calcSign($arrParams, $key, $signType);
+
+        return $arrParams;
     }
 }

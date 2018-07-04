@@ -56,7 +56,7 @@ class OrderController extends BaseServerSignedRequestController
             'url'          => LogicOrder::getCashierUrl($order->order_no),
             'trade_no'     => $order->order_no,
             'order_no'     => $order->merchant_order_no,
-            'order_amount' => $order->amount,
+            'order_amount' => bcadd($order->amount,0,2),
         ];
 
         return ResponseHelper::formatOutput(Macro::SUCCESS,'下单成功',$data);
@@ -102,7 +102,7 @@ class OrderController extends BaseServerSignedRequestController
                 'merchant_code'=>$order->merchant_id,
                 'trade_time'=>$order->paid_at,
                 'order_time'=>$order->merchant_order_time,
-                'order_amount'=>$order->amount,
+                'order_amount'=>bcadd($order->amount,0,2),
                 'trade_status'=>$status,
             ];
             $ret = Macro::SUCCESS;

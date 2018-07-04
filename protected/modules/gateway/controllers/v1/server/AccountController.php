@@ -42,7 +42,7 @@ class AccountController extends BaseServerSignedRequestController
 
         //余额查询
         $data = [
-            'money'=>$this->merchant->balance,
+            'money'=>bcadd($this->merchant->balance,0,6),
             'merchant_code'=>$this->merchant->id,
         ];
 
