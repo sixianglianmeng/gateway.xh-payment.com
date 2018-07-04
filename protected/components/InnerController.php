@@ -101,15 +101,6 @@
 
         protected function handleException($e)
         {
-            LogHelper::error(
-                sprintf(
-                    'unkown exception occurred. %s:%s trace: %s',
-                    get_class($e),
-                    $e->getMessage(),
-                    str_replace("\n", " ", $e->getTraceAsString())
-                )
-            );
-
             $errCode = $e->getCode();
             $msg     = $e->getMessage();
             if (empty($msg) && !empty(Macro::MSG_LIST[$errCode])) {

@@ -146,7 +146,7 @@ class LogicRemit
 
         //接口日志埋点
         Yii::$app->params['apiRequestLog'] = [
-            'event_id'=>$newRemit->order_no,
+            'event_id'=>$newRemit->merchant_order_no,
             'event_type'=> LogApiRequest::EVENT_TYPE_IN_REMIT_ADD,
             'merchant_id'=>$newRemit->merchant_id??$merchant->id,
             'merchant_name'=>$newRemit->merchant_account??$merchant->username,
@@ -681,7 +681,7 @@ class LogicRemit
 
         //接口日志埋点
         Yii::$app->params['apiRequestLog'] = [
-            'event_id'=>$orderNo,
+            'event_id'=>$merchantOrderNo,
             'event_type'=> LogApiRequest::EVENT_TYPE_IN_REMIT_QUERY,
             'merchant_id'=>$merchant->id,
             'merchant_name'=>$merchant->username,

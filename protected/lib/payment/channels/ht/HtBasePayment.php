@@ -140,8 +140,8 @@ class HtBasePayment extends BasePayment
         }
 
         $params = [
-            'notify_url'=>$this->paymentConfig['paymentNotifyBaseUri']."/gateway/ht/notify",
-            'return_url'=>$this->paymentConfig['paymentNotifyBaseUri']."/gateway/ht/return",
+            'notify_url'=>$this->paymentConfig['paymentNotifyBaseUri']."/gateway/v1/web/ht/notify",
+            'return_url'=>$this->paymentConfig['paymentNotifyBaseUri']."/gateway/v1/web/ht/return",
             'bank_code'=>$bankCode,
             'merchant_code'=>$this->order['channel_merchant_id'],
             'order_no'=>$this->order['order_no'],

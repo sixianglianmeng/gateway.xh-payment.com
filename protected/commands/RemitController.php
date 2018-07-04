@@ -116,4 +116,39 @@ class RemitController extends BaseConsoleCommand
             sleep(mt_rand(5,10));
         }
     }
+
+
+    /*
+     * 查询出待通知订单并放到通知队列
+     *
+     * 队列本身已经有重试机制，这个地方不需要太频繁
+     */
+    public function actionNotifyQueueProducer(){
+        $doCheck = true;
+        while ($doCheck) {
+            //获取配置:出款多少分钟之后不再自动查询状态,默认半小时
+            $expire = SiteConfig::cacheGetContent('order_notify_expire');
+            $remitMaxNotifyTimes = SiteConfig::cacheGetContent('remit_max_notify_times');
+            $remitMaxNotifyTimes = $remitMaxNotifyTimes?$remitMaxNotifyTimes:1;
+            $startTs = time()-($expire?$expire*60:1800);
+
+            $query = Remit::find()
+                ->where(['status'=>Remit::STATUS_SUCCESS,'notify_status'=>[Remit::NOTICE_STATUS_NONE,Remit::NOTICE_STATUS_FAIL]])
+                ->andWhere(['!=', 'notify_url', ''])
+                ->andWhere(['>=', 'remit_at', $startTs])
+                //最多通知10次
+                ->andWhere(['<', 'notify_times', $remitMaxNotifyTimes])
+                //已经到达通知时间
+                ->andWhere(['or',['next_notify_time'=>0],['>=', 'next_notify_time', time()]]);
+
+            $orders = $query->limit(100)->all();
+            Yii::info('find remit to notify: '.count($orders));
+            foreach ($orders as $order){
+                Yii::info('remit notify: '.$order->order_no);
+                LogicRemit::notify($order);
+            }
+
+            sleep(mt_rand(5,30));
+        }
+    }
 }

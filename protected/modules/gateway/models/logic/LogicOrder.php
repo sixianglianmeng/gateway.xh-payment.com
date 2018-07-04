@@ -137,7 +137,7 @@ class LogicOrder
         //接口日志埋点
         if(empty($orderData['op_uid']) && empty($orderData['op_username'])){
             Yii::$app->params['apiRequestLog'] = [
-                'event_id'=>$newOrder->order_no,
+                'event_id'=>$newOrder->merchant_order_no,
                 'event_type'=>LogApiRequest::EVENT_TYPE_IN_RECHARGE_ADD,
                 'merchant_id'=>$order->merchant_id??$merchant->id,
                 'merchant_name'=>$order->merchant_account??$merchant->username,
@@ -613,7 +613,7 @@ class LogicOrder
 
         //接口日志埋点
         Yii::$app->params['apiRequestLog'] = [
-            'event_id'=>$orderNo,
+            'event_id'=>$order->merchant_order_no,
             'event_type'=>LogApiRequest::EVENT_TYPE_IN_RECHARGE_QUERY,
             'merchant_id'=>$merchant->id,
             'merchant_name'=>$merchant->username,

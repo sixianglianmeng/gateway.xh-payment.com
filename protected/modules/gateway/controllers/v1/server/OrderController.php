@@ -1,6 +1,7 @@
 <?php
 namespace app\modules\gateway\controllers\v1\server;
 
+use app\common\models\model\LogApiRequest;
 Use Yii;
 use app\common\models\model\Channel;
 use app\common\models\model\ChannelAccount;
@@ -30,8 +31,8 @@ class OrderController extends BaseServerSignedRequestController
         return parent::beforeAction($action);
     }
 
-    /*
-     * 后台下单
+    /**
+     * 收款API下单
      */
     public function actionOrder()
     {
@@ -62,8 +63,8 @@ class OrderController extends BaseServerSignedRequestController
         return ResponseHelper::formatOutput(Macro::SUCCESS,'下单成功',$data);
     }
 
-    /*
-     * 订单状态查询
+    /**
+     * 收款订单状态查询
      */
     public function actionStatus()
     {

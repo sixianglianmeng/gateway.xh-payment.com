@@ -26,7 +26,7 @@ class AccountController extends BaseServerSignedRequestController
         return parent::beforeAction($action);
     }
 
-    /*
+    /**
      * 账户余额查询
      */
     public function actionBalance()

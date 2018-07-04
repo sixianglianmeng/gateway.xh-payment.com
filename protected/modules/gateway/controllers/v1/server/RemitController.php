@@ -1,6 +1,7 @@
 <?php
 namespace app\modules\gateway\controllers\v1\server;
 
+use app\common\models\model\LogApiRequest;
 use Yii;
 use app\common\exceptions\InValidRequestException;
 use app\common\models\model\ChannelAccount;
@@ -37,8 +38,8 @@ class RemitController extends BaseServerSignedRequestController
         return parent::beforeAction($action);
     }
 
-    /*
-     * 单账户提现
+    /**
+     * 代付(出款)申请
      */
     public function actionSingle()
     {
@@ -75,8 +76,8 @@ class RemitController extends BaseServerSignedRequestController
     }
 
 
-    /*
-     * 提款状态查询
+    /**
+     * 代付(出款)查询
      */
     public function actionStatus()
     {

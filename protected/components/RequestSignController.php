@@ -104,15 +104,6 @@
 
         protected function handleException($e)
         {
-            LogHelper::error(
-                sprintf(
-                    'unkown exception occurred. %s:%s trace: %s',
-                    get_class($e),
-                    $e->getMessage(),
-                    str_replace("\n", " ", $e->getTraceAsString())
-                )
-            );
-
             $errCode = $e->getCode();
             $msg     = $e->getMessage();
             if (empty($msg) && !empty(Macro::MSG_LIST[$errCode])) {
@@ -121,7 +112,6 @@
 
             if ($errCode === Macro::SUCCESS) $errCode = Macro::FAIL;
             if (YII_DEBUG) {
-                throw $e;
                 return ResponseHelper::formatOutput($errCode, $msg);
             } else {
                 $code = Macro::INTERNAL_SERVER_ERROR;
