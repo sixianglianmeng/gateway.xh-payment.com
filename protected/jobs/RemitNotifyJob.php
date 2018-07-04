@@ -2,6 +2,7 @@
 namespace app\jobs;
 
 use app\components\Util;
+use app\modules\gateway\models\logic\LogicRemit;
 use Yii;
 use app\common\models\logic\LogicApiRequestLog;
 use app\common\models\model\LogApiRequest;
@@ -11,7 +12,7 @@ use yii\base\BaseObject;
 use yii\queue\RetryableJobInterface;
 use app\common\models\model\Order;
 
-class PaymentNotifyJob extends BaseObject implements RetryableJobInterface
+class RemitNotifyJob extends BaseObject implements RetryableJobInterface
 {
     public $orderNo;
     public $url;
@@ -19,14 +20,16 @@ class PaymentNotifyJob extends BaseObject implements RetryableJobInterface
 
     public function execute($queue)
     {
-        Yii::info('got PaymentNotifyJob ret: '.$this->orderNo.' '.http_build_query($this->data));
+        Yii::info('got RemitNotifyJob ret: '.$this->orderNo.' '.http_build_query($this->data));
         $ts = microtime(true);
         $orderNo = $this->orderNo;
 
         $url = $this->url;
         try{
+
             $body = Util::curlPostJson($url,$this->data);
             $httpCode = 200;
+
 //            $client = new \GuzzleHttp\Client(
 //                [
 //                    'timeout' => 10,
@@ -48,13 +51,13 @@ class PaymentNotifyJob extends BaseObject implements RetryableJobInterface
             $body = $e->getMessage();
         }
 
-        Yii::info('PaymentNotifyJob ret: '.$this->orderNo.' '.$httpCode.' '.$body);
+        Yii::info('RemitNotifyJob ret: '.$this->orderNo.' '.$httpCode.' '.$body);
         $costTime = bcsub(microtime(true),$ts,4);
 
         //接口日志埋点
         Yii::$app->params['apiRequestLog'] = [];
         Yii::$app->params['apiRequestLog']['event_id']=$orderNo;
-        Yii::$app->params['apiRequestLog']['event_type']=LogApiRequest::EVENT_TYPE_OUT_RECHARGE_NOTIFY;
+        Yii::$app->params['apiRequestLog']['event_type']=LogApiRequest::EVENT_TYPE_OUT_REMIT_NOTIFY;
         LogicApiRequestLog::outLog($url, 'POST', $body, $httpCode, $costTime, $this->data);
 
         $noticeOk = Order::NOTICE_STATUS_NONE;
@@ -64,7 +67,7 @@ class PaymentNotifyJob extends BaseObject implements RetryableJobInterface
         }else{
             $noticeOk = Order::NOTICE_STATUS_FAIL;
         }
-        LogicOrder::updateNotifyResult($this->orderNo,$noticeOk,$body);
+        LogicRemit::updateNotifyResult($this->orderNo,$noticeOk,$body);
 
         return true;
     }

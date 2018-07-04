@@ -17,6 +17,7 @@ use app\common\models\model\User;
 use app\common\models\model\UserPaymentInfo;
 use app\components\Macro;
 use app\components\Util;
+use app\jobs\RemitNotifyJob;
 use app\lib\payment\ChannelPayment;
 use app\lib\payment\channels\BasePayment;
 use Yii;
@@ -57,24 +58,26 @@ class LogicRemit
             return $hasRemit;
         }
 
-        $remitData['amount']        = $request['order_amount'];
-        $remitData['bat_order_no']  = $request['bat_order_no'] ?? '';
-        $remitData['bat_index']     = $request['bat_index'] ?? 0;
-        $remitData['bat_count']     = $request['bat_count'] ?? 0;
-        $remitData['bank_province'] = $request['bank_province'] ?? '';
-        $remitData['bank_city']     = $request['bank_city'] ?? '';
-        $remitData['bank_branch']   = $request['bank_branch'] ?? '';
-        $remitData['bank_code']     = $request['bank_code'];
-        $remitData['bank_account']  = $request['account_name'];
-        $remitData['bank_no']       = $request['account_number'];
-        $remitData['client_ip']     = $request['client_ip'] ?? '';
-        $remitData['op_uid']        = $request['op_uid'] ?? 0;
-        $remitData['op_username']   = $request['op_username'] ?? '';
+        $remitData['amount']               = $request['order_amount'];
+        $remitData['bat_order_no']         = $request['bat_order_no'] ?? '';
+        $remitData['bat_index']            = $request['bat_index'] ?? 0;
+        $remitData['bat_count']            = $request['bat_count'] ?? 0;
+        $remitData['bank_province']        = $request['bank_province'] ?? '';
+        $remitData['bank_city']            = $request['bank_city'] ?? '';
+        $remitData['bank_branch']          = $request['bank_branch'] ?? '';
+        $remitData['bank_code']            = $request['bank_code'];
+        $remitData['bank_account']         = $request['account_name'];
+        $remitData['bank_no']              = $request['account_number'];
+        $remitData['client_ip']            = $request['client_ip'] ?? '';
+        $remitData['op_uid']               = $request['op_uid'] ?? 0;
+        $remitData['op_username']          = $request['op_username'] ?? '';
+        $remitData['commit_to_bank_times'] = 0;
 
-        $remitData['status']    = Remit::STATUS_NONE;
-        $remitData['remit_fee'] = $merchant->paymentInfo->remit_fee;
+        $remitData['status']           = Remit::STATUS_NONE;
+        $remitData['remit_fee']        = $merchant->paymentInfo->remit_fee;
         $remitData['bank_status']      = Remit::BANK_STATUS_NONE;
         $remitData['financial_status'] = Remit::FINANCIAL_STATUS_NONE;
+        $remitData['notify_status']    = Remit::NOTICE_STATUS_NONE;
 
         $remitData['merchant_id']         = $merchant->id;
         $remitData['merchant_account']    = $merchant->username;
@@ -85,7 +88,7 @@ class LogicRemit
         $remitData['channel_merchant_id'] = $paymentChannelAccount->merchant_id;
         $remitData['channel_app_id']      = $paymentChannelAccount->app_id;
         $remitData['created_at']          = time();
-        $remitData['order_no']          = self::generateRemitNo($remitData);
+        $remitData['order_no']            = self::generateRemitNo($remitData);
 
         $parentConfigModels = UserPaymentInfo::findAll(['app_id'=>$merchant->getAllParentAgentId()]);
         //把自己也存进去
@@ -342,6 +345,9 @@ class LogicRemit
                 return $remit;
             }
 
+            //刷新提交次数
+            $remit->updateCounters(['commit_to_bank_times' => 1]);
+
             //提交到银行
             //银行状态说明：00处理中，04成功，05失败或拒绝
             $payment = new ChannelPayment($remit, $remit->channelAccount);
@@ -387,7 +393,6 @@ class LogicRemit
             }
 
             $remit->save();
-            $remit->updateCounters(['commit_to_bank_times' => 1]);
 
             return $remit;
 
@@ -543,7 +548,7 @@ class LogicRemit
         $remit->remit_at =  time();
         if($opUsername) $bak.=date('Ymd H:i:s')." {$opUsername} 设置为成功状态\n";
         $remit->bak .=$bak;
-        $remit->bank_ret.=date('Ymd H:i:s')."管理员设置为成功状态\n";;
+        $remit->bank_ret.=date('Ymd H:i:s')."管理员设置为成功状态\n";
         $remit->save();
 
         self::afterSuccess($remit);
@@ -738,4 +743,50 @@ class LogicRemit
 
         return $arrParams;
     }
+
+
+    /*
+     * 异步通知商户
+     */
+    static public function notify(Remit $order){
+        Yii::trace((new \ReflectionClass(__CLASS__))->getShortName().'-'.__FUNCTION__.' '.$order->order_no);
+        if(!$order->notify_url
+            || $order->status != Remit::STATUS_SUCCESS
+        ){
+            return true;
+        }
+
+        $arrParams = self::createNotifyParameters($order);
+        $job = new RemitNotifyJob([
+            'orderNo'=>$order->order_no,
+            'url' => $order->notify_url,
+            'data' => $arrParams,
+        ]);
+        Yii::$app->remitNotifyQueue->push($job);//->delay(10)
+    }
+
+    /*
+     * 更新通知结果
+     */
+    static public function updateNotifyResult($orderNo, $retCode, $retContent){
+        $order = self::getOrderByOrderNo($orderNo);
+        if(!$order){
+            throw new OperationFailureException("remit updateNotifyResult 订单不存在：{$orderNo}");
+        }
+
+        $order->notify_at = time();
+        $order->notify_status = $retCode;
+        $order->notify_ret = $retContent;
+        $order->next_notify_time = time()+self::NOTICE_DELAY;
+
+        $bak=date('Ymd H:i:s')."出款结果通知商户：{$retContent}({$retCode})\n";
+        $order->bak .=$bak;
+        $order->bank_ret.=$bak;
+
+        $order->save();
+        $order->updateCounters(['notify_times' => 1]);
+
+        return $order;
+    }
+
 }

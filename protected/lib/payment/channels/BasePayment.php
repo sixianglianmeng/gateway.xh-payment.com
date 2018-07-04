@@ -515,7 +515,7 @@ class BasePayment
     }
 
     protected  function getCallChildClassName(){
-        $class = $this->getCallChildClassName();
+        $class = (new \ReflectionClass(__CLASS__))->getShortName();
         $clsArr = explode('\\',$class);
         $class = array_pop($clsArr);
         return $class;

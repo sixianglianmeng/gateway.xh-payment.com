@@ -15,7 +15,8 @@ $config = [
         'paymentNotifyQueue',
         'remitBankCommitQueue',
         'remitQueryQueue',
-        'orderQueryQueue'
+        'orderQueryQueue',
+        'remitNotifyQueue',
     ],
     'runtimePath' => constant('RUNTIME_DIR'),
     'modules' => [
@@ -203,6 +204,12 @@ $config = [
             'redis' => 'redis',
             'as log' => \yii\queue\LogBehavior::class,
             'channel' => REDIS_PREFIX.'tq_rq',
+        ],
+        'remitNotifyQueue' => [
+            'class' => \yii\queue\redis\Queue::class,
+            'redis' => 'redis',
+            'as log' => \yii\queue\LogBehavior::class,
+            'channel' => REDIS_PREFIX.'tq_rnq',
         ],
         'orderQueryQueue' => [
             'class' => \yii\queue\redis\Queue::class,

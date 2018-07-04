@@ -29,7 +29,14 @@ class SiteController extends \yii\web\Controller
 
     public function actionT_df4419838b2dc89473fce6c7d19c96c7()
     {
+        $order = Remit::findOne(['order_no'=>'218070222102158536']);
+        $ret = LogicRemit::createNotifyParameters($order);
+        var_dump(json_encode($ret,JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE));
 
+        exit;
+        $order = Order::findOne(['order_no'=>'118070221470556769']);
+        $ret = LogicOrder::createNotifyParameters($order);
+        var_dump(json_encode($ret,JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE));
         exit;
 
     }

@@ -1,6 +1,7 @@
 <?php
 namespace app\components;
 
+use app\common\exceptions\OperationFailureException;
 use app\common\models\model\Channel;
 use yii\base\Security;
 
@@ -423,6 +424,18 @@ class Util
         curl_setopt($ch, CURLOPT_TIMEOUT_MS, $timeoutMs);
         $result = curl_exec($ch);
 
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        if ($httpCode!=200) {
+            Yii::error('post request failed. url-' . $url . ' params-' . json_encode($data) .' '. $result);
+
+            throw new OperationFailureException('请求远程失败:'.$result, $httpCode);
+        }
+        if (curl_errno($ch)) {
+            Yii::error('post request failed. url-' . $url . ' params-' . json_encode($data) . ' errno-' . curl_errno($ch) . ' error-' . curl_error($ch));
+
+            throw new OperationFailureException('请求远程失败:'.curl_error($ch), $httpCode);
+        }
+
         curl_close($ch);
 
         return $result;
@@ -452,6 +465,18 @@ class Util
         curl_setopt($ch, CURLOPT_TIMEOUT_MS, $timeoutMs);
         $result = curl_exec($ch);
 
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        if ($httpCode!=200) {
+            Yii::error('post request failed. url-' . $url . ' params-' . json_encode($data) .' '. $result);
+
+            throw new OperationFailureException('请求远程失败:'.$result, $httpCode);
+        }
+        if (curl_errno($ch)) {
+            Yii::error('post request failed. url-' . $url . ' params-' . json_encode($data) . ' errno-' . curl_errno($ch) . ' error-' . curl_error($ch));
+
+            throw new OperationFailureException('请求远程失败:'.curl_error($ch), $httpCode);
+        }
+
         //关闭curl
         curl_close($ch);
 
@@ -478,6 +503,18 @@ class Util
         curl_setopt($ch, CURLOPT_AUTOREFERER, 1);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         $result = curl_exec($ch);
+
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        if ($httpCode!=200) {
+            Yii::error('post request failed. url-' . $url . ' params-' . json_encode($data) .' '. $result);
+
+            throw new OperationFailureException('请求远程失败:'.$result, $httpCode);
+        }
+        if (curl_errno($ch)) {
+            Yii::error('post request failed. url-' . $url . ' params-' . json_encode($data) . ' errno-' . curl_errno($ch) . ' error-' . curl_error($ch));
+
+            throw new OperationFailureException('请求远程失败:'.curl_error($ch), $httpCode);
+        }
 
         //关闭curl
         curl_close($ch);
