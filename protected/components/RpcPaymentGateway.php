@@ -2,6 +2,7 @@
 
 namespace app\components;
 use app\common\exceptions\OperationFailureException;
+use app\common\models\model\SiteConfig;
 use Yii;
 
 /*
@@ -195,7 +196,8 @@ class RpcPaymentGateway
             'Content-Type: application/json',
             'HTTP_X_RPC_KEY: '.$params['_sign_']
         ];
-        $strUrl = Yii::$app->params['domain.gateway.rpc'] . '/gateway/v1/inner';
+        $uriBase = SiteConfig::cacheGetContent('payment_api_base_uri');
+        $strUrl = $uriBase . '/gateway/v1/inner';
 
         try {
             $api = $strUrl.$path;

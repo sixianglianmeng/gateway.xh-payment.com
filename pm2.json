@@ -34,6 +34,15 @@
     },
 
     {
+      "name": "remit-notify-queue-producer",
+      "args": "remit/notify-queue-producer",
+      "script": "./protected/yii",
+      "exec_interpreter": "php",
+      "exec_mode": "fork",
+      "max_memory_restart": "256M"
+    },
+
+    {
       "name": "payment-notify-queue",
       "args": "payment-notify-queue/listen --verbose",
       "script": "./protected/yii",
@@ -52,6 +61,14 @@
     {
       "name": "remit-bank-commit-queue",
       "args": "remit-bank-commit-queue/listen --verbose",
+      "script": "./protected/yii",
+      "exec_interpreter": "php",
+      "exec_mode": "fork",
+      "max_memory_restart": "256M"
+    },
+    {
+      "name": "remit-notify-queue-consumer",
+      "args": "remit-notify-queue/listen --verbose",
       "script": "./protected/yii",
       "exec_interpreter": "php",
       "exec_mode": "fork",

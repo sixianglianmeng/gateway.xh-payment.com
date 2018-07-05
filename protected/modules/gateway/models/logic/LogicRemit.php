@@ -140,7 +140,9 @@ class LogicRemit
             }catch (\Exception $e) {
                 Yii::error('beforeAddRemit error:'.$e->getMessage());
                 $newRemit->save();
-                $newRemit = self::setFail($newRemit,$e->getMessage());
+                $newRemit = self::setFail($newRemit, $e->getMessage());
+
+                throw new OperationFailureException($e->getMessage(),Macro::FAIL);
             }
         }
 
@@ -640,6 +642,11 @@ class LogicRemit
     public static function setChecked(Remit &$remit, $opUid=0, $opUsername='')
     {
         Yii::info(__CLASS__ . ':' . __FUNCTION__ . ' ' . $remit->order_no);
+
+        //账户未扣款的先扣款
+        if($remit->status == Remit::STATUS_NONE){
+            $remit = self::deduct($remit);
+        }
 
         $remit->status = Remit::STATUS_CHECKED;
         if($opUsername) $bak=date('Ymd H:i:s')." {$opUsername}审核通过\n";
