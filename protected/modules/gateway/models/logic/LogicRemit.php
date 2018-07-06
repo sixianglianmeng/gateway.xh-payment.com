@@ -389,9 +389,7 @@ class LogicRemit
             }
             //提交失败暂不处理,记录失败原因
             else{
-                if($ret['message']){
-                    $remit->bank_ret = $remit->bank_ret.date('Y-m-d H:i:s').' '.$ret['message']."\n";
-                }
+                $remit->bank_ret = $remit->bank_ret.date('Y-m-d H:i:s').' 银行提交失败，请手工处理.'.($ret['message']??'')."\n";
             }
 
             $remit->save();

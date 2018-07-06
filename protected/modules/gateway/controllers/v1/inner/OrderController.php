@@ -228,6 +228,33 @@ class OrderController extends BaseInnerController
     }
 
     /**
+     * 订单结算
+     */
+    public function actionSettlement()
+    {
+        $rawOrderList = ControllerParameterValidator::getRequestParam($this->allParams, 'idList', '',Macro::CONST_PARAM_TYPE_ARRAY,'订单号列表错误');
+        $bak = ControllerParameterValidator::getRequestParam($this->allParams, 'bak','',Macro::CONST_PARAM_TYPE_STRING,'结算原因错误',[1]);
+
+        if(empty($rawOrderList)){
+            Util::throwException(Macro::PARAMETER_VALIDATION_FAILED);
+        }
+
+        $opOrderList = [];
+        foreach ($rawOrderList as $k=>$on){
+            $opOrderList[] = intval($on);
+        }
+
+        $filter['id'] = $opOrderList;
+
+        $orders = Order::findAll($filter);
+        foreach ($orders as $order){
+            LogicOrder::settlement($order,$this->allParams['op_uid'],$this->allParams['op_username'],$bak,$this->allParams['op_ip']);
+        }
+
+        return ResponseHelper::formatOutput(Macro::SUCCESS);
+    }
+
+    /**
      * 订单退款
      */
     public function actionRefund()
@@ -241,8 +268,8 @@ class OrderController extends BaseInnerController
         if(empty($order)){
             Util::throwException(Macro::FAIL,'订单不存在');
         }
-        if($order->status!=Order::STATUS_PAID){
-            Util::throwException(Macro::FAIL,'只有成功订单才能退款');
+        if($order->status!=Order::STATUS_SETTLEMENT){
+            Util::throwException(Macro::FAIL,'只有已结算订单才能退款');
         }
 
         LogicOrder::refund($order,$bak,$this->allParams['op_ip'],$this->allParams['op_uid'],$this->allParams['op_username']);

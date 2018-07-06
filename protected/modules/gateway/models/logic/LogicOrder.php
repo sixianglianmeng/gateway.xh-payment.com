@@ -47,33 +47,37 @@ class LogicOrder
 //            return $hasOrder;
         }
 
-        $orderData['pay_method_code']     = $request['pay_type'];
-        $orderData['amount']              = $request['order_amount'];
-        $orderData['notify_url']          = $request['notify_url'] ?? '';
-        $orderData['return_url']          = $request['return_url'] ?? '';
-        $orderData['bank_code']           = $request['bank_code'] ?? '';
-        $orderData['bank_code']           = strtoupper($orderData['bank_code']);
-        $orderData['op_uid']              = $request['op_uid'] ?? 0;
-        $orderData['op_username']         = $request['op_username'] ?? '';
-        $orderData['merchant_user_id']    = $request['user_id'] ?? '';
-        $orderData['merchant_order_time'] = $request['order_time'];
-        $orderData['description']         = '';
-        $orderData['notify_ret']          = '';
-        $orderData['client_ip']           = $request['client_ip'] ?? Yii::$app->request->userIP;
-        $orderData['return_params']       = $request['return_params'] ?? '';
-        $orderData['status']              = Order::STATUS_NOTPAY;
-        $orderData['financial_status']    = Order::FINANCIAL_STATUS_NONE;
-        $orderData['notify_status']       = Order::NOTICE_STATUS_NONE;
-        $orderData['created_at']          = time();
-        $orderData['merchant_id']         = $merchant->id;
-        $orderData['merchant_account']    = $merchant->username;
-        $orderData['all_parent_agent_id'] = $merchant->all_parent_agent_id;
-        $orderData['channel_id']          = $rechargeMethod->channel_id;
-        $orderData['channel_account_id']  = $rechargeMethod->channel_account_id;
-        $orderData['method_config_id']    = $rechargeMethod->id;
-        $channelAccount                   = $rechargeMethod->channelAccount;
-        $orderData['channel_merchant_id'] = $channelAccount->merchant_id;
-        $orderData['channel_app_id']      = $channelAccount->app_id;
+        $orderData['pay_method_code']      = $request['pay_type'];
+        $orderData['amount']               = $request['order_amount'];
+        $orderData['notify_url']           = $request['notify_url'] ?? '';
+        $orderData['return_url']           = $request['return_url'] ?? '';
+        $orderData['bank_code']            = $request['bank_code'] ?? '';
+        $orderData['bank_code']            = strtoupper($orderData['bank_code']);
+        $orderData['op_uid']               = $request['op_uid'] ?? 0;
+        $orderData['op_username']          = $request['op_username'] ?? '';
+        $orderData['merchant_user_id']     = $request['user_id'] ?? '';
+        $orderData['merchant_order_time']  = $request['order_time'];
+        $orderData['description']          = '';
+        $orderData['notify_ret']           = '';
+        $orderData['client_ip']            = $request['client_ip'] ?? Yii::$app->request->userIP;
+        $orderData['return_params']        = $request['return_params'] ?? '';
+        $orderData['status']               = Order::STATUS_NOTPAY;
+        $orderData['financial_status']     = Order::FINANCIAL_STATUS_NONE;
+        $orderData['notify_status']        = Order::NOTICE_STATUS_NONE;
+        $orderData['created_at']           = time();
+        $orderData['merchant_id']          = $merchant->id;
+        $orderData['merchant_account']     = $merchant->username;
+        $orderData['all_parent_agent_id']  = $merchant->all_parent_agent_id;
+        $orderData['channel_id']           = $rechargeMethod->channel_id;
+        $orderData['channel_account_id']   = $rechargeMethod->channel_account_id;
+        $orderData['method_config_id']     = $rechargeMethod->id;
+        $orderData['settlement_type']      = $rechargeMethod->settlement_type;
+        $orderData['expect_settlement_at'] = MerchantRechargeMethod::getExpectSettlementTime($orderData['settlement_type']);
+        $orderData['settlement_at']        = 0;
+        $channelAccount                    = $rechargeMethod->channelAccount;
+        $orderData['channel_merchant_id']  = $channelAccount->merchant_id;
+        $orderData['channel_app_id']       = $channelAccount->app_id;
+
 
         $orderData['fee_rate']   = $rechargeMethod->fee_rate;
         //防止费率填写错误，手续费不大于订单金额
@@ -305,38 +309,107 @@ class LogicOrder
     static public function paySuccess(Order $order,$paidAmount,$channelOrderNo, $opUid=0, $opUsername='',$bak=''){
         Yii::info([__FUNCTION__.' '.$order->order_no.','.$paidAmount.','.$channelOrderNo]);
         if($order->status != Order::STATUS_PAID){
-            //更改订单状态
-            $order->paid_amount = $paidAmount;
-            //实际付款金额必须大于订单金额
-            if(bccomp($order->amount, $order->paid_amount, 2)===1){
-//                $order->amount = $order->paid_amount;
-                Yii::error("{$order->order_no} paid amount($order->paid_amount) is not equal origin amount($order->amount):".bccomp($order->amount, $order->paid_amount, 2));
-//                return self::payFail($order,"付款金额{$order->paid_amount}小于订单金额{$order->amount}");
-            }
-            if($channelOrderNo && !$order->channel_order_no) $order->channel_order_no = $channelOrderNo;
-            $order->status = Order::STATUS_PAID;
-            $order->paid_at = time();
-//            $order->op_uid = $opUid;
-//            $order->op_username = $opUsername;
-            if(empty($bak) && $opUsername) $bak="{$opUsername} set success at ".date('Ymd H:i:s')."\n";
-            $order->bak .=$bak;
-            $order->save();
+            $db = Yii::$app->db;
+            $transaction = $db->beginTransaction();
+            try {
 
-            $logicUser = new LogicUser($order->merchant);
-            //更新充值金额
-            bcscale(9);
+                //更改订单状态
+                $order->paid_amount = $paidAmount;
+                //实际付款金额必须大于订单金额
+                if(bccomp($order->amount, $order->paid_amount, 2)===1){
+    //                $order->amount = $order->paid_amount;
+                    Yii::error("{$order->order_no} paid amount($order->paid_amount) is not equal origin amount($order->amount):".bccomp($order->amount, $order->paid_amount, 2));
+    //                return self::payFail($order,"付款金额{$order->paid_amount}小于订单金额{$order->amount}");
+                }
+                if($channelOrderNo && !$order->channel_order_no) $order->channel_order_no = $channelOrderNo;
+                $order->status = Order::STATUS_PAID;
+                $order->paid_at = time();
+                if(empty($bak) && $opUsername) $bak="{$opUsername} set success at ".date('Ymd H:i:s')."\n";
+                $order->bak .=$bak;
+                $order->save();
+
+                //更新待结算金额
+                $logicUser = new LogicUser($order->merchant);
+                $logicUser->changeUserUnsettleBalance(bcsub($order->amount, $order->fee_amount, 6));
+
+                //更新用户及渠道当天充值计数
+                self::updateTodayQuota($order);
+
+                //D0,T0结算，自动进行结算
+                if($order->settlement_at<=time()
+                    && substr($order->settlement_type,1)=='0'
+                ){
+                    self::settlement($order);
+                }
+
+                $transaction->commit();
+                return true;
+            } catch(\Exception $e) {
+                $transaction->rollBack();
+                throw $e;
+                return false;
+            } catch(\Throwable $e) {
+                $transaction->rollBack();
+                throw $e;
+                return false;
+            }
+        }
+
+        return $order;
+    }
+
+
+    /*
+     * 订单结算
+     *
+     * @param Order $order 订单对象
+     * @param String $bak 备注
+     */
+    static public function settlement(Order $order, $opUid=0, $opUsername='', $bak='', $ip=''){
+        Yii::info(__FUNCTION__.' '.$order->order_no.' '.$bak);
+        if($order->status !== Order::STATUS_PAID){
+            return $order;
+        }
+
+        $logicUser = new LogicUser($order->merchant);
+        //更新充值金额
+        bcscale(9);
+
+        $db = Yii::$app->db;
+        $transaction = $db->beginTransaction();
+        try {
+
             $logicUser->changeUserBalance($order->paid_amount, Financial::EVENT_TYPE_RECHARGE, $order->order_no, $order->amount, Yii::$app->request->userIP);
 
             //需扣除充值手续费
             $logicUser->changeUserBalance(0-$order->fee_amount, Financial::EVENT_TYPE_RECHARGE_FEE, $order->order_no, $order->amount,
                 Yii::$app->request->userIP);
+
+            //更改订单状态
+            $order->status = Order::STATUS_SETTLEMENT;
+            $order->settlement_at = time();
+            if(empty($bak) && $opUsername) $bak=date('Ymd H:i:s')." {$opUsername} 设置为已结算\n";
+            $order->bak .=$bak;
+            $order->save();
+
+            //发放分润
+            $order = self::bonus($order);
+
+            //更新待结算金额
+            $logicUser = new LogicUser($order->merchant);
+            $logicUser->changeUserUnsettleBalance(0-bcsub($order->amount,$order->fee_amount, 6));
+
+            $transaction->commit();
+            return true;
+        } catch(\Exception $e) {
+            $transaction->rollBack();
+            throw $e;
+            return false;
+        } catch(\Throwable $e) {
+            $transaction->rollBack();
+            throw $e;
+            return false;
         }
-
-        //发放分润
-        $order = self::bonus($order);
-
-        //更新用户及渠道当天充值计数
-        self::updateTodayQuota($order);
 
         return $order;
     }
@@ -359,8 +432,8 @@ class LogicOrder
      */
     static public function frozen(Order $order, $opUid, $opUsername, $bak='', $ip=''){
         Yii::info(__FUNCTION__.' '.$order->order_no.' '.$bak);
-        if($order->status === Order::STATUS_FREEZE){
-            return $order;
+        if($order->status !== Order::STATUS_SETTLEMENT){
+            throw new OperationFailureException('订单状态错误，已结算订单才能冻结:'.$order->status);
         }
 
         $logicUser = new LogicUser($order->merchant);
@@ -422,7 +495,7 @@ class LogicOrder
     static public function refund(Order &$order, string $reason, string $ip='', int $opUid=0, string $opUsername=''){
         Yii::info(__CLASS__ . ':' . __FUNCTION__ . ' ' . $order->order_no);
         if(
-            $order->status == order::STATUS_PAID
+            $order->status == order::STATUS_SETTLEMENT
         ){
             //退回账户扣款
             $logicUser = new LogicUser($order->merchant);

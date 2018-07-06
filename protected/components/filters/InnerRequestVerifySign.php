@@ -1,6 +1,7 @@
 <?php
 namespace app\components\filters;
 
+use app\common\models\model\SiteConfig;
 use app\components\Macro;
 use app\lib\helpers\ControllerParameterValidator;
 use power\yii2\net\exceptions\SignatureNotMatchException;
@@ -27,10 +28,10 @@ class InnerRequestVerifySign extends ActionFilter
         $opUsername = ControllerParameterValidator::getRequestParam($allParams, 'op_username', null,Macro::CONST_PARAM_TYPE_USERNAME,'操作者username错误');
         $opIp = ControllerParameterValidator::getRequestParam($allParams, 'op_ip', null,Macro::CONST_PARAM_TYPE_STRING,'操作IP错误',[1,48]);
 
-
-        $localSign = md5(Yii::$app->params['secret']['agent.payment'].$nonce);
+        $key = SiteConfig::cacheGetContent('gateway_rpc_key');
+        $localSign = md5($key.$nonce);
         if ($localSign!==$sign) {
-            throw new SignatureNotMatchException('签名错误'.Yii::$app->params['secret']['agent.payment'].$nonce);
+            throw new SignatureNotMatchException('签名错误:'.$key);
         }
 
         return true;

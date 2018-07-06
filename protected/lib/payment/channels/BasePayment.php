@@ -521,4 +521,30 @@ class BasePayment
         return $class;
     }
 
+    /**
+     * aes加密
+     *
+     * @param string $input 要加密的数据
+     * @params string 加密key
+     * @return string 加密后的数据
+     */
+    public static function aesEncrypt($input, $key)
+    {
+        $data = openssl_encrypt($input, 'AES-128-ECB', $key, OPENSSL_RAW_DATA);
+        $data = base64_encode($data);
+        return $data;
+    }
+    /**
+     * aes解密
+     *
+     * @param string $sStr 要解密的数据
+     * @param string $sKey 加密key
+     * @return string 解密后的数据
+     */
+    public static function aesDecrypt($sStr, $sKey)
+    {
+        $decrypted = openssl_decrypt(base64_decode($sStr), 'AES-128-ECB', $sKey, OPENSSL_RAW_DATA);
+        return $decrypted;
+    }
+
 }
