@@ -5,6 +5,7 @@ namespace app\lib\payment\channels\ht;
 use app\common\exceptions\OperationFailureException;
 use app\common\models\logic\LogicApiRequestLog;
 use app\common\models\model\BankCodes;
+use app\common\models\model\Channel;
 use app\common\models\model\LogApiRequest;
 use app\components\Macro;
 use app\components\Util;
@@ -13,6 +14,7 @@ use app\lib\payment\channels\BasePayment;
 use app\modules\gateway\models\logic\LogicOrder;
 use power\yii2\net\exceptions\SignatureNotMatchException;
 use Symfony\Component\DomCrawler\Crawler;
+use app\common\models\model\Order;
 use Yii;
 
 class HtBasePayment extends BasePayment
@@ -22,18 +24,18 @@ class HtBasePayment extends BasePayment
     const  TRADE_STATUS_FAIL = 'failed';
 
     const PAY_TYPE_MAP = [
-        "WY"=>1,
-        "WXQR"=>2,
-        "ALIQR"=>3,
-        "QQQR"=>5,
-        "UNQR"=>7,
-        "WXH5"=>10,
-        "ALIH5"=>11,
-        "QQH5"=>12,
-        "WYKJ"=>13,
-        "JDH5"=>14,
-        "JDQR"=>17,
-        "UNH5"=>18,
+        Channel::METHOD_WEBBANK=>1,
+        Channel::METHOD_WECHAT_QR=>2,
+        Channel::METHOD_ALIPAY_QR=>3,
+        Channel::METHOD_QQ_QR=>5,
+        Channel::METHOD_UNIONPAY_QR=>7,
+        Channel::METHOD_WECHAT_H5=>10,
+        Channel::METHOD_ALIPAY_H5=>11,
+        Channel::METHOD_QQ_H5=>12,
+        Channel::METHOD_BANK_QUICK=>13,
+        Channel::METHOD_JD_H5=>14,
+        Channel::METHOD_JD_QR=>17,
+        Channel::METHOD_UNIONPAY_H5=>18,
     ];
 
     public function __construct(...$arguments)
@@ -107,6 +109,7 @@ class HtBasePayment extends BasePayment
             $ret['data']['order_no'] = $order->order_no;
             $ret['data']['amount'] = $data['order_amount'];
             $ret['status'] = Macro::SUCCESS;
+            $ret['data']['trade_status'] = Order::STATUS_NOTPAY;
             $ret['data']['channel_order_no'] = $data['trade_no'];
         }
         elseif(!empty($request['trade_status']) && $request['trade_status'] == self::TRADE_STATUS_FAIL) {
@@ -502,7 +505,7 @@ class HtBasePayment extends BasePayment
                 $ret['data']['balance'] = $res['money'];
                 $ret['data']['frozen_balance'] = $res['freeze_money'];
             } else {
-                $ret['message'] = $res['errror_msg']??'出款查询失败';
+                $ret['message'] = $res['errror_msg']??'余额查询失败';
             }
         }
 

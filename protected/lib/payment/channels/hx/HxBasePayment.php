@@ -10,6 +10,7 @@ use app\lib\helpers\ControllerParameterValidator;
 use app\lib\payment\channels\BasePayment;
 use app\modules\gateway\models\logic\LogicOrder;
 use power\yii2\net\exceptions\SignatureNotMatchException;
+use app\common\models\model\Order;
 
 /**
  * 恒星闪付接口
@@ -87,6 +88,7 @@ class HxBasePayment extends BasePayment
             $ret['amount'] = $data['order_amount'];
             $ret['status'] = Macro::SUCCESS;
             $ret['channel_order_no'] = $data['trade_no'];
+            $ret['data']['trade_status'] = Order::STATUS_NOTPAY;
         }
         elseif(!empty($request['trade_status']) && $request['trade_status'] == self::TRADE_STATUS_FAIL) {
             $ret['status'] =  Macro::FAIL;

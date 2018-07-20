@@ -97,8 +97,8 @@
             $ret['data']['order_no'] = $order->order_no;
             $ret['data']['amount'] = $data['amount'];
             $ret['status'] = Macro::SUCCESS;
+            $ret['data']['trade_status'] = Order::STATUS_NOTPAY;
             $ret['data']['channel_order_no'] = $data['payment_sn'];
-
 
             return $ret;
         }
@@ -234,7 +234,7 @@
          *
          * @return bool|string
          */
-        public static function post(string $url, array $postData, $header = [], $timeout = 5)
+        public static function post(string $url, array $postData, $header = [], $timeout = 10)
         {
             $headers = [];
             try {

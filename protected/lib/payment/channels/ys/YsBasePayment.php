@@ -12,6 +12,7 @@ use app\lib\payment\channels\BasePayment;
 use app\modules\gateway\models\logic\LogicOrder;
 use power\yii2\net\exceptions\SignatureNotMatchException;
 use Symfony\Component\DomCrawler\Crawler;
+use app\common\models\model\Order;
 use Yii;
 
 /**
@@ -86,6 +87,7 @@ class YsBasePayment extends BasePayment
             $ret['data']['amount'] = $data['total_amount'];
             $ret['status'] = Macro::SUCCESS;
             $ret['data']['channel_order_no'] = $data['trade_no'];
+            $ret['data']['trade_status'] = Order::STATUS_NOTPAY;
         }
 
         return $ret;
@@ -180,8 +182,8 @@ class YsBasePayment extends BasePayment
                 //交易状态  SUCCESS 打款成功 UNKNOW  未知的结果， 请继续轮询 FAILED 打款失败
                 //注意：任何未明确返回tradeStatus状态为FAILED都不能认为失败！！！
                 if($res['code'] == '00000' && $res['isPaid']=='YES' && $res['orderPrice']>0){
-                    $ret['data']['trade_status'] = Macro::SUCCESS;
                     $ret['data']['amount'] = $res['orderPrice'];
+                    $ret['data']['trade_status'] = Order::STATUS_PAID;
                 }
 
                 $ret['status'] = Macro::SUCCESS;

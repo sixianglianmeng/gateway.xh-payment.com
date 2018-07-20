@@ -12,6 +12,7 @@ use app\components\Macro;
 use app\components\Util;
 use app\lib\helpers\ControllerParameterValidator;
 use app\lib\payment\channels\BasePayment;
+use app\common\models\model\Order;
 use app\modules\gateway\models\logic\LogicOrder;
 use app\modules\gateway\models\logic\LogicRemit;
 use power\yii2\net\exceptions\SignatureNotMatchException;
@@ -150,6 +151,7 @@ class YzbBasePayment extends BasePayment
             $ret['data']['order_no'] = $order->order_no;
             $ret['data']['amount'] = $data['orderPrice'];
             $ret['status'] = Macro::SUCCESS;
+            $ret['data']['trade_status'] = Order::STATUS_NOTPAY;
             $ret['data']['channel_order_no'] = $data['trxNo'];
         }
 
@@ -578,6 +580,7 @@ class YzbBasePayment extends BasePayment
                 if($res['code'] == '00000' && $res['isPaid']=='YES' && $res['orderPrice']>0){
                     $ret['data']['trade_status'] = Macro::SUCCESS;
                     $ret['data']['amount'] = $res['orderPrice'];
+                    $ret['data']['trade_status'] = Order::STATUS_PAID;
                 }
 
                 $ret['status'] = Macro::SUCCESS;
@@ -612,7 +615,7 @@ class YzbBasePayment extends BasePayment
         //接口日志埋点
         Yii::$app->params['apiRequestLog'] = [
             'event_id'=>$remit->order_no,
-            'event_type'=> LogApiRequest::EVENT_TYPE_IN_RECHARGE_NOTIFY,
+            'event_type'=> LogApiRequest::EVENT_TYPE_IN_REMIT_NOTIFY,
             'merchant_id'=>$remit->merchant_id,
             'merchant_name'=>$remit->merchant_account,
             'channel_account_id'=>$remit->channelAccount->id,

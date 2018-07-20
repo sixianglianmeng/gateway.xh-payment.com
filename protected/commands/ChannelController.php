@@ -23,10 +23,13 @@ class ChannelController extends BaseConsoleCommand
         return parent::beforeAction($event);
     }
 
-    /*
+    /**
      * 更新三方平台账户余额
+     *
+     *  @param int $runOnce 是否只执行一次 0否，1是
+     * ./protected/yii channel/update-account-balance
      */
-    public function actionUpdateAccountBalance(){
+    public function actionUpdateAccountBalance(int $runOnce = 0){
         $doCheck = true;
 
         while ($doCheck) {
@@ -40,7 +43,12 @@ class ChannelController extends BaseConsoleCommand
             }
             Yii::$app->cache->set($lastUpdateKey,time());
 
-            sleep(mt_rand(600,1200));
+            if($runOnce==1){
+                $doCheck = false;
+            }else{
+                sleep(1800);
+            }
+
         }
     }
 }

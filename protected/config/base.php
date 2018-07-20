@@ -103,6 +103,11 @@ $config = [
                 //余额查询
                 '/balance.html' => '/gateway/v1/server/account/balance',
                 '/api/v1/balance' => '/gateway/v1/server/account/balance',
+
+                //充值回调
+                '/api/v1/callback/recharge-notify/<channelId:\d+>' => '/gateway/v1/web/callback/recharge-notify',
+                '/api/v1/callback/recharge-return/<channelId:\d+>' => '/gateway/v1/web/callback/recharge-return',
+                '/api/v1/callback/remit-notify/<channelId:\d+>' => '/gateway/v1/web/callback/remit-notify',
                 /********商户接口URL重写结束*******/
 
                 [
@@ -131,9 +136,27 @@ $config = [
                     'class' => '\power\yii2\log\FileTarget',
                     'levels' => ['notice', 'trace','info','warning','error'],//'profile',
                     'logFile' => '@runtime/log/common'.date('md').'.log',
+//                    'categories' => ['yii\db\Command::query', 'yii\db\Command::execute'],
                     'enableRotation' => true,
                     'maxFileSize' => 1024 * 100,
                     'logVars' => [],
+                    'prefix' => function ($message) {
+                        $request = Yii::$app->getRequest();
+                        $ip = method_exists($request,'getUserIP')?$request->getUserIP() : '-';
+
+                        $user = Yii::$app->has('user', true) ? Yii::$app->get('user') : null;
+                        if ($user && ($identity = $user->getIdentity(false))) {
+                            $userID = $identity->getId();
+                        } else {
+                            $userID = '-';
+                        }
+
+                        if (empty($_SERVER['LOG_ID']) || !is_string($_SERVER['LOG_ID'])) {
+                            $_SERVER['LOG_ID'] = strval(uniqid());
+                        }
+
+                        return "[$ip] [$userID] [{$_SERVER['LOG_ID']}]";
+                    }
                 ],
                 'db_log' => [
                     'levels' => ['warning','error'],
@@ -142,11 +165,18 @@ $config = [
                     'logVars' => [],
                     'logTable' => '{{%system_log}}',
                 ],
-                'mail_log'=>[
-                    'enabled'=>true,
-                    'class' => '\yii\log\EmailTarget',
-                    'levels' => ['error'],
-                    'message' => [
+
+                'sys_notice'=>[
+                    'class' => 'app\components\SystemNoticeLogger',
+                    'levels' => ['error', 'warning'],
+                    'logVars' => [],
+                    //电报报警，会传入msg=xx&key=xx到api_uri对应接口
+                    'telegram'=>[
+                        'api_uri'=>'https://t1-portal.huaruipay.com/telgram/msg.php',
+                        'key'=>'98200a5ea53b2e6e7a06964b1558f831',
+                    ],
+                    //邮件报警
+                    'email' => [
                         'from' => ['mail.booter.ui@gmail.com'],
                         'to' => ['booter.ui@gmail.com'],
                         'subject' => SYSTEM_NAME.' errors',
@@ -205,26 +235,25 @@ $config = [
             'as log' => \yii\queue\LogBehavior::class,
             'channel' => REDIS_PREFIX.'tq_rq',
         ],
-        'remitNotifyQueue' => [
-            'class' => \yii\queue\redis\Queue::class,
-            'redis' => 'redis',
-            'as log' => \yii\queue\LogBehavior::class,
-            'channel' => REDIS_PREFIX.'tq_rnq',
-        ],
         'orderQueryQueue' => [
             'class' => \yii\queue\redis\Queue::class,
             'redis' => 'redis',
             'as log' => \yii\queue\LogBehavior::class,
             'channel' => REDIS_PREFIX.'tq_oq',
         ],
+	'remitNotifyQueue' => [
+            'class' => \yii\queue\redis\Queue::class,
+            'redis' => 'redis',
+            'as log' => \yii\queue\LogBehavior::class,
+            'channel' => REDIS_PREFIX.'tq_rnq',
+        ],
+
         'on beforeRequest' => ['\power\yii2\log\LogHelper', 'onBeforeRequest'],
         'on afterRequest' => ['\power\yii2\log\LogHelper', 'onAfterRequest'],
     ],
 
     'params' => [
         'secret'   => [        // 参数签名私钥, 由客户端、服务端共同持有
-            'test'          => 'e09813f8015339fc445f3a84bb8c4023',
-            'agent.payment' => '736a0658e80f70ba5e53dc1ae9dc9f_xinhui',
         ],
 
         'paymentGateWayApiDefaultSignType' => 'md5',//rsa

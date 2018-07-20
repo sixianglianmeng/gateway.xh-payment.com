@@ -26,6 +26,7 @@ class MerchantRechargeMethod extends BaseModel
         return $this->hasOne(ChannelAccount::className(), ['id'=>'channel_account_id']);
     }
 
+
     /**
      * 获取渠道账户支付方式配置信息
      *

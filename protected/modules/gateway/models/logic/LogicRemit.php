@@ -22,6 +22,7 @@ use app\lib\payment\ChannelPayment;
 use app\lib\payment\channels\BasePayment;
 use Yii;
 use app\lib\helpers\SignatureHelper;
+use yii\db\Query;
 
 class LogicRemit
 {
@@ -71,6 +72,7 @@ class LogicRemit
         $remitData['client_ip']            = $request['client_ip'] ?? '';
         $remitData['op_uid']               = $request['op_uid'] ?? 0;
         $remitData['op_username']          = $request['op_username'] ?? '';
+        $remitData['notify_url']           = $request['notify_url'] ?? '';
         $remitData['commit_to_bank_times'] = 0;
 
         $remitData['status']           = Remit::STATUS_NONE;
@@ -174,13 +176,13 @@ class LogicRemit
         //站点是否允许费率设置为0
         $feeCanBeZero = SiteConfig::cacheGetContent('remit_fee_can_be_zero');
 
-        if(!BankCardIssuer::checkBankNoBankCode($remit->bank_no, $remit->bank_code)){
-            throw new OperationFailureException("银行卡号与银行不匹配",Macro::ERR_PAYMENT_BANK_CODE);
+        if(SiteConfig::cacheGetContent('check_remit_bank_no') && !BankCardIssuer::checkBankNoBankCode($remit->bank_no, $remit->bank_code)){
+            throw new OperationFailureException($remit->order_no." 银行卡号与银行不匹配",Macro::ERR_PAYMENT_BANK_CODE);
         }
 
         $bankCode = BankCodes::getChannelBankCode($remit['channel_id'],$remit['bank_code'],'remit');
         if(empty($bankCode)){
-            throw new OperationFailureException("商户绑定的通道暂不支持此银行出款,银行代码配置错误:".$remit['channel_id'].':'.$remit['bank_code'],Macro::ERR_PAYMENT_BANK_CODE);
+            throw new OperationFailureException($remit->order_no." 商户绑定的通道暂不支持此银行出款,银行代码配置错误:".$remit['channel_id'].':'.$remit['bank_code'],Macro::ERR_PAYMENT_BANK_CODE);
         }
 
         //账户费率检测
@@ -190,11 +192,13 @@ class LogicRemit
 
         //检测账户单笔限额
         if($userPaymentConfig->remit_quota_pertime && $remit->amount > $userPaymentConfig->remit_quota_pertime){
-            throw new OperationFailureException('超过账户单笔限额:'.$userPaymentConfig->remit_quota_pertime,Macro::ERR_REMIT_REACH_ACCOUNT_QUOTA_PER_TIME);
+            throw new OperationFailureException($remit->order_no." 超过账户单笔限额:".$userPaymentConfig->remit_quota_pertime,Macro::ERR_REMIT_REACH_ACCOUNT_QUOTA_PER_TIME);
         }
         //检测账户日限额
-        if($userPaymentConfig->remit_quota_perday && $remit->remit_today > $userPaymentConfig->remit_quota_perday){
-            throw new OperationFailureException('超过账户日限额:'.$userPaymentConfig->remit_quota_perday.',当前已使用:'.$remit->remit_today,Macro::ERR_REMIT_REACH_ACCOUNT_QUOTA_PER_DAY);
+        if($userPaymentConfig->remit_quota_perday
+            && (($remit->remit_today+$remit->amount) > $userPaymentConfig->remit_quota_perday)
+        ){
+            throw new OperationFailureException($remit->order_no." 超过账户日限额:".$userPaymentConfig->remit_quota_perday.',当前已使用:'.$remit->remit_today,Macro::ERR_REMIT_REACH_ACCOUNT_QUOTA_PER_DAY);
         }
         //检测是否支持api出款
         if(empty($remit->op_uid) && $userPaymentConfig->allow_api_remit==UserPaymentInfo::ALLOW_API_REMIT_NO){
@@ -207,15 +211,17 @@ class LogicRemit
 
         //渠道费率检测
         if(!$feeCanBeZero && $paymentChannelAccount->remit_fee <= 0){
-            throw new OperationFailureException("通道出款费率不能设置为0:".Macro::ERR_CHANNEL_FEE_CONFIG);
+            throw new OperationFailureException($remit->order_no." 通道出款费率不能设置为0:".Macro::ERR_CHANNEL_FEE_CONFIG);
         }
         //检测渠道单笔限额
         if($paymentChannelAccount->remit_quota_pertime && $remit->amount > $paymentChannelAccount->remit_quota_pertime){
-            throw new OperationFailureException('超过渠道单笔限额:'.$paymentChannelAccount->remit_quota_pertime,Macro::ERR_REMIT_REACH_CHANNEL_QUOTA_PER_TIME);
+            throw new OperationFailureException($remit->order_no." 超过渠道单笔限额:".$paymentChannelAccount->remit_quota_pertime,Macro::ERR_REMIT_REACH_CHANNEL_QUOTA_PER_TIME);
         }
         //检测渠道日限额
-        if($paymentChannelAccount->remit_quota_perday && $paymentChannelAccount->remit_today > $paymentChannelAccount->remit_quota_perday){
-            throw new OperationFailureException('超过渠道日限额:'.$paymentChannelAccount->remit_quota_perday.',当前已使用:'.$paymentChannelAccount->remit_today,Macro::ERR_REMIT_REACH_CHANNEL_QUOTA_PER_DAY);
+        if($paymentChannelAccount->remit_quota_perday
+            && (($paymentChannelAccount->remit_today+$remit->amount) > $paymentChannelAccount->remit_quota_perday)
+        ){
+            throw new OperationFailureException($remit->order_no." 超过渠道日限额:".$paymentChannelAccount->remit_quota_perday.',当前已使用:'.$paymentChannelAccount->remit_today,Macro::ERR_REMIT_REACH_CHANNEL_QUOTA_PER_DAY);
         }
     }
 
@@ -227,6 +233,7 @@ class LogicRemit
         Yii::info(__CLASS__ . ':' . __FUNCTION__ . ' ' . $remit->order_no);
         if ($remit->financial_status === Remit::FINANCIAL_STATUS_SUCCESS) {
             Yii::warning(__FUNCTION__ . ' remit has been bonus,will return, ' . $remit->order_no);
+            Yii::info(print_r(debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS),true));
             return $remit;
         }
 
@@ -297,7 +304,7 @@ class LogicRemit
                 if ($remit->userPaymentInfo->allow_api_fast_remit == UserPaymentInfo::ALLOW_API_FAST_REMIT_YES) {
                     $remit->status = Remit::STATUS_CHECKED;
                 }
-                $remit->bank_ret = $remit->bank_ret.date('Y-m-d H:i:s')." 账户已扣款\n";
+                $remit->bank_ret = $remit->bank_ret.date('Ymd H:i:s')." 账户已扣款\n";
                 $remit->save();
 
                 return $remit;
@@ -305,7 +312,7 @@ class LogicRemit
                 $remit->status = Remit::STATUS_REFUND;
                 $remit->bank_status =  Remit::BANK_STATUS_FAIL;
                 $remit->save();
-                $remit->bank_ret = $remit->bank_ret.date('Y-m-d H:i:s')." 账户扣款失败:".$ex->getMessage()."\n";
+                $remit->bank_ret = $remit->bank_ret.date('Ymd H:i:s')." 账户扣款失败:".$ex->getMessage()."\n";
                 self::updateToRedis($remit);
 
                 throw $ex;
@@ -342,7 +349,7 @@ class LogicRemit
             if($remit->commit_to_bank_times>=self::MAX_TIME_COMMIT_TO_BANK){
                 $remit->status = Remit::STATUS_NOT_REFUND;
                 $remit->bank_status =  Remit::BANK_STATUS_FAIL;
-                $remit->bank_ret = $remit->bank_ret.date('Y-m-d H:i:s')." 超过银行最大提交次数:".self::MAX_TIME_COMMIT_TO_BANK."\n";
+                $remit->bank_ret = $remit->bank_ret.date('Ymd H:i:s')." 超过银行最大提交次数:".self::MAX_TIME_COMMIT_TO_BANK."\n";
 
                 return $remit;
             }
@@ -386,13 +393,22 @@ class LogicRemit
                     $remit->channel_order_no = $ret['data']['channel_order_no'];
                 }
 
+                $remit->bank_ret = $remit->bank_ret.date('Ymd H:i:s')." 已提交到银行\n";
             }
             //提交失败暂不处理,记录失败原因
             else{
-                $remit->bank_ret = $remit->bank_ret.date('Y-m-d H:i:s').' 银行提交失败，请手工处理.'.($ret['message']??'')."\n";
+                $remit->bank_ret = $remit->bank_ret.date('Ymd H:i:s').' 银行提交失败，请手工处理('.($ret['message']??'').")\n";
+                if($ret['message'] && strpos(strtolower($ret['message']),'curl')!=='false'){
+                    $ret['message'] = '网络超时错误';
+                }
+                $remit->fail_msg = '银行提交失败:'.($ret['message']??'');
             }
 
             $remit->save();
+
+            if($ret['status'] === Macro::ERR_THIRD_CHANNEL_BALANCE_NOT_ENOUGH){
+                Yii::error("上游渠道:{$remit->channelAccount->channel_name},商户ID:{$remit->channelAccount->merchant_id}余额不足！");
+            }
 
             return $remit;
 
@@ -404,6 +420,14 @@ class LogicRemit
 
     static public function queryChannelRemitStatus(Remit &$remit){
         Yii::info(__CLASS__ . ':' . __FUNCTION__ . ' ' . $remit->order_no);
+        if($remit->status == Remit::STATUS_SUCCESS
+            || $remit->status == Remit::STATUS_REFUND
+            || $remit->status == Remit::STATUS_NOT_REFUND
+            || $remit->bank_status == Remit::BANK_STATUS_SUCCESS
+        ){
+            Yii::info("remit {$remit->order_no}(status $remit->status) is already success, will not queryChannelRemitStatus");
+            return $remit;
+        }
         //接口日志埋点
         Yii::$app->params['apiRequestLog'] = [
             'event_id'=>$remit->order_no,
@@ -428,6 +452,9 @@ class LogicRemit
     /**
      * 根据订单查询结果对订单做相应处理
      *
+     * @param array $remitRet app\lib\payment\channels\BasePayment::REMIT_QUERY_RESULT
+     * @return mixed
+     * @throws OperationFailureException
      */
     static public function processRemitQueryStatus($remitRet){
         Yii::info(__CLASS__ . ':' . __FUNCTION__ . ' ' . json_encode($remitRet));
@@ -436,23 +463,42 @@ class LogicRemit
             isset($remitRet['data']['bank_status'])
             && !empty($remitRet['data']['remit'])
         ){
+            if($remitRet['data']['remit']->status == Remit::STATUS_SUCCESS
+              || $remitRet['data']['remit']->status == Remit::STATUS_REFUND
+              || $remitRet['data']['remit']->status == Remit::STATUS_NOT_REFUND
+              || $remitRet['data']['remit']->bank_status == Remit::BANK_STATUS_SUCCESS
+            ){
+                Yii::info("remit {$remitRet['data']['remit']->order_no}(status {$remitRet['data']['remit']->status}) is already success, will not processRemitQueryStatus");
+                return $remitRet['data']['remit'];
+            }
 
             if($remitRet['status'] === Macro::SUCCESS){
                 switch ($remitRet['data']['bank_status']){
                     case Remit::BANK_STATUS_PROCESSING:
                         $remitRet['data']['remit']->status = Remit::STATUS_BANK_PROCESSING;
                         $remitRet['data']['remit']->bank_status =  Remit::BANK_STATUS_PROCESSING;
-                        $remitRet['data']['remit']->bank_ret.=date('Ymd H:i:s')." 已提交到银行处理"."\n";
+//                      //$remitRet['data']['remit']->bank_ret.=date('Ymd H:i:s')." 银行处理中"."\n";
                         break;
                     case Remit::BANK_STATUS_SUCCESS:
-                        $remitRet['data']['remit']->status = Remit::STATUS_SUCCESS;
-                        $remitRet['data']['remit']->bank_status =  Remit::BANK_STATUS_SUCCESS;
-                        $remitRet['data']['remit']->remit_at =  time();
+                        if(!empty($remitRet['data']['amount'])
+                            && bccomp($remitRet['data']['amount'],$remitRet['data']['remit']->amount,2)!==0
+                        ){
+                            $remitRet['data']['remit']->status = Remit::STATUS_NOT_REFUND;
+                            $remitRet['data']['remit']->bank_status =  Remit::BANK_STATUS_FAIL;
+                            if($remitRet['message']) $remitRet['data']['remit']->bank_ret = date('Y-m-d H:i:s')." 实际出款金额({$remitRet['data']['amount']})与定单金额({$remitRet['data']['remit']->amount})不符合，请手工确认。\n";
+                        }else{
+                            $remitRet['data']['remit']->status = Remit::STATUS_SUCCESS;
+                            $remitRet['data']['remit']->bank_status =  Remit::BANK_STATUS_SUCCESS;
+                            $remitRet['data']['remit']->remit_at =  time();
+                        }
                         break;
                     case  Remit::BANK_STATUS_FAIL:
                         $remitRet['data']['remit']->status = Remit::STATUS_NOT_REFUND;
                         $remitRet['data']['remit']->bank_status =  Remit::BANK_STATUS_FAIL;
-                        if($remitRet['message']) $remitRet['data']['remit']->bank_ret = date('Y-m-d H:i:s').' '.$remitRet['message']."\n";
+                        if($remitRet['message']){
+                            $remitRet['data']['remit']->bank_ret = date('Y-m-d H:i:s').' '.$remitRet['message']."\n";
+                            $remitRet['data']['remit']->fail_msg = date('Y-m-d H:i:s').' '.$remitRet['message'];
+                        }
                         break;
                 }
 
@@ -613,7 +659,7 @@ class LogicRemit
     {
         Yii::info(__CLASS__ . ':' . __FUNCTION__ . ' ' . $remit->order_no);
 
-        if($failMsg) $remit->fail_msg = $remit->fail_msg.date('Ymd H:i:s').' '.$failMsg."\n";
+        if($failMsg) $remit->fail_msg = $remit->fail_msg."; ".date('Ymd H:i:s').' '.$failMsg;
         $remit->status = Remit::STATUS_BANK_PROCESS_FAIL;
         $remit->bank_status =  Remit::BANK_STATUS_FAIL;
         if($opUsername) $failMsg=date('Ymd H:i:s')." {$opUsername}设置为失败状态\n";
@@ -668,6 +714,7 @@ class LogicRemit
             'merchant_order_no'=>$remit->merchant_order_no,
             'order_no'=>$remit->order_no,
             'bank_status'=>$remit->bank_status,
+            'fail_msg'=>$remit->fail_msg,
         ];
         $json = \GuzzleHttp\json_encode($data);
         Yii::$app->redis->hmset(self::REDIS_CACHE_KEY, $remit->merchant_id.'-'.$remit->merchant_order_no, $json);
@@ -679,31 +726,36 @@ class LogicRemit
      */
     public static function getStatus($orderNo = '',$merchantOrderNo = '', User $merchant)
     {
-        if(!$merchantOrderNo && $orderNo){
-            $remit = Remit::findOne(['order_no'=>$orderNo,'merchant_id'=>$merchant->id]);
-            if($remit) $merchantOrderNo = $remit->merchant_order_no;
-        }
-
-        //接口日志埋点
-        Yii::$app->params['apiRequestLog'] = [
-            'event_id'=>$merchantOrderNo,
-            'event_type'=> LogApiRequest::EVENT_TYPE_IN_REMIT_QUERY,
-            'merchant_id'=>$merchant->id,
-            'merchant_name'=>$merchant->username,
-            'channel_account_id'=>Yii::$app->params['merchantPayment']->remitChannel->id,
-            'channel_name'=>Yii::$app->params['merchantPayment']->remitChannel->channel_name,
-        ];
-
-        if(!$merchantOrderNo){
-            return [];
-        }
-
         $statusJson = Yii::$app->redis->hmget(self::REDIS_CACHE_KEY, $merchant->id.'-'.$merchantOrderNo);
 
         $statusArr = [];
         if(!empty($statusJson[0])){
             $statusArr = json_decode($statusJson[0], true);
         }
+
+        if(!$statusArr){
+            if(!$merchantOrderNo && $orderNo){
+                $statusArr = (new Query())->select(['order_no','merchant_id','merchant_order_no','bank_status'])
+                    ->andWhere(['order_no'=>$orderNo,'merchant_id'=>$merchant->id])
+                    ->from(Remit::tableName())
+                    ->one();
+            }elseif($merchantOrderNo && !$orderNo){
+                $statusArr = (new Query())->select(['order_no','merchant_id','merchant_order_no','bank_status'])
+                    ->andWhere(['merchant_order_no'=>$merchantOrderNo,'merchant_id'=>$merchant->id])
+                    ->from(Remit::tableName())
+                    ->one();
+            }
+        }
+
+        //接口日志埋点
+        Yii::$app->params['apiRequestLog'] = [
+            'event_id'=>$statusArr['merchant_order_no']??$merchantOrderNo,
+            'event_type'=> LogApiRequest::EVENT_TYPE_IN_REMIT_QUERY,
+            'merchant_id'=>$merchant->id,
+            'merchant_name'=>$merchant->username,
+            'channel_account_id'=>Yii::$app->params['merchantPayment']->remitChannel->id,
+            'channel_name'=>Yii::$app->params['merchantPayment']->remitChannel->channel_name,
+        ];
 
         return $statusArr;
     }

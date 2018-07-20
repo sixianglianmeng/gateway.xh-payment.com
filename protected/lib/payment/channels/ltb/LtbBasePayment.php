@@ -109,6 +109,8 @@ class LtbBasePayment extends BasePayment
         if (!empty($data['respCode']) && $data['respCode'] == '0000' && !empty($data['status']) && $data['status'] == '100' && $data['amount']>0) {
             $ret['data']['amount'] = $data['amount'];
             $ret['status'] = Macro::SUCCESS;
+            $ret['data']['status'] = Macro::SUCCESS;
+            $ret['data']['trade_status'] = Order::STATUS_NOTPAY;
         }
 
         return $ret;

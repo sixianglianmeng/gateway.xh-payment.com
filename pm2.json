@@ -1,6 +1,14 @@
 {
   "apps": [
     {
+      "name": "update-account-balance",
+      "args": "channel/update-account-balance",
+      "script": "./protected/yii",
+      "exec_interpreter": "php",
+      "exec_mode": "fork",
+      "max_memory_restart": "256M"
+    },    
+    {
       "name": "bank-commit-queue-producer",
       "args": "remit/bank-commit-queue-producer",
       "script": "./protected/yii",
@@ -32,7 +40,6 @@
       "exec_mode": "fork",
       "max_memory_restart": "256M"
     },
-
     {
       "name": "remit-notify-queue-producer",
       "args": "remit/notify-queue-producer",

@@ -12,6 +12,7 @@ use app\lib\payment\channels\BasePayment;
 use app\modules\gateway\models\logic\LogicOrder;
 use power\yii2\net\exceptions\SignatureNotMatchException;
 use Symfony\Component\DomCrawler\Crawler;
+use app\common\models\model\Order;
 use Yii;
 
 /**
@@ -104,6 +105,7 @@ class MbBasePayment extends BasePayment
         if (!empty($data['payStatus']) && $data['payStatus'] == '00' && $data['transAmount']>0) {
             $ret['data']['transAmount'] = $data['transAmount'];
             $ret['status'] = Macro::SUCCESS;
+            $ret['data']['trade_status'] = Order::STATUS_NOTPAY;
         }
         return $ret;
     }
@@ -312,25 +314,4 @@ exit($ret['data']['url']);
         Yii::info('md5Sign string: '.$signStr.' raw: '.$transStr.''.$signKey);
         return $signStr;
     }
-
-    /**
-     * post提交
-     * @param $url
-     * @param $data
-     * @return bool|string
-     */
-//    public static function post($url, $data){
-//        //file_get_content
-//        $postdata = http_build_query($data);
-//        $opts = array('http' =>
-//            array(
-//                'method'  => 'POST',
-//                'header'  => 'Content-type:application/x-www-form-urlencoded;charset=GBK',
-//                'content' => $postdata
-//            )
-//        );
-//        $context = stream_context_create($opts);
-//        $result = file_get_contents($url, false, $context);
-//        return  $result;
-//    }
 }

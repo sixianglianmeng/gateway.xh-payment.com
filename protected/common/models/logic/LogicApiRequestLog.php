@@ -22,6 +22,8 @@ class LogicApiRequestLog
         //设置了请求日志，写入日志表
         if(!empty(Yii::$app->params['apiRequestLog'])){
             $logData = Yii::$app->params['apiRequestLog'];
+            $logData['event_type'] = $logData['event_type']??'event_type';
+            $logData['event_id'] = $logData['event_id']??'event_id';
             $logCheckKey = 'apiRequestLogWrited'.$logData['event_type'].$logData['event_id'];
             if(!empty(Yii::$app->params[$logCheckKey])){
                 return true;
@@ -43,6 +45,7 @@ class LogicApiRequestLog
             $logData['cost_time'] = ceil(Yii::getLogger()->getElapsedTime()*1000);
             $logData['channel_account_id'] = $logData['channel_account_id']??0;
             $logData['channel_name'] = $logData['channel_name']??'';
+            $logData['deleted_at'] = 0;
 
             $apiRequestLog = new LogApiRequest();
             $apiRequestLog->setAttributes($logData,false);

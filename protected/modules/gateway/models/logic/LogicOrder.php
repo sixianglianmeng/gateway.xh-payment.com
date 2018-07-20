@@ -127,7 +127,7 @@ class LogicOrder
         //没有上级,平台利润为商户-渠道
         else{
             $orderData['plat_fee_profit']     = bcmul(bcsub($rechargeMethod->fee_rate,$orderData['plat_fee_rate'],6), $orderData['amount'], 6);
-
+            $orderData['all_parent_recharge_config'] = json_encode([]);
         }
 
         unset($parentConfigs);
@@ -149,6 +149,7 @@ class LogicOrder
                 'channel_name'=>$rechargeMethod->channel_account_name,
             ];
         }
+
         return $newOrder;
     }
 
@@ -161,7 +162,7 @@ class LogicOrder
      * @param ChannelAccount $paymentChannelAccount 提款的三方渠道账户
      * @param MerchantRechargeMethod $rechargeMethod 商户的当前收款渠道配置
      */
-    static public function beforeAddOrder(Order $order, User $merchant, ChannelAccount $paymentChannelAccount, MerchantRechargeMethod $rechargeMethod,
+    static public function beforeAddOrder(Order &$order, User $merchant, ChannelAccount $paymentChannelAccount, MerchantRechargeMethod $rechargeMethod,
                                           ChannelAccountRechargeMethod $channelAccountRechargeMethod){
         $userPaymentConfig = $merchant->paymentInfo;
         //站点是否允许费率设置为0
@@ -169,25 +170,27 @@ class LogicOrder
 
         //账户费率检测
         if(!$feeCanBeZero && $rechargeMethod->fee_rate <= 0){
-            throw new OperationFailureException('费率不能设置为0',Macro::ERR_MERCHANT_FEE_CONFIG);
+            throw new OperationFailureException($order->order_no.' 费率不能设置为0',Macro::ERR_MERCHANT_FEE_CONFIG);
         }
 
         //账户支付方式开关检测
         if($rechargeMethod->status != MerchantRechargeMethod::STATUS_ACTIVE){
-            throw new OperationFailureException('商户此支付方式通道开关未打开',Macro::ERR_PAYMENT_TYPE_NOT_ALLOWED);
+            throw new OperationFailureException($order->order_no.' 商户此支付方式通道开关未打开',Macro::ERR_PAYMENT_TYPE_NOT_ALLOWED);
         }
 
         //检测账户单笔限额
         if($userPaymentConfig->recharge_quota_pertime && $order->amount > $userPaymentConfig->recharge_quota_pertime){
-            throw new OperationFailureException(null,Macro::ERR_PAYMENT_REACH_ACCOUNT_QUOTA_PER_TIME);
+            throw new OperationFailureException($order->order_no.' 超过商户单笔限额:'.$userPaymentConfig->recharge_quota_pertime,Macro::ERR_PAYMENT_REACH_ACCOUNT_QUOTA_PER_TIME);
         }
         //检测账户日限额
-        if($userPaymentConfig->recharge_quota_perday && $order->recharge_today > $userPaymentConfig->recharge_quota_perday){
-            throw new OperationFailureException(null,Macro::ERR_PAYMENT_REACH_ACCOUNT_QUOTA_PER_DAY);
+        if($userPaymentConfig->recharge_quota_perday
+            && (($userPaymentConfig->recharge_today+$order->amount) > $userPaymentConfig->recharge_quota_perday)
+        ){
+            throw new OperationFailureException($order->order_no." 超过商户日限额{$userPaymentConfig->recharge_quota_perday},当前为$userPaymentConfig->recharge_today",Macro::ERR_PAYMENT_REACH_ACCOUNT_QUOTA_PER_DAY);
         }
         //检测是否支持api充值
         if(empty($order->op_uid) && $userPaymentConfig->allow_api_recharge==UserPaymentInfo::ALLOW_API_RECHARGE_NO){
-            throw new OperationFailureException(null,Macro::ERR_PAYMENT_API_NOT_ALLOWED);
+            throw new OperationFailureException($order->order_no.' 商户不支持API支付',Macro::ERR_PAYMENT_API_NOT_ALLOWED);
         }
         //检测是否支持手工充值
         elseif(!empty($order->op_uid) && $userPaymentConfig->allow_manual_recharge==UserPaymentInfo::ALLOW_MANUAL_RECHARGE_NO){
@@ -196,7 +199,7 @@ class LogicOrder
 
         //渠道费率检测
         if(!$feeCanBeZero && $channelAccountRechargeMethod->fee_rate <= 0){
-            throw new OperationFailureException('费率不能设置为0',Macro::ERR_CHANNEL_FEE_CONFIG);
+            throw new OperationFailureException($order->order_no.' 费率不能设置为0',Macro::ERR_CHANNEL_FEE_CONFIG);
         }
 
         //检测渠道单笔限额
@@ -204,7 +207,9 @@ class LogicOrder
             throw new OperationFailureException(null,Macro::ERR_PAYMENT_REACH_CHANNEL_QUOTA_PER_TIME);
         }
         //检测渠道日限额
-        if($paymentChannelAccount->recharge_quota_perday && $paymentChannelAccount->recharge_today > $paymentChannelAccount->recharge_quota_perday){
+        if($paymentChannelAccount->recharge_quota_perday
+            && (($paymentChannelAccount->recharge_today+$order->amount) > $paymentChannelAccount->recharge_quota_perday)
+        ){
             throw new OperationFailureException(null,Macro::ERR_PAYMENT_REACH_CHANNEL_QUOTA_PER_DAY);
         }
     }
@@ -257,17 +262,18 @@ class LogicOrder
         //未处理
         if( $noticeResult['status'] === Macro::SUCCESS
             && $order->status !== Order::STATUS_PAID
-            && bccomp($order->amount, $noticeResult['data']['amount'], 2)===0
+            && $order->status !== Order::STATUS_SETTLEMENT
+            && bccomp($order->amount, $noticeResult['data']['amount'], 2)!==1
         ){
-            $order = self::paySuccess($order,$noticeResult['data']['amount'],$noticeResult['data']['channel_order_no']);
+            self::paySuccess($order,$noticeResult['data']['amount'],$noticeResult['data']['channel_order_no']);
 
             if($order->notify_status != Order::NOTICE_STATUS_SUCCESS){
                 self::notify($order);
             }
         }
-        //订单状态成功但是金额不对
+        //订单状态成功但是金额小于订单金额
         elseif($noticeResult['status'] === Macro::SUCCESS
-            && bccomp($order->amount, $noticeResult['data']['amount'], 2)!==0
+            && bccomp($order->amount, $noticeResult['data']['amount'], 2)===1
         ){
             $order = self::payFail($order, "三方回调金额({$noticeResult['data']['amount']})与订单金额({$order->amount})不一致!");
         }
@@ -286,14 +292,15 @@ class LogicOrder
      * @param Order $order 订单对象
      * @param String $failMsg 失败描述信息
      */
-    static public function payFail(Order $order, $failMsg='')
+    static public function payFail(Order &$order, $failMsg='')
     {
         if ($order->status === Order::STATUS_FAIL) {
             return $order;
         }
 
         $order->status = Order::STATUS_FAIL;
-        $order->fail_msg = $failMsg;
+        $order->fail_msg .= $failMsg."\n";
+        $order->bak .= $failMsg."\n";
         $order->save();
 
         return $order;
@@ -306,26 +313,39 @@ class LogicOrder
      * @param Decimal $paidAmount 实际支付金额
      * @param String $channelOrderNo 第三方流水号
      */
-    static public function paySuccess(Order $order,$paidAmount,$channelOrderNo, $opUid=0, $opUsername='',$bak=''){
+    static public function paySuccess(Order &$order,$paidAmount,$channelOrderNo, $opUid=0, $opUsername='',$bak=''){
         Yii::info([__FUNCTION__.' '.$order->order_no.','.$paidAmount.','.$channelOrderNo]);
-        if($order->status != Order::STATUS_PAID){
+        if(
+            $order->status != Order::STATUS_PAID
+            && $order->status !== Order::STATUS_SETTLEMENT
+        ){
             $db = Yii::$app->db;
             $transaction = $db->beginTransaction();
             try {
 
                 //更改订单状态
                 $order->paid_amount = $paidAmount;
-                //实际付款金额必须大于订单金额
+                //实际付款金额小于于订单金额
                 if(bccomp($order->amount, $order->paid_amount, 2)===1){
-    //                $order->amount = $order->paid_amount;
                     Yii::error("{$order->order_no} paid amount($order->paid_amount) is not equal origin amount($order->amount):".bccomp($order->amount, $order->paid_amount, 2));
-    //                return self::payFail($order,"付款金额{$order->paid_amount}小于订单金额{$order->amount}");
+                    return self::payFail($order,"付款金额{$order->paid_amount}小于订单金额{$order->amount}");
                 }
+                //实际金额大于订单金额
+                elseif(bccomp($order->amount, $order->paid_amount, 2)===-1){
+                    $bak.=date('Ymd H:i:s')." 更新订单金额：付款金额{$order->paid_amount}大于订单金额{$order->amount}\n";
+                }
+                Yii::info([$order->amount,$order->paid_amount,bccomp($order->amount, $order->paid_amount, 2)]);
                 if($channelOrderNo && !$order->channel_order_no) $order->channel_order_no = $channelOrderNo;
                 $order->status = Order::STATUS_PAID;
                 $order->paid_at = time();
-                if(empty($bak) && $opUsername) $bak="{$opUsername} set success at ".date('Ymd H:i:s')."\n";
-                $order->bak .=$bak;
+                $bak.=date('Ymd H:i:s');
+                if($opUsername){
+                    $bak.=" {$opUsername}设置为订单状态成功\n";
+                }else{
+                    $bak.="订单回调成功\n";
+                }
+
+                if($bak) $order->bak.=$bak;
                 $order->save();
 
                 //更新待结算金额
@@ -336,8 +356,10 @@ class LogicOrder
                 self::updateTodayQuota($order);
 
                 //D0,T0结算，自动进行结算
-                if($order->settlement_at<=time()
-                    && substr($order->settlement_type,1)=='0'
+                //或者系统启用自动结算
+                if(
+                    SiteConfig::cacheGetContent('check_remit_bank_no') &&
+                    ($order->settlement_at<=time() && substr($order->settlement_type,1)=='0')
                 ){
                     self::settlement($order);
                 }
@@ -365,7 +387,7 @@ class LogicOrder
      * @param Order $order 订单对象
      * @param String $bak 备注
      */
-    static public function settlement(Order $order, $opUid=0, $opUsername='', $bak='', $ip=''){
+    static public function settlement(Order &$order, $opUid=0, $opUsername='', $bak='', $ip=''){
         Yii::info(__FUNCTION__.' '.$order->order_no.' '.$bak);
         if($order->status !== Order::STATUS_PAID){
             return $order;
@@ -430,7 +452,7 @@ class LogicOrder
      * @param Order $order 订单对象
      * @param String $bak 备注
      */
-    static public function frozen(Order $order, $opUid, $opUsername, $bak='', $ip=''){
+    static public function frozen(Order &$order, $opUid, $opUsername, $bak='', $ip=''){
         Yii::info(__FUNCTION__.' '.$order->order_no.' '.$bak);
         if($order->status !== Order::STATUS_SETTLEMENT){
             throw new OperationFailureException('订单状态错误，已结算订单才能冻结:'.$order->status);
@@ -459,7 +481,7 @@ class LogicOrder
      *
      * @param Order $order 订单对象
      */
-    static public function unfrozen(Order $order, $opUid, $opUsername, $bak='', $ip=''){
+    static public function unfrozen(Order &$order, $opUid, $opUsername, $bak='', $ip=''){
         Yii::info(__FUNCTION__.' '.$order->order_no.' '.$bak);
         if($order->status != Order::STATUS_FREEZE){
             return $order;
@@ -527,7 +549,7 @@ class LogicOrder
     /*
      * 订单分红
      */
-    static public function bonus(Order $order){
+    static public function bonus(Order &$order){
         Yii::info([__CLASS__.':'.__FUNCTION__.' '.$order->order_no]);
         if($order->financial_status === Order::FINANCIAL_STATUS_SUCCESS){
             Yii::warning([__FUNCTION__.' order has been bonus,will return, '.$order->order_no]);
@@ -595,7 +617,8 @@ class LogicOrder
         $arrParams = [
             'merchant_code'=>$order->merchant_id,
             'order_no'=>$order->merchant_order_no,
-            'order_amount'=>$order->paid_amount,
+            'order_amount'=>bcadd($order->amount,0,2),
+            'paid_amount'=>bcadd($order->paid_amount,0,2),
             'order_time'=>$order->created_at,
             'return_params'=>$order->return_params,
             'trade_no'=>$order->order_no,
@@ -646,7 +669,7 @@ class LogicOrder
     /*
      * 异步通知商户
      */
-    static public function notify(Order $order){
+    static public function notify(Order &$order){
         Yii::trace((new \ReflectionClass(__CLASS__))->getShortName().'-'.__FUNCTION__.' '.$order->order_no);
         if(!$order->notify_url
             || $order->status != Order::STATUS_PAID
@@ -704,7 +727,7 @@ class LogicOrder
     /*
      * 到第三方查询订单状态
      */
-    static public function queryChannelOrderStatus(Order $order){
+    static public function queryChannelOrderStatus(Order &$order){
         Yii::info([(new \ReflectionClass(__CLASS__))->getShortName().':'.__FUNCTION__,$order->order_no]);
 
         $paymentChannelAccount = $order->channelAccount;
@@ -746,7 +769,7 @@ class LogicOrder
     /*
      * 更新订单的客户端信息,如Ip
      */
-    public static function updateClientInfo($order)
+    public static function updateClientInfo(&$order)
     {
         $order->client_ip          = Util::getClientIp();
 

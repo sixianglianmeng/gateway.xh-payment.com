@@ -16,6 +16,7 @@ use app\modules\gateway\models\logic\LogicOrder;
 use app\modules\gateway\models\logic\LogicRemit;
 use power\yii2\net\exceptions\SignatureNotMatchException;
 use Yii;
+use app\common\models\model\Order;
 
 /**
  * 密付支付接口
@@ -106,6 +107,7 @@ class MfBasePayment extends BasePayment
         ) {
             $ret['data']['amount'] = $data['amount'];
             $ret['status'] = Macro::SUCCESS;
+            $ret['data']['trade_status'] = Order::STATUS_NOTPAY;
         }
         return $ret;
     }
@@ -308,6 +310,7 @@ class MfBasePayment extends BasePayment
                 if($localSign == $res['data']['sign']){
                     $ret['status'] = Macro::SUCCESS;
                     $ret['data']['amount'] = $res['amount'];
+                    $ret['data']['trade_status'] = Order::STATUS_PAID;
                 }
             } else {
                 $ret['message'] = $res['message']??'订单查询失败';
@@ -429,35 +432,41 @@ class MfBasePayment extends BasePayment
 
         if (!empty($resTxt)) {
             $res = json_decode($resTxt, true);
-            $localSign = self::md5Sign($res,trim($this->paymentConfig['key']));
-            Yii::info('remit query ret sign: '.$this->remit['order_no'].' local:'.$localSign.' back:'.$res['sign']);
-            if (
-                isset($res['code']) && $res['code'] == '1000'
-                && isset($res['status'])
-            ) {
-                //200：初始状态，处理中 210:处理中;220：代付成功;230：代付失败（未确认），处理中状态处理;260：失败已退款;【220成功，260失败，其他状态处理中状态处理】 请参照注意事项6
-                if($res['status'] == '220'){
-                    $ret['data']['bank_status'] = Remit::BANK_STATUS_SUCCESS;
+            if(empty($res)){
+                $ret['message'] = $res['msg']??"三方代付失败未确认({$resTxt})";
+            }else{
+                $localSign = self::md5Sign($res,trim($this->paymentConfig['key']));
+                Yii::info('remit query ret sign: '.$this->remit['order_no'].' local:'.$localSign.' back:'.$res['sign']);
+                if (
+                    isset($res['code']) && $res['code'] == '1000'
+                    && isset($res['status'])
+                ) {
+                    //200：初始状态，处理中 210:处理中;220：代付成功;230：代付失败（未确认），处理中状态处理;260：失败已退款;【220成功，260失败，其他状态处理中状态处理】 请参照注意事项6
+                    if($res['status'] == '220'){
+                        $ret['data']['bank_status'] = Remit::BANK_STATUS_SUCCESS;
 
-                    //成功金额小于订单金额
-                    if(empty($res['amount']) || $res['amount'] < $this->remit->amount){
+                        //成功金额小于订单金额
+                        if(empty($res['amount']) || $res['amount'] < $this->remit->amount){
+                            $ret['data']['bank_status'] = Remit::BANK_STATUS_FAIL;
+                            $ret['message'] = $res['msg']??"三方出款成功金额{$res['amount']}小于订单金额{$this->remit->amount}，请手工确认！";
+                        }
+                    }elseif($res['status'] == '260'){
                         $ret['data']['bank_status'] = Remit::BANK_STATUS_FAIL;
-                        $ret['message'] = $res['msg']??"三方出款成功金额{$res['amount']}小于订单金额{$this->remit->amount}，请手工确认！";
+                        $ret['message'] = $res['msg']??"出款失败({$resTxt})";
+                    }else{
+                        if($res['status'] == '230'){
+                            $ret['message'] = $res['msg']??"三方代付失败未确认({$resTxt})";
+                        }
+                        $ret['data']['bank_status'] = Remit::BANK_STATUS_PROCESSING;
                     }
-                }elseif($res['status'] == '260'){
-                    $ret['data']['bank_status'] = Remit::BANK_STATUS_FAIL;
-                    $ret['message'] = $res['msg']??"出款失败({$resTxt})";
-                }else{
-                    if($res['status'] == '230'){
-                        $ret['message'] = $res['msg']??"三方代付失败未确认({$resTxt})";
-                    }
-                    $ret['data']['bank_status'] = Remit::BANK_STATUS_PROCESSING;
-                }
 
-                $ret['status'] = Macro::SUCCESS;
-            } else {
-                $ret['message'] = $res['message']??"出款查询失败({$resTxt})";;
+                    $ret['data']['amount'] = $res['amount'];
+                    $ret['status'] = Macro::SUCCESS;
+                } else {
+                    $ret['message'] = $res['message']??"出款查询失败({$resTxt})";;
+                }
             }
+
         }
 
         return  $ret;
@@ -493,7 +502,7 @@ class MfBasePayment extends BasePayment
         //接口日志埋点
         Yii::$app->params['apiRequestLog'] = [
             'event_id'=>$remit->order_no,
-            'event_type'=> LogApiRequest::EVENT_TYPE_IN_RECHARGE_NOTIFY,
+            'event_type'=> LogApiRequest::EVENT_TYPE_IN_REMIT_NOTIFY,
             'merchant_id'=>$remit->merchant_id,
             'merchant_name'=>$remit->merchant_account,
             'channel_account_id'=>$remit->channelAccount->id,
@@ -509,10 +518,16 @@ class MfBasePayment extends BasePayment
         $ret['data']['remit'] = $remit;
         $ret['data']['order_no'] = $remit->order_no;
 
-        if(!empty($request['code']) && $request['code'] =='1000' && !empty($request['status']) && $request['status'] =='220' && $data['amount']>0) {
-            $ret['data']['amount']      = $data['amount'];
-            $ret['status']              = Macro::SUCCESS;
-            $ret['data']['bank_status'] = Remit::BANK_STATUS_SUCCESS;
+        if(!empty($request['code']) && $request['code'] =='1000' && !empty($request['status']) && $request['status'] =='220' && $request['amount']>0) {
+            //成功金额小于订单金额
+            if(empty($request['amount']) || $request['amount'] < $this->remit->amount){
+                $ret['data']['bank_status'] = Remit::BANK_STATUS_FAIL;
+                $ret['message'] = $request['msg']??"三方出款成功金额{$request['amount']}小于订单金额{$this->remit->amount}，请手工确认！";
+            }else{
+                $ret['data']['amount']      = $request['amount'];
+                $ret['status']              = Macro::SUCCESS;
+                $ret['data']['bank_status'] = Remit::BANK_STATUS_SUCCESS;
+            }
         }elseif(!empty($request['code']) && $request['code'] =='1000' && !empty($request['status']) && $request['status'] =='260') {
             $ret['data']['bank_status'] = Remit::BANK_STATUS_FAIL;
         }
@@ -545,7 +560,7 @@ class MfBasePayment extends BasePayment
      *
      * @return bool|string
      */
-    public static function post(string $url, array $postData, $header = [], $timeout = 5)
+    public static function post(string $url, array $postData, $header = [], $timeout = 10)
     {
         $headers = [];
         try {

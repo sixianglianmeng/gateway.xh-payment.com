@@ -230,7 +230,7 @@ class User extends BaseModel
             $filter = ['and',['in','merchant_id',$allAgentIds]];
             $minFeeFilter = ['or'];
             foreach ($methods as $key => $val){
-                $minFeeFilter[]=["and","method_id={$key}","fee_rate<={$val}"];
+                $minFeeFilter[]=["and","method_id='{$key}'","fee_rate<={$val}"];
             }
             $filter[] = $minFeeFilter;
             $merchantRechargeMethods = (new Query())->select('count(id) as total,merchant_id')->from(MerchantRechargeMethod::tableName())->where($filter)->groupBy('merchant_id')->all();

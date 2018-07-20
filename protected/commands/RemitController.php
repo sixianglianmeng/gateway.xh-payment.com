@@ -47,7 +47,7 @@ class RemitController extends BaseConsoleCommand
                 Yii::$app->remitQueryQueue->push($job);//->delay(10)
             }
 
-            sleep(mt_rand(5,10));
+            sleep(mt_rand(30,40));
         }
     }
 
@@ -82,7 +82,7 @@ class RemitController extends BaseConsoleCommand
                 Yii::info('system set stop commit to bank');
             }
 
-            sleep(mt_rand(5,10));
+            sleep(mt_rand(30,40));
         }
     }
 
@@ -113,7 +113,7 @@ class RemitController extends BaseConsoleCommand
                 Yii::$app->remitQueryQueue->push($job);//->delay(10)
             }
 
-            sleep(mt_rand(5,10));
+            sleep(mt_rand(20,40));
         }
     }
 
@@ -148,7 +148,7 @@ class RemitController extends BaseConsoleCommand
                 LogicRemit::notify($order);
             }
 
-            sleep(mt_rand(5,30));
+            sleep(mt_rand(30,40));
         }
     }
 }

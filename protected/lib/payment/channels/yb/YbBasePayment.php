@@ -10,6 +10,7 @@ use app\components\Macro;
 use app\lib\helpers\ControllerParameterValidator;
 use app\lib\payment\channels\BasePayment;
 use app\modules\gateway\models\logic\LogicOrder;
+use app\common\models\model\Order;
 use power\yii2\net\exceptions\SignatureNotMatchException;
 use Symfony\Component\DomCrawler\Crawler;
 use Yii;
@@ -90,6 +91,7 @@ class YbBasePayment extends BasePayment
             $ret['data']['amount'] = $data['r3_Amt'];
             $ret['status'] = Macro::SUCCESS;
             $ret['data']['channel_order_no'] = $data['r2_TrxId'];
+            $ret['data']['trade_status'] = Order::STATUS_NOTPAY;
         }
 
         return $ret;
@@ -184,6 +186,7 @@ class YbBasePayment extends BasePayment
                 if($res['rb_PayStatus'] == 'SUCCESS' && $res['r3_Amt']>0){
                     $ret['data']['trade_status'] = Macro::SUCCESS;
                     $ret['data']['amount'] = $res['r3_Amt'];
+                    $ret['data']['trade_status'] = Order::STATUS_PAID;
                 }
 
                 $ret['status'] = Macro::SUCCESS;

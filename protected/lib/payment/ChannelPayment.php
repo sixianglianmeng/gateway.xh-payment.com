@@ -31,8 +31,6 @@ class ChannelPayment
 
         $channel = $channelAccount->channel;
 
-        $payMethod = $channel->remit_handle_class;
-
         if(empty($channel->remit_handle_class)){
             throw new OperationFailureException("渠道配置错误",Macro::ERR_PAYMENT_CHANNEL_ID);
         }
@@ -61,7 +59,6 @@ class ChannelPayment
 
         $channel = $channelAccount->channel;
 
-        $payMethod = $channel->remit_handle_class;
         if(empty($channel->remit_handle_class)){
             throw new OperationFailureException("渠道配置错误,未配置对应remit_handle_class",Macro::ERR_PAYMENT_CHANNEL_ID);
         }

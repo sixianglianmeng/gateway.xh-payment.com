@@ -44,7 +44,7 @@
 
             $order = Order::findOne(['order_no' => $orderNo]);
             if (!$order) {
-                return ResponseHelper::formatOutput(Macro::ERR_UNKNOWN, '订单不存在');
+                return ResponseHelper::formatOutput(Macro::ERR_UNKNOWN, '订单不存在:'.$orderNo);
             }
             if (Order::STATUS_PAID == $order->status) {
                 return ResponseHelper::formatOutput(Macro::ERR_UNKNOWN, '订单已付款');
@@ -67,6 +67,7 @@
                 $msg = '对不起，来路域名错误，请联系您的商户:'.Macro::ERR_REFERRER;
                 return ResponseHelper::formatOutput(Macro::ERR_REFERRER, $msg);
             }
+
             //生成跳转连接
             $payment = new ChannelPayment($order, $order->channelAccount);
 

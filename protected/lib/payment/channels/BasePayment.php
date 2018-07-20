@@ -39,9 +39,9 @@ class BasePayment
     /**********各接口操作结果数据结构,每种三方渠道必须返回统一的结构,上层才能处理***********/
     //收银台接口响应结果
     const RECHARGE_CASHIER_RESULT = [
-        'status' => Macro::FAIL,
-        'message'=>'',
-        'data' => [
+        'status'  => Macro::FAIL,
+        'message' => '',
+        'data'    => [
             'type'             => self::RENDER_TYPE_REDIRECT,
             'url'              => '',//get跳转链接
             'channel_order_no' => '',//三方支付流水号
@@ -53,76 +53,75 @@ class BasePayment
 
     //网银支付跳转接口结果
     const RECHARGE_WEBBANK_RESULT = [
-        'status' => Macro::FAIL,
-        'message'=>'',
-        'data' => [
+        'status'  => Macro::FAIL,
+        'message' => '',
+        'data'    => [
             'url'      => '',//get跳转链接
             'formHtml' => '',//自动提交的form表单HTML
         ],
     ];
     //支付通知解析结果
     const RECHARGE_NOTIFY_RESULT = [
-        'status' => Macro::FAIL,
-        'message'=>'',
-        'data' => [
+        'status'  => Macro::FAIL,
+        'message' => '',
+        'data'    => [
             //订单对象 app\common\models\model\Order
-            'order' => null,
+            'order'            => null,
             //平台订单号
-            'order_no' => '',
+            'order_no'         => '',
             //订单实际支付金额
-            'amount' => 0,
-            //订单状态 Macro::SUCCESS为成功，Macro::FAIL失败',其它正在支付
-            'status' => Macro::FAIL,
+            'amount'           => 0,
+            'trade_status'     => Macro::FAIL,//业务状态，需转换为Order表状态,
             //充值结果描述
-            'msg' => 'fail',
+            'msg'              => 'fail',
             //三方订单流水号
             'channel_order_no' => '',
             //三方成功时间
-            'success_time' => '',
+            'success_time'     => '',
         ],
     ];
 
     //收款订单查询接口结果商户此支付方式通道开关未打
     const RECHARGE_QUERY_RESULT = [
-        'status' => Macro::FAIL,
-        'message'=>'',
-        'data' => [
+        'status'  => Macro::FAIL,
+        'message' => '',
+        'data'    => [
             'channel_order_no' => '',//三方订单号',
-            'amount' => '',//实际订单金额,可选,
-            'trade_status'       => "",//Macro::SUCCESS|Macro::FAIL",
+            'amount'           => '',//实际订单金额,可选,
+            'trade_status'     => "",//业务状态，需转换为Order表状态,
         ],
     ];
     //出款接口结果
     const REMIT_RESULT = [
-        'status' => Macro::FAIL,
-        'message'=>'',
-        'data' => [
+        'status'  => Macro::FAIL,
+        'message' => '',
+        'data'    => [
             'channel_order_no' => '',//三方订单号',
-            'amount' => '',//实际出款金额,可选,
-            'bank_status'       => '',//三方银行状态,需转换为Remit表状态',
+            'amount'           => '',//实际出款金额,可选,
+            'bank_status'      => '',//三方银行状态,需转换为Remit表状态',
         ],
     ];
     //出款订单查询接口结果
     const REMIT_QUERY_RESULT = [
-        'status' => Macro::FAIL,
-        'message'=>'',
-        'data' => [
+        'status'  => Macro::FAIL,
+        'message' => '',
+        'data'    => [
             //订单对象 app\common\models\model\Remit
-            'remit' => null,
+            'remit'            => null,
             //订单号
-            'order_no' => '',
+            'order_no'         => '',
             //订单实际出款金额
-            'amount' => 0,
+            'amount'           => 0,
             'channel_order_no' => '',//三方订单号'
             //出款状态 Remit::STATUS_BANK_PROCESSING|Remit::BANK_STATUS_SUCCESS|Remit::BANK_STATUS_FAIL
-            'bank_status'       => '',//三方银行状态,需转换为Remit表状态',
+            'bank_status'      => '',//三方银行状态,需转换为Remit表状态',
         ],
     ];
     //余额查询接口结果
     const BALANCE_QUERY_RESULT = [
-        'status' => Macro::FAIL,
-        'message'=>'',
-        'data' => [
+        'status'  => Macro::FAIL,
+        'message' => '',
+        'data'    => [
             'balance'        => '',//三方账户可用余额',
             'frozen_balance' => '',//三方账户冻结余额',
         ],
@@ -133,23 +132,28 @@ class BasePayment
     }
 
 
-    public function setOrder(Order $order){
+    public function setOrder(Order $order)
+    {
         $this->order = $order;
     }
 
-    public function setRemit(Remit $remit){
+    public function setRemit(Remit $remit)
+    {
         $this->remit = $remit;
     }
 
-    public function setMerchant(User $merchant){
+    public function setMerchant(User $merchant)
+    {
         $this->merchant = $merchant;
     }
 
-    public function setPaymentInfo(UserPaymentInfo $paymentInfo){
+    public function setPaymentInfo(UserPaymentInfo $paymentInfo)
+    {
         $this->paymentInfo = $paymentInfo;
     }
 
-    public function setChannelAccount(ChannelAccount $channelAccount){
+    public function setChannelAccount(ChannelAccount $channelAccount)
+    {
         $this->channelAccount = $channelAccount;
     }
 
@@ -161,27 +165,27 @@ class BasePayment
     {
         $this->setChannelAccount($channelAccount);
 
-        $channel = $channelAccount->channel;
+        $channel    = $channelAccount->channel;
         $baseConfig = $envConfig = [];
 
         $paymentConfig = $channelAccount->getAppSectets();
-        if(empty($paymentConfig) || !is_array($paymentConfig) || empty($channelAccount->merchant_id)){
-            throw new OperationFailureException("收款渠道KEY配置错误:channelAccountId:{$channelAccount->id}",Macro::ERR_PAYMENT_CHANNEL_CONFIG);
+        if (empty($paymentConfig) || !is_array($paymentConfig) || empty($channelAccount->merchant_id)) {
+            throw new OperationFailureException("收款渠道KEY配置错误:channelAccountId:{$channelAccount->id}", Macro::ERR_PAYMENT_CHANNEL_CONFIG);
         }
 
         $channelAccountConfigs = $channelAccount->toArray();
         unset($channelAccountConfigs['app_secrets']);
-        $paymentConfig                = \yii\helpers\ArrayHelper::merge($paymentConfig, $channelAccountConfigs);
+        $paymentConfig = \yii\helpers\ArrayHelper::merge($paymentConfig, $channelAccountConfigs);
 
         $paymentConfig['merchantId'] = $channelAccount->merchant_id;
         $paymentConfig['appId']      = $channelAccount->app_id;
 
         //充值回调域名
         $notifyBase = SiteConfig::cacheGetContent('payment_notify_base_uri');
-        if(!$notifyBase && isset(Yii::$app->request->hostInfo)) $notifyBase = Yii::$app->request->hostInfo;
-        $paymentConfig['paymentNotifyBaseUri'] =  $notifyBase;
+        if (!$notifyBase && isset(Yii::$app->request->hostInfo)) $notifyBase = Yii::$app->request->hostInfo;
+        $paymentConfig['paymentNotifyBaseUri'] = $notifyBase;
 
-        $this->paymentConfig          = $paymentConfig;
+        $this->paymentConfig = $paymentConfig;
     }
 
 
@@ -194,19 +198,20 @@ class BasePayment
      *
      * @return bool|string
      */
-    public static function md5Sign(array $params, string $signKey){
+    public static function md5Sign(array $params, string $signKey)
+    {
         unset($params['key']);
 
-        $signParams      = [];
+        $signParams = [];
         foreach ($params as $key => $value) {
-            if($value == '') continue;
+            if ($value == '') continue;
             $signParams[] = "$key=$value";
         }
 
-        sort($signParams,SORT_STRING);
+        sort($signParams, SORT_STRING);
         $strToSign = implode('&', $signParams);
 
-        $signStr = md5($strToSign.'&key='.$signKey);
+        $signStr = md5($strToSign . '&key=' . $signKey);
 
         return $signStr;
     }
@@ -220,7 +225,7 @@ class BasePayment
      *
      * @return bool|string
      */
-    public static function post(string $url, array $postData, $header = [], $timeout = 5)
+    public static function post(string $url, array $postData, $header = [], $timeout = 10)
     {
         $headers = [];
         try {
@@ -240,7 +245,7 @@ class BasePayment
             $body     = $e->getMessage();
         }
 
-        Yii::info('request to channel: ' . $url . ' ' . json_encode($postData,JSON_UNESCAPED_UNICODE). ' ' . $body);
+        Yii::info('request to channel: ' . $url . ' ' . json_encode($postData, JSON_UNESCAPED_UNICODE) . ' ' . $body);
 
         return $body;
     }
@@ -254,7 +259,7 @@ class BasePayment
      *
      * @return bool|string
      */
-    public static function curlPost(string $url, array $postData, $header = [], $timeout = 5)
+    public static function curlPost(string $url, array $postData, $header = [], $timeout = 10)
     {
         $headers = [];
         try {
@@ -275,11 +280,11 @@ class BasePayment
             $body = curl_exec($ch);
             curl_close($ch);
         } catch (\Exception $e) {
-            Yii::error('request to channel: ' . $url . ' ' . json_encode($postData,JSON_UNESCAPED_UNICODE). ' ' . $body.' '.curl_error($ch));
-            $body     = $e->getMessage();
+            Yii::error('request to channel: ' . $url . ' ' . json_encode($postData, JSON_UNESCAPED_UNICODE) . ' ' . $body . ' ' . curl_error($ch));
+            $body = $e->getMessage();
         }
 
-        Yii::info('request to channel: ' . $url . ' ' . json_encode($postData,JSON_UNESCAPED_UNICODE). ' ' . $body);
+        Yii::info('request to channel: ' . $url . ' ' . json_encode($postData, JSON_UNESCAPED_UNICODE) . ' ' . $body);
 
         return $body;
     }
@@ -293,19 +298,19 @@ class BasePayment
      *
      * @return bool|string
      */
-    public static function httpGet($url, $headers=[])
+    public static function httpGet($url, $headers = [])
     {
-        try{
-            $client = new \GuzzleHttp\Client();
+        try {
+            $client   = new \GuzzleHttp\Client();
             $response = $client->get($url);
             $httpCode = $response->getStatusCode();
-            $body = (string)$response->getBody();
-        }catch (\Exception $e){
+            $body     = (string)$response->getBody();
+        } catch (\Exception $e) {
             $httpCode = $e->getCode();
-            $body = $e->getMessage();
+            $body     = $e->getMessage();
         }
 
-        Yii::info('request to channel: '.$url.' '.$httpCode.' '.$body);
+        Yii::info('request to channel: ' . $url . ' ' . $httpCode . ' ' . $body);
 
         return $body;
     }
@@ -319,22 +324,57 @@ class BasePayment
      * @param $buttonName 确认按钮显示文字
      * @return 提交表单HTML文本
      */
-    public static function buildForm(array $params, string $url, bool $autoSubmit=true, $method='post', $buttonName='确定') {
+    public static function buildForm(array $params, string $url, bool $autoSubmit = true, $method = 'post', $buttonName = '确定')
+    {
 
-        $sHtml = "<form id='paymentForm' name='paymentForm' action='".$url."' method='".$method."'>";
+        $sHtml = "<form id='paymentForm' name='paymentForm' action='" . $url . "' method='" . $method . "'>";
 
-        foreach($params as $key=>$value){
-            $sHtml.= "<input type='hidden' name='".$key."' value='".$value."'/>";
+        foreach ($params as $key => $value) {
+            $sHtml .= "<input type='hidden' name='" . $key . "' value='" . $value . "'/>";
         }
 
-        if($autoSubmit){
-            $sHtml = $sHtml."<input type='submit' value='".$buttonName."' style='display:none;'></form>";
-            $sHtml = $sHtml."<script>document.forms['paymentForm'].submit();</script>";
-        }else{
-            $sHtml = $sHtml."<input type='submit' value='".$buttonName."' /></form>";
+        if ($autoSubmit) {
+            $sHtml = $sHtml . "<input type='submit' value='" . $buttonName . "' style='display:none;'></form>";
+            $sHtml = $sHtml . "<script>document.forms['paymentForm'].submit();</script>";
+        } else {
+            $sHtml = $sHtml . "<input type='submit' value='" . $buttonName . "' /></form>";
         }
 
         return $sHtml;
+    }
+
+
+    /**
+     * 获取收款订单异步通知地址
+     * 需在配置文件中配置地址重写'/api/v1/callback/recharge-notify/<channelId:\d+>' => '/gateway/v1/web/callback/recharge-notify',
+     *
+     * return string
+     */
+    public function getRechargeNotifyUrl()
+    {
+        return $this->paymentConfig['paymentNotifyBaseUri']."/api/v1/callback/recharge-notify/{$this->order->channel_id}";
+    }
+
+    /**
+     * 获取收款订单同步步通知地址
+     * 需在配置文件中配置地址重写'/api/v1/callback/recharge-return/<channelId:\d+>' => '/gateway/v1/web/callback/recharge-return',
+     *
+     * return string
+     */
+    public function getRechargeReturnUrl()
+    {
+        return $this->paymentConfig['paymentNotifyBaseUri']."/api/v1/callback/recharge-return/{$this->order->channel_id}";
+    }
+
+    /**
+     * 获取出款订单异步通知地址
+     * 需在配置文件中配置地址重写'/api/v1/callback/remit-notify/<channelId:\d+>' => '/gateway/v1/web/callback/remit-notify',
+     *
+     * return string
+     */
+    public function getRemitNotifyUrl()
+    {
+        return $this->paymentConfig['paymentNotifyBaseUri']."/api/v1/callback/remit-notify/{$this->remit->channel_id}";
     }
 
     /**
@@ -342,7 +382,8 @@ class BasePayment
      *
      * return array BasePayment::RECHARGE_NOTIFY_RESULT
      */
-    public function parseNotifyRequest(array $request){
+    public function parseNotifyRequest(array $request)
+    {
         //check sign
 
         //get order id and result from request
@@ -355,22 +396,23 @@ class BasePayment
      *
      * return array BasePayment::RECHARGE_NOTIFY_RESULT
      */
-    public function parseReturnRequest(array $request){
+    public function parseReturnRequest(array $request)
+    {
         //check sign
 
         //get order id and result from request
 
-        throw new OperationFailureException("通道暂不支持解析同步通知:".$this->getCallChildClassName(), Macro::ERR_UNKNOWN);
+        throw new OperationFailureException("通道暂不支持解析同步通知:" . $this->getCallChildClassName(), Macro::ERR_UNKNOWN);
     }
 
-     /**
-      * 出款
-      *
-      * return array BasePayment::REMIT_RESULT
-      */
+    /**
+     * 出款
+     *
+     * return array BasePayment::REMIT_RESULT
+     */
     public function remit()
     {
-        throw new OperationFailureException("通道暂不支持出款:".$this->getCallChildClassName(), Macro::ERR_UNKNOWN);
+        throw new OperationFailureException("通道暂不支持出款:" . $this->getCallChildClassName(), Macro::ERR_UNKNOWN);
     }
 
     /**
@@ -378,18 +420,19 @@ class BasePayment
      *
      * @return array BasePayment::REMIT_QUERY_RESULT
      */
-    public function remitStatus(){
-        throw new OperationFailureException("通道暂不支持查询出款状态:".$this->getCallChildClassName(), Macro::ERR_UNKNOWN);
+    public function remitStatus()
+    {
+        throw new OperationFailureException("通道暂不支持查询出款状态:" . $this->getCallChildClassName(), Macro::ERR_UNKNOWN);
     }
 
     /**
-      * 余额查询
-      *
-      * return  array BasePayment::BALANCE_QUERY_RESULT
-      */
+     * 余额查询
+     *
+     * return  array BasePayment::BALANCE_QUERY_RESULT
+     */
     public function balance()
     {
-        throw new OperationFailureException("通道暂不支持查询余额:".$this->getCallChildClassName(), Macro::ERR_UNKNOWN);
+        throw new OperationFailureException("通道暂不支持查询余额:" . $this->getCallChildClassName(), Macro::ERR_UNKNOWN);
     }
 
     /**
@@ -397,7 +440,7 @@ class BasePayment
      */
     public function webBank()
     {
-        throw new OperationFailureException("通道程序暂不支持此支付方式:".$this->getCallChildClassName().':'.__FUNCTION__, Macro::ERR_UNKNOWN);
+        throw new OperationFailureException("通道程序暂不支持此支付方式:" . $this->getCallChildClassName() . ':' . __FUNCTION__, Macro::ERR_UNKNOWN);
     }
 
     /**
@@ -405,7 +448,7 @@ class BasePayment
      */
     public function bankH5()
     {
-        throw new OperationFailureException("通道程序暂不支持此支付方式:".$this->getCallChildClassName().':'.__FUNCTION__, Macro::ERR_UNKNOWN);
+        throw new OperationFailureException("通道程序暂不支持此支付方式:" . $this->getCallChildClassName() . ':' . __FUNCTION__, Macro::ERR_UNKNOWN);
     }
 
     /**
@@ -413,7 +456,7 @@ class BasePayment
      */
     public function bankQuickPay()
     {
-        throw new OperationFailureException("通道程序暂不支持此支付方式:".$this->getCallChildClassName().':'.__FUNCTION__, Macro::ERR_UNKNOWN);
+        throw new OperationFailureException("通道程序暂不支持此支付方式:" . $this->getCallChildClassName() . ':' . __FUNCTION__, Macro::ERR_UNKNOWN);
     }
 
     /**
@@ -421,15 +464,15 @@ class BasePayment
      */
     public function wechatQr()
     {
-        throw new OperationFailureException("通道程序暂不支持此支付方式:".$this->getCallChildClassName().':'.__FUNCTION__, Macro::ERR_UNKNOWN);
+        throw new OperationFailureException("通道程序暂不支持此支付方式:" . $this->getCallChildClassName() . ':' . __FUNCTION__, Macro::ERR_UNKNOWN);
     }
 
     /**
      * 微信快捷扫码支付
      */
-    public function wechatQuickQr()
+    public function wechatCodeBar()
     {
-        throw new OperationFailureException("通道程序暂不支持此支付方式:".$this->getCallChildClassName().':'.__FUNCTION__, Macro::ERR_UNKNOWN);
+        throw new OperationFailureException("通道程序暂不支持此支付方式:" . $this->getCallChildClassName() . ':' . __FUNCTION__, Macro::ERR_UNKNOWN);
     }
 
     /**
@@ -437,7 +480,7 @@ class BasePayment
      */
     public function wechatH5()
     {
-        throw new OperationFailureException("通道程序暂不支持此支付方式:".$this->getCallChildClassName().':'.__FUNCTION__, Macro::ERR_UNKNOWN);
+        throw new OperationFailureException("通道程序暂不支持此支付方式:" . $this->getCallChildClassName() . ':' . __FUNCTION__, Macro::ERR_UNKNOWN);
 
     }
 
@@ -446,7 +489,7 @@ class BasePayment
      */
     public function alipayQr()
     {
-        throw new OperationFailureException("通道程序暂不支持此支付方式:".$this->getCallChildClassName().':'.__FUNCTION__, Macro::ERR_UNKNOWN);
+        throw new OperationFailureException("通道程序暂不支持此支付方式:" . $this->getCallChildClassName() . ':' . __FUNCTION__, Macro::ERR_UNKNOWN);
     }
 
     /**
@@ -454,7 +497,15 @@ class BasePayment
      */
     public function alipayH5()
     {
-        throw new OperationFailureException("通道程序暂不支持此支付方式:".$this->getCallChildClassName().':'.__FUNCTION__, Macro::ERR_UNKNOWN);
+        throw new OperationFailureException("通道程序暂不支持此支付方式:" . $this->getCallChildClassName() . ':' . __FUNCTION__, Macro::ERR_UNKNOWN);
+    }
+
+    /**
+     * 支付宝条码支付
+     */
+    public function alipayCodeBar()
+    {
+        throw new OperationFailureException("通道程序暂不支持此支付方式:" . $this->getCallChildClassName() . ':' . __FUNCTION__, Macro::ERR_UNKNOWN);
     }
 
     /**
@@ -462,7 +513,7 @@ class BasePayment
      */
     public function qqQr()
     {
-        throw new OperationFailureException("通道程序暂不支持此支付方式:".$this->getCallChildClassName().':'.__FUNCTION__, Macro::ERR_UNKNOWN);
+        throw new OperationFailureException("通道程序暂不支持此支付方式:" . $this->getCallChildClassName() . ':' . __FUNCTION__, Macro::ERR_UNKNOWN);
     }
 
     /**
@@ -470,7 +521,15 @@ class BasePayment
      */
     public function qqH5()
     {
-        throw new OperationFailureException("通道程序暂不支持此支付方式:".$this->getCallChildClassName().':'.__FUNCTION__, Macro::ERR_UNKNOWN);
+        throw new OperationFailureException("通道程序暂不支持此支付方式:" . $this->getCallChildClassName() . ':' . __FUNCTION__, Macro::ERR_UNKNOWN);
+    }
+
+    /**
+     * QQ条码支付
+     */
+    public function qqCodeBar()
+    {
+        throw new OperationFailureException("通道程序暂不支持此支付方式:" . $this->getCallChildClassName() . ':' . __FUNCTION__, Macro::ERR_UNKNOWN);
     }
 
     /**
@@ -478,7 +537,7 @@ class BasePayment
      */
     public function jdWallet()
     {
-        throw new OperationFailureException("通道程序暂不支持此支付方式:".$this->getCallChildClassName().':'.__FUNCTION__, Macro::ERR_UNKNOWN);
+        throw new OperationFailureException("通道程序暂不支持此支付方式:" . $this->getCallChildClassName() . ':' . __FUNCTION__, Macro::ERR_UNKNOWN);
     }
 
     /**
@@ -486,7 +545,7 @@ class BasePayment
      */
     public function unoinPayQr()
     {
-        throw new OperationFailureException("通道程序暂不支持此支付方式:".$this->getCallChildClassName().':'.__FUNCTION__, Macro::ERR_UNKNOWN);
+        throw new OperationFailureException("通道程序暂不支持此支付方式:" . $this->getCallChildClassName() . ':' . __FUNCTION__, Macro::ERR_UNKNOWN);
     }
 
     /**
@@ -494,16 +553,23 @@ class BasePayment
      */
     public function unionPayH5()
     {
-        throw new OperationFailureException("通道程序暂不支持此支付方式:".$this->getCallChildClassName().':'.__FUNCTION__, Macro::ERR_UNKNOWN);
+        throw new OperationFailureException("通道程序暂不支持此支付方式:" . $this->getCallChildClassName() . ':' . __FUNCTION__, Macro::ERR_UNKNOWN);
     }
 
+    /**
+     * 银联快捷支付
+     */
+    public function unoinPayQuick()
+    {
+        throw new OperationFailureException("通道程序暂不支持此支付方式:" . $this->getCallChildClassName() . ':' . __FUNCTION__, Macro::ERR_UNKNOWN);
+    }
 
     /**
      * 京东H5支付
      */
     public function jdH5()
     {
-        throw new OperationFailureException("通道程序暂不支持此支付方式:".$this->getCallChildClassName().':'.__FUNCTION__, Macro::ERR_UNKNOWN);
+        throw new OperationFailureException("通道程序暂不支持此支付方式:" . $this->getCallChildClassName() . ':' . __FUNCTION__, Macro::ERR_UNKNOWN);
     }
 
     /**
@@ -511,13 +577,14 @@ class BasePayment
      */
     public function jdQr()
     {
-        throw new OperationFailureException("通道程序暂不支持此支付方式:".$this->getCallChildClassName().':'.__FUNCTION__, Macro::ERR_UNKNOWN);
+        throw new OperationFailureException("通道程序暂不支持此支付方式:" . $this->getCallChildClassName() . ':' . __FUNCTION__, Macro::ERR_UNKNOWN);
     }
 
-    protected  function getCallChildClassName(){
-        $class = (new \ReflectionClass(__CLASS__))->getShortName();
-        $clsArr = explode('\\',$class);
-        $class = array_pop($clsArr);
+    protected function getCallChildClassName()
+    {
+        $class  = (new \ReflectionClass(__CLASS__))->getShortName();
+        $clsArr = explode('\\', $class);
+        $class  = array_pop($clsArr);
         return $class;
     }
 
@@ -534,6 +601,7 @@ class BasePayment
         $data = base64_encode($data);
         return $data;
     }
+
     /**
      * aes解密
      *

@@ -170,11 +170,11 @@ class AllScoreBasePayment extends BasePayment
             //2表示交易成功，4表示交易失败,其他状态按“处理中”处理
             $ret = self::RECHARGE_NOTIFY_RESULT;
             if(!empty($request['tradeStatus']) && $request['tradeStatus'] == self::TRADE_STATUS_SUCCESS) {
-                $ret['order'] = $order;
-                $ret['order_no'] = $order->order_no;
-                $ret['amount'] = $request['transAmt'];
-                $ret['status'] = Macro::SUCCESS;
-                $ret['channel_order_no'] = $request['localOrderId'];
+                $ret['data']['order'] = $order;
+                $ret['data']['order_no'] = $order->order_no;
+                $ret['data']['amount'] = $request['transAmt'];
+                $ret['data']['trade_status'] = Order::STATUS_NOTPAY;
+                $ret['data']['channel_order_no'] = $request['localOrderId'];
             }
             elseif(!empty($request['trade_status']) && $request['trade_status'] == self::TRADE_STATUS_FAIL) {
                 $ret['status'] =  Macro::FAIL;

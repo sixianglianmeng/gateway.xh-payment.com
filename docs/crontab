@@ -1,3 +1,5 @@
 #crontab -u www -e
 #定时清空商户及渠道单日限额
 01 0 * * *  /www/wwwroot/gateway.payment.com/protected/yii account/reset-quota  2>&1
+#查询0点渠道账户余额
+0 0 * * *  /www/wwwroot/gateway.payment.com/protected/yii channel/update-account-balance 1 2>&1
