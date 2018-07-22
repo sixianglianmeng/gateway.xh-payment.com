@@ -191,6 +191,10 @@ P07V3PBzXJaTl7/eUwIDAQAB
         return $ret;
     }
 
+    public function wechatH5()
+    {
+        return $this->wechatQr();
+    }
 
     /**
      * 网银支付
@@ -199,7 +203,6 @@ P07V3PBzXJaTl7/eUwIDAQAB
     {
         return $this->wechatQr();
     }
-
 
     /**
      * 网银快捷
@@ -226,10 +229,20 @@ P07V3PBzXJaTl7/eUwIDAQAB
         return $this->wechatQr();
     }
 
+    public function alipayH5()
+    {
+        return $this->wechatQr();
+    }
+
     /**
      * QQ扫码支付
      */
     public function qqQr()
+    {
+        return $this->wechatQr();
+    }
+
+    public function qqH5()
     {
         return $this->wechatQr();
     }
@@ -447,7 +460,6 @@ P07V3PBzXJaTl7/eUwIDAQAB
         $resTxt = self::post($requestUrl, $params);
         LogicApiRequestLog::outLog($requestUrl, 'GET', $resTxt, 200,0, $params);
 
-        Yii::info('remit query result: '.$this->remit['order_no'].' '.$resTxt);
         $ret = self::REMIT_QUERY_RESULT;
         $ret['data']['remit'] = $this->remit;
         $ret['data']['order_no'] = $this->remit['order_no'];
@@ -461,34 +473,25 @@ P07V3PBzXJaTl7/eUwIDAQAB
                 $res = [];
             }
 
-            if(is_array($res) && !empty($res['sign'])){
-                $res['sign']= str_replace("*", "+",$res['sign']);
-                $res['sign']= str_replace("-", "/",$res['sign']);
-                $localSign = self::rsaVerify($res,$res['sign'],trim(self::XTB_PUBLIC_KEY));
-                Yii::info('remit query ret sign: '.$this->remit['order_no'].' local:'.$localSign.' back:'.$res['sign']);
-                if (
+            if(is_array($res) &&
                     isset($res['retCode']) && $res['retCode'] == '0000'
                     && isset($res['state'])
                 ) {
-
                     if($res['state'] == '00'){
                         $ret['data']['bank_status'] = Remit::BANK_STATUS_PROCESSING;
-                    }elseif($res['r5_state'] == '04'){
-                        $ret['state']['bank_status'] = Remit::BANK_STATUS_SUCCESS;
-                        $ret['message'] = "出款提交失败({$resTxt})";
+                    }elseif($res['state'] == '04'){
+                        $ret['data']['bank_status'] = Remit::BANK_STATUS_SUCCESS;
                     }elseif($res['state'] == '05'){
                         $ret['data']['bank_status'] = Remit::BANK_STATUS_FAIL;
                         $ret['message'] = "出款提交失败({$resTxt})";
                     }
 
-                    $ret['data']['amount'] = $res['r3_Amt'];
+                    $ret['data']['amount'] = $this->remit->amount;
                     $ret['status'] = Macro::SUCCESS;
                 } else {
                     $ret['message'] = "出款查询失败({$resTxt})";
                 }
-            }else{
-                $ret['message'] = "出款查询失败({$resTxt})";
-            }
+
         }
 
         return  $ret;

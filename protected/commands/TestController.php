@@ -55,8 +55,6 @@ class TestController extends BaseConsoleCommand
     public function actionRemitStatus($no){
         $order = Remit::findOne(['order_no'=>$no]);
         $ret = LogicRemit::queryChannelRemitStatus($order);
-//        $payment = new \app\lib\payment\ChannelPayment($order, $order->channelAccount);
-//        $ret = $payment->remitStatus();
 
         var_dump($ret);
     }
@@ -85,16 +83,5 @@ class TestController extends BaseConsoleCommand
      */
     public function actionT(){
 
-       echo  md5('bulnk');
-
-        return;
-        $arr = [
-
-        ];
-
-        foreach ($arr as $a){
-            $u = "http://gateway.huaruipay.com/gateway/v1/web/mf/remit-notify?{$a}";
-            echo file_get_contents($u).PHP_EOL;
-        }
     }
 }

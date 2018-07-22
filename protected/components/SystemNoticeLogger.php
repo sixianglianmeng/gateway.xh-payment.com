@@ -75,9 +75,17 @@ class SystemNoticeLogger extends Target
     {
         $messages = array_map([$this, 'formatMessage'], $this->messages);
         $messages = wordwrap(implode("\n", $messages), 70);
+
         //404错误不发送警报
         if(strpos($messages,'NotFoundHttpException')){
             return true;
+        }
+
+        $title = gethostname();
+        if(Yii::$app->request->getIsConsoleRequest()){
+            $title.=" ".pathinfo(WWW_DIR)['basename'];
+        }else{
+            $title.=" ".Yii::$app->request->hostName;
         }
 
         if(!empty($this->telegram['api_uri'])){
@@ -143,7 +151,6 @@ class SystemNoticeLogger extends Target
         $prefix = $this->getMessagePrefix($message);
         $message =  $this->getTime($timestamp) . " {$prefix}[$level][$category] $text"
             . (empty($traces) ? '' : "\n    " . implode("\n    ", $traces));
-        $message = gethostname()." ".Url::base(true)."\n ".$message;
 
         return $message;
     }

@@ -52,7 +52,7 @@ class RemitController extends BaseServerSignedRequestController
 
         $paymentChannelAccount = $this->merchantPayment->remitChannel;
         if(!$paymentChannelAccount){
-            throw new InValidRequestException('商户提款通道配置错误，请联系平台客服');
+            throw new InValidRequestException("商户{$this->merchant->id}:{$this->merchant->username}提款通道配置错误，请联系平台客服");
         }
         if($paymentChannelAccount->status!=ChannelAccount::STATUS_ACTIVE && $paymentChannelAccount->status!=ChannelAccount::STATUS_RECHARGE_BANED){
             Util::throwException(Macro::ERR_REMIT_CHANNEL_NOT_ENOUGH,"出款渠道状态不正确:".$paymentChannelAccount->getStatusStr());

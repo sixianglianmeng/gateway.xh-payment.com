@@ -83,17 +83,28 @@ EuPAgzYI8tQtmJ2PNL1XizWe2ptpYNbHUfPJamNGJjetGw+2ql7G82ErMbu/urHS
     public function parseNotifyRequest(array $request){
         $ret = self::RECHARGE_NOTIFY_RESULT;
 
+        //通知消息为raw post
         $result=file_get_contents('php://input', 'r');
+        Yii::info("get sl recharge notice raw text: ".$result);
         $tmp = explode("|", $result);
         if(count($tmp)!==2){
             return $ret;
         }
-        $xml = simplexml_load_string(base64_decode($tmp[0]));
+        $xmlStr = base64_decode($tmp[0]);
+        //将平台传来的sign更改符号再进行验签方法
+        $localSign = self::rsaVerify($xmlStr, $tmp[1], self::SL_SERVER_CER);
+        if(!$localSign){
+            throw new SignatureNotMatchException("签名验证失败");
+        }
+
+        //从xml提取数组
+        $xml = simplexml_load_string($xmlStr);
         $json = json_encode($xml);
-        $request = json_decode($json, TRUE)['@attributes'];
+        $xmlArr = json_decode($json, TRUE);
+        $request = array_merge($xmlArr['@attributes'],$xmlArr['deductList']['item']['@attributes']);
 
         //按照文档获取所有签名参数,某些渠道签名参数不固定,也可以直接获取所有request
-        $callbackParamsName = ["application","version","merchantId","merchantOrderId","deductList","deductList.item.payOrderId","deductList.item.payAmt","deductList.item.payStatus","deductList.item.payDesc","deductList.item.payTime","refundList"];
+        $callbackParamsName = ["application","version","merchantId","merchantOrderId","payOrderId","payAmt","payStatus","payDesc","payTime"];
         $data = [];
         foreach ($callbackParamsName as $p){
             if(!isset($request[$p])){
@@ -104,8 +115,8 @@ EuPAgzYI8tQtmJ2PNL1XizWe2ptpYNbHUfPJamNGJjetGw+2ql7G82ErMbu/urHS
 
         //验证必要参数
         $data['merchantOrderId'] = ControllerParameterValidator::getRequestParam($request, 'merchantOrderId', null, Macro::CONST_PARAM_TYPE_ORDER_NO, '订单号错误！');
-        $data['amount'] = ControllerParameterValidator::getRequestParam($request, 'deductList.item.payAmt', null, Macro::CONST_PARAM_TYPE_DECIMAL, '订单金额错误！');
-        $data['status'] = ControllerParameterValidator::getRequestParam($request, 'deductList.item.payStatus', null, Macro::CONST_PARAM_TYPE_INT, '状态错误！');
+        $data['amount'] = ControllerParameterValidator::getRequestParam($request, 'payAmt', null, Macro::CONST_PARAM_TYPE_DECIMAL, '订单金额错误！');
+        $data['status'] = ControllerParameterValidator::getRequestParam($request, 'payStatus', null, Macro::CONST_PARAM_TYPE_INT, '状态错误！');
 
         $order = LogicOrder::getOrderByOrderNo($data['merchantOrderId']);
         $this->setPaymentConfig($order->channelAccount);
@@ -121,16 +132,10 @@ EuPAgzYI8tQtmJ2PNL1XizWe2ptpYNbHUfPJamNGJjetGw+2ql7G82ErMbu/urHS
             'channel_name'=>$order->channelAccount->channel_name,
         ];
 
-        //将平台传来的sign更改符号再进行验签方法
-        $localSign = self::rsaVerify($data, $tmp[1], self::SL_SERVER_CER);
-        if(!$localSign){
-            throw new SignatureNotMatchException("签名验证失败");
-        }
-
         $ret['data']['order'] = $order;
         $ret['data']['order_no'] = $order->order_no;
 
-        if ($data['status']=='01') {
+        if ($data['payStatus']=='01') {
             $ret['data']['trade_status'] = Order::STATUS_PAID;
             $ret['data']['amount'] = $data['amount'];
             $ret['status'] = Macro::SUCCESS;
@@ -531,14 +536,22 @@ EuPAgzYI8tQtmJ2PNL1XizWe2ptpYNbHUfPJamNGJjetGw+2ql7G82ErMbu/urHS
         }
 
         $params = [
-            'p0_Cmd'=>'Money',
-            'p1_MerId'=>$this->remit['channel_merchant_id'],
-            'p2_Order'=>$this->remit['order_no'],
+            'application' => 'ReceivePayQuery',
+            'version' => '1.0.1',
+            'merchantId' => $this->remit['channel_merchant_id'],
+            'timestamp' => date('YmdHis'),
+            'queryTranId' => $this->remit['order_no'],
         ];
-        $params['sign'] = self::rsaSign($params,trim($this->paymentConfig['key']));
+
+        $xml = self::arrayToXml($params);
+        Yii::info("sl remit query request xml:".$xml);
+        $base64Xml = base64_encode($xml);
+        Yii::info("sl remit query request base64Xml:".$base64Xml);
+        $sign = self::rsaSign($xml,trim($this->paymentConfig['key']));
+        $requestData['msg'] = "{$base64Xml}|{$sign}";
 
         $requestUrl = $this->paymentConfig['gateway_base_uri'].'/GateWay/ReceiveWithdrawCheck.aspx';
-        $resTxt = self::post($requestUrl, $params);
+        $resTxt = self::post($requestUrl, $requestData);
         LogicApiRequestLog::outLog($requestUrl, 'GET', $resTxt, 200,0, $params);
 
 //        Yii::info('remit query result: '.$this->remit['order_no'].' '.$resTxt);
@@ -547,42 +560,38 @@ EuPAgzYI8tQtmJ2PNL1XizWe2ptpYNbHUfPJamNGJjetGw+2ql7G82ErMbu/urHS
         $ret['data']['order_no'] = $this->remit->order_no;
 
         if (!empty($resTxt)) {
-            try{
-                $xml = simplexml_load_string($resTxt);
+            try {
+                $retTxtArr = explode('|',$resTxt);
+
+                if(count($retTxtArr)!==2){
+                    $ret['message'] = '出款提交失败,服务器返回参数格式错误';
+                    return $ret;
+                }
+                $xmlStr = base64_decode($retTxtArr[0]);
+                Yii::info("{$this->order['order_no']} sl remit query xml response: ".$xmlStr);
+
+                $xml = simplexml_load_string($xmlStr);
                 $json = json_encode($xml);
-                $res = json_decode($json,TRUE);
-            }catch (\Exception $e){
+                $res = json_decode($json, TRUE)['@attributes'];
+            } catch (\Exception $e) {
                 $res = [];
             }
-
-            if(is_array($res) && !empty($res['sign'])){
-                $res['sign']= str_replace("*", "+",$res['sign']);
-                $res['sign']= str_replace("-", "/",$res['sign']);
-                $localSign = self::rsaVerify($res,$res['sign'],trim(self::XTB_PUBLIC_KEY));
-                Yii::info('remit query ret sign: '.$this->remit['order_no'].' local:'.$localSign.' back:'.$res['sign']);
-                if (
-                    isset($res['retCode']) && $res['retCode'] == '0000'
-                    && isset($res['state'])
+var_dump($res);exit;
+            if(is_array($res) &&
+                    isset($res['respCode']) && $res['respCode'] == '000'
                 ) {
-
-                    if($res['state'] == '00'){
-                        $ret['data']['bank_status'] = Remit::BANK_STATUS_PROCESSING;
-                    }elseif($res['r5_state'] == '04'){
-                        $ret['state']['bank_status'] = Remit::BANK_STATUS_SUCCESS;
-                        $ret['message'] = "出款提交失败({$resTxt})";
-                    }elseif($res['state'] == '05'){
-                        $ret['data']['bank_status'] = Remit::BANK_STATUS_FAIL;
-                        $ret['message'] = "出款提交失败({$resTxt})";
-                    }
-
+                    $ret['data']['bank_status'] = Remit::BANK_STATUS_PROCESSING;
+                    $ret['message'] = "{$res['respDesc']}";
                     $ret['data']['amount'] = $res['r3_Amt'];
                     $ret['status'] = Macro::SUCCESS;
                 } else {
-                    $ret['message'] = "出款查询失败({$resTxt})";
+                    if(strpos($res['respDesc'],'余额不足') !== false){
+                        $ret['status'] = Macro::ERR_THIRD_CHANNEL_BALANCE_NOT_ENOUGH;
+                    }
+
+                    $ret['message'] = "{$res['respDesc']}";
                 }
-            }else{
-                $ret['message'] = "出款查询失败({$resTxt})";
-            }
+
         }
 
         return  $ret;
@@ -682,27 +691,25 @@ EuPAgzYI8tQtmJ2PNL1XizWe2ptpYNbHUfPJamNGJjetGw+2ql7G82ErMbu/urHS
      */
     function rsaVerify($data, $sign, $pubKey)
     {
-        unset($data['sign']);
-        unset($data['rp_transTime']);
-        if(substr($pubKey,0,26)!='-----BEGIN PUBLIC KEY-----'){
-            $wrapStr = wordwrap($pubKey, 64, "\n", true);
-            $pubKey = "-----BEGIN PUBLIC KEY-----\n"
-                .$wrapStr
-                .= "\n-----END PUBLIC KEY-----";
+        if(is_array($data)){
+            unset($data['sign']);
+            unset($data['rp_transTime']);
+            $strToSign = implode('', $data);
+        }else{
+            $strToSign = $data;
         }
-//var_dump($data);
-        $strToSign = implode('', $data);
+
 //        echo "回调参数: p1_MerId=2800&r0_Cmd=Buy&r1_Code=1&r2_TrxId=GM2018071815235554678318&r3_Amt=10.00&r4_Cur=RMB&r5_Pid=&r6_Order=118071815065664306&r7_Uid=&r8_MP=&r9_BType=2&rp_PayDate=2018/7/18%2015:24:58&sign=ITJMKhT4HMRmaesZMzF5yzUKwkz6Hz7u0Z6zX*MSF6Ec9EwFa*vvMABJcswi5Sh3AqoVB3aYJdNYimZOLQpjHuBo7yqemH-7JZ4epKaHl0r7ek78yhQ076mqFhsb9BGBGrBPYhugtuxqW6eRnzf3lg5l2RK*xWdUkX9DrfhWAZM=\n";
-        echo "\n\n验签字符串: \n";
-        echo ($strToSign);
-        echo "\n\n回传签名：\n";
-        echo ($sign);
-        echo "\n\npubkey: \n";
-        echo ($pubKey );
+//        echo "\n\n验签字符串: \n";
+//        echo ($strToSign);
+//        echo "\n\n回传签名：\n";
+//        echo ($sign);
+//        echo "\n\npubkey: \n";
+//        echo ($pubKey );
 
         $res = openssl_get_publickey($pubKey);
         // 调用openssl内置方法验签，返回bool值
-        $result = (boolean)openssl_verify($strToSign, base64_decode($sign), $res);
+        $result = (boolean)openssl_verify(md5($strToSign,true), base64_decode($sign), $res);
         // 释放资源
         openssl_free_key($res);
 

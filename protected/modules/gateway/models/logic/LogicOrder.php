@@ -232,15 +232,16 @@ class LogicOrder
     }
 
     static public function processChannelNotice($noticeResult){
-        if(
-            empty($noticeResult['data']['order'])
-            || empty($noticeResult['data']['amount'])
-        ){
-            throw new InValidRequestException('支付结果对象错误',Macro::ERR_PAYMENT_NOTICE_RESULT_OBJECT);
+        if(empty($noticeResult['data']['order'])){
+            throw new InValidRequestException('支付回调:支付结果对象为空:'.$noticeResult['data']['order_no']??'',Macro::ERR_PAYMENT_NOTICE_RESULT_OBJECT);
+        }
+
+        if(empty($noticeResult['data']['amount'])){
+            throw new InValidRequestException('支付回调:回调金额为0:'.$noticeResult['data']['order_no']??'',Macro::ERR_PAYMENT_NOTICE_RESULT_OBJECT);
         }
 
         if(!LogicChannelAccount::checkChannelIp($noticeResult['data']['order']->channel)){
-            throw new OperationFailureException("服务器IP未在白名单中!");
+            throw new OperationFailureException("支付回调: 服务器IP未在白名单中：".$noticeResult['data']['order_no']??'');
         }
 
         $order = $noticeResult['data']['order'];
@@ -275,7 +276,7 @@ class LogicOrder
         elseif($noticeResult['status'] === Macro::SUCCESS
             && bccomp($order->amount, $noticeResult['data']['amount'], 2)===1
         ){
-            $order = self::payFail($order, "三方回调金额({$noticeResult['data']['amount']})与订单金额({$order->amount})不一致!");
+            $order = self::payFail($order, "充值回调金额({$noticeResult['data']['amount']})与订单金额({$order->amount})不一致!");
         }
         //订单失败
         elseif( $noticeResult['status'] === Macro::FAIL){
