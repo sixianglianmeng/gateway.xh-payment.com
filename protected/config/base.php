@@ -170,10 +170,9 @@ $config = [
                     'class' => 'app\components\SystemNoticeLogger',
                     'levels' => ['error', 'warning'],
                     'logVars' => [],
-                    //电报报警，会传入msg=xx&key=xx到api_uri对应接口
+                    //电报报警，会传入msg=xx&key=xx&chatId=xx到api_uri对应接口
+                    //配置已移到系统配置表
                     'telegram'=>[
-                        'api_uri'=>'https://t1-portal.huaruipay.com/telgram/msg.php',
-                        'key'=>'98200a5ea53b2e6e7a06964b1558f831',
                     ],
                     //邮件报警
                     'email' => [
@@ -241,7 +240,7 @@ $config = [
             'as log' => \yii\queue\LogBehavior::class,
             'channel' => REDIS_PREFIX.'tq_oq',
         ],
-	'remitNotifyQueue' => [
+	    'remitNotifyQueue' => [
             'class' => \yii\queue\redis\Queue::class,
             'redis' => 'redis',
             'as log' => \yii\queue\LogBehavior::class,

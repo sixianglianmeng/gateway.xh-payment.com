@@ -8,6 +8,7 @@
 
 namespace app\components;
 
+use app\common\models\model\SiteConfig;
 use power\yii2\log\Logger;
 use Yii;
 use yii\base\InvalidConfigException;
@@ -88,22 +89,26 @@ class SystemNoticeLogger extends Target
             $title.=" ".Yii::$app->request->hostName;
         }
 
-        if(!empty($this->telegram['api_uri'])){
+        $telgramKey = SiteConfig::cacheGetContent('sys_notice_tegram_key');
+        $telgramUrl = SiteConfig::cacheGetContent('sys_notice_tegram_url');
+        $telgramChatId = SiteConfig::cacheGetContent('sys_notice_tegram_chatid');
+        if($telgramKey && $telgramUrl && $telgramChatId){
             $data = [
-                'msg'=> $messages,
-                'key'=> $this->telegram['key']
+                'msg'=> $title."\n".$messages,
+                'key'=> $this->telegram['key'],
+                'chatId'=> $telgramChatId,
             ];
-            $ret = Util::curlPost($this->telegram['api_uri'],$data);
+            $ret = Util::curlPost($telgramUrl,$data);
             if($ret!='ok'){
 
             }
         }
 
-        if(!empty($this->telegram['email'])){
+        if(!empty($this->email)){
             Yii::$app->mailer->compose()
-                ->setFrom($this->telegram['email']["from"])
-                ->setTo($this->telegram['email']["to"])
-                ->setSubject($this->telegram['email']["subject"])
+                ->setFrom($this->telegram["from"])
+                ->setTo($this->telegram["to"])
+                ->setSubject($title)
                 ->setTextBody($messages)
                 ->send();
         }
