@@ -215,7 +215,7 @@ EuPAgzYI8tQtmJ2PNL1XizWe2ptpYNbHUfPJamNGJjetGw+2ql7G82ErMbu/urHS
         $requestData['msg'] = "{$base64Xml}|{$sign}";
         $requestUrl = $this->paymentConfig['gateway_base_uri']."/pay/pay.htm";
 
-        $retTxt = self::post($requestUrl,$requestData);
+        $retTxt = self::post($requestUrl,$requestData,[],30);
         //接口日志记录
         LogicApiRequestLog::rechargeAddLog($this->order, $requestUrl, $retTxt, [$xml]);
 
@@ -638,7 +638,7 @@ var_dump($res);exit;
             $body     = $e->getMessage();
         }
 
-        Yii::info('request to channel: ' . $url . ' ' . json_encode($postData,JSON_UNESCAPED_UNICODE). ' resp: ' . $body);
+        Yii::info('request to channel: ' . $url . ' ' . json_encode($postData,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES). ' resp: ' . $body);
 
         return $body;
     }
