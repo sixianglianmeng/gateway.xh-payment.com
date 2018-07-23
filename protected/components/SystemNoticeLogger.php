@@ -95,7 +95,7 @@ class SystemNoticeLogger extends Target
         if($telgramKey && $telgramUrl && $telgramChatId){
             $data = [
                 'msg'=> $title."\n".$messages,
-                'key'=> $this->telegram['key'],
+                'key'=> $telgramKey,
                 'chatId'=> $telgramChatId,
             ];
             $ret = Util::curlPost($telgramUrl,$data);
@@ -104,10 +104,10 @@ class SystemNoticeLogger extends Target
             }
         }
 
-        if(!empty($this->email)){
+        $mailAddr = SiteConfig::cacheGetContent('sys_notice_mail_to');
+        if(!empty($mailAddr)){
             Yii::$app->mailer->compose()
-                ->setFrom($this->telegram["from"])
-                ->setTo($this->telegram["to"])
+                ->setTo($mailAddr)
                 ->setSubject($title)
                 ->setTextBody($messages)
                 ->send();

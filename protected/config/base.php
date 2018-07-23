@@ -172,14 +172,10 @@ $config = [
                     'logVars' => [],
                     //电报报警，会传入msg=xx&key=xx&chatId=xx到api_uri对应接口
                     //配置已移到系统配置表
-                    'telegram'=>[
-                    ],
+                    'telegram'=>[],
                     //邮件报警
-                    'email' => [
-                        'from' => ['mail.booter.ui@gmail.com'],
-                        'to' => ['booter.ui@gmail.com'],
-                        'subject' => SYSTEM_NAME.' errors',
-                    ],
+		            //配置已移到系统配置表
+                    'email' => [],
                 ],
             ],
         ],

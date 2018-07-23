@@ -550,7 +550,7 @@ EuPAgzYI8tQtmJ2PNL1XizWe2ptpYNbHUfPJamNGJjetGw+2ql7G82ErMbu/urHS
         $sign = self::rsaSign($xml,trim($this->paymentConfig['key']));
         $requestData['msg'] = "{$base64Xml}|{$sign}";
 
-        $requestUrl = $this->paymentConfig['gateway_base_uri'].'/GateWay/ReceiveWithdrawCheck.aspx';
+        $requestUrl = $this->paymentConfig['gateway_base_uri']."/pay/pay.htm";
         $resTxt = self::post($requestUrl, $requestData);
         LogicApiRequestLog::outLog($requestUrl, 'GET', $resTxt, 200,0, $params);
 
@@ -576,7 +576,7 @@ EuPAgzYI8tQtmJ2PNL1XizWe2ptpYNbHUfPJamNGJjetGw+2ql7G82ErMbu/urHS
             } catch (\Exception $e) {
                 $res = [];
             }
-var_dump($res);exit;
+
             if(is_array($res) &&
                     isset($res['respCode']) && $res['respCode'] == '000'
                 ) {
