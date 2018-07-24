@@ -24,8 +24,6 @@ class SiteController extends \yii\web\Controller
 {
     public function actionIndex()
     {
-        Yii::error('tststt');
-        exit;
         exit('nginx 2.1.17');
     }
 
