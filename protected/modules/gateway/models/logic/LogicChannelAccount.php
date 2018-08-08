@@ -40,8 +40,8 @@ class LogicChannelAccount
             $snap->merchant_account = $account->merchant_account;
             $snap->merchant_id = $account->merchant_id;
             $snap->app_id = $account->app_id;
-            $snap->balance = $account->balance;
-            $snap->frozen_balance = $account->frozen_balance;
+            $snap->balance = $account->balance?$account->balance:0;
+            $snap->frozen_balance = $account->frozen_balance?$account->frozen_balance:0;
             $snap->save(false);
         }
 

@@ -4,6 +4,7 @@ namespace app\components;
 use app\common\exceptions\OperationFailureException;
 use app\common\models\model\Channel;
 use yii\base\Security;
+use Yii;
 
 class Util
 {
@@ -139,7 +140,7 @@ class Util
                 $exp =  "ctype_alnum";
                 break;
             case Macro::CONST_PARAM_TYPE_ALNUM_DASH_UNDERLINE:
-                $exp =  "/^[1-9a-zA-Z-_]{0,}$/i";
+                $exp =  "/^[0-9a-zA-Z-_]{0,}$/i";
                 if(is_array($extRule)){
                     if(count($extRule)==2){
                         $exp =  "/^[0-9a-zA-Z-_]{".$extRule[0].",".$extRule[1]."}$/i";

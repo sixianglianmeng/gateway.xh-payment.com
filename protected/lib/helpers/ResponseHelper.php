@@ -40,13 +40,13 @@ class ResponseHelper extends \power\yii2\helpers\ResponseHelper
             && Yii::$app->params['jsonFormatType'] == Macro::FORMAT_PAYMENT_GATEWAY_JSON
         ){
             $result = [
-                'is_success'        => $code==0?'TRUE':'FALSE',
-                'msg'       => $message,
+                API_RESP_FIELD_CODE        => $code==0?'TRUE':'FALSE',
+                API_RESP_FIELD_MESSAGE     => $message,
             ];
             $result = ArrayHelper::merge($result,$data);
             $logResponse = $result;
             if(isset(Yii::$app->params['merchantPayment']) && Yii::$app->params['merchantPayment'] instanceof UserPaymentInfo){
-                $result['sign'] = SignatureHelper::calcSign($result, Yii::$app->params['merchantPayment']->app_key_md5, Macro::CONST_PAYMENT_GETWAY_SIGN_TYPE);
+                $result[API_RESP_FIELD_SIGN] = SignatureHelper::calcSign($result, Yii::$app->params['merchantPayment']->app_key_md5, Macro::CONST_PAYMENT_GETWAY_SIGN_TYPE);
             }
         }elseif($response->format == Response::FORMAT_HTML) {
 //            $result['return_url'] = Yii::$app->request->referrer;

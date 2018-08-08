@@ -151,7 +151,7 @@ class YzbBasePayment extends BasePayment
             $ret['data']['order_no'] = $order->order_no;
             $ret['data']['amount'] = $data['orderPrice'];
             $ret['status'] = Macro::SUCCESS;
-            $ret['data']['trade_status'] = Order::STATUS_NOTPAY;
+            $ret['data']['trade_status'] = Order::STATUS_PAID;
             $ret['data']['channel_order_no'] = $data['trxNo'];
         }
 

@@ -1,7 +1,6 @@
 <?php
-!defined('SYSTEM_NAME') && define('SYSTEM_NAME', 'gateway_pub_payment');
-//redis key前缀，用于在同一个redis实例部署多套相同程序时使用
-!defined('REDIS_PREFIX') && define('REDIS_PREFIX', 'gp_');
+include("./project.php");
+
 !defined('WWW_DIR') && define('WWW_DIR', realpath(__DIR__ . '/../../'));
 !defined('RUNTIME_DIR') && define('RUNTIME_DIR', WWW_DIR . '/runtime');
 //!is_dir(RUNTIME_DIR) && mkdir(RUNTIME_DIR, 0777, true);
@@ -41,9 +40,9 @@ $config = [
         ],
         'db' => [
             'class' => 'yii\db\Connection',
-            'dsn' => 'mysql:host=35.229.128.154;dbname=xh_payment_com',
-            'username' => 'xh_payment_com',
-            'password' => 'xf8LxyLRZmNM62Jd',
+            'dsn' => 'mysql:host=127.0.0.1;dbname=payment',
+            'username' => 'root',
+            'password' => '',
             'charset' => 'utf8',
             'tablePrefix' => 'p_',
 //            'enableLogging'=>true,
@@ -51,7 +50,7 @@ $config = [
         'redis' => [
             'class' => 'yii\redis\Connection',
             'hostname' => '127.0.0.1',
-            'port' => 6381,
+            'port' => 6379,
             'database' => 0,
         ],
         'formatter' => [
@@ -174,7 +173,7 @@ $config = [
                     //配置已移到系统配置表
                     'telegram'=>[],
                     //邮件报警
-		            //配置已移到系统配置表
+		    //配置已移到系统配置表
                     'email' => [],
                 ],
             ],
@@ -230,17 +229,17 @@ $config = [
             'as log' => \yii\queue\LogBehavior::class,
             'channel' => REDIS_PREFIX.'tq_rq',
         ],
+        'remitNotifyQueue' => [
+            'class' => \yii\queue\redis\Queue::class,
+            'redis' => 'redis',
+            'as log' => \yii\queue\LogBehavior::class,
+            'channel' => REDIS_PREFIX.'tq_rnq',
+        ],
         'orderQueryQueue' => [
             'class' => \yii\queue\redis\Queue::class,
             'redis' => 'redis',
             'as log' => \yii\queue\LogBehavior::class,
             'channel' => REDIS_PREFIX.'tq_oq',
-        ],
-	    'remitNotifyQueue' => [
-            'class' => \yii\queue\redis\Queue::class,
-            'redis' => 'redis',
-            'as log' => \yii\queue\LogBehavior::class,
-            'channel' => REDIS_PREFIX.'tq_rnq',
         ],
 
         'on beforeRequest' => ['\power\yii2\log\LogHelper', 'onBeforeRequest'],

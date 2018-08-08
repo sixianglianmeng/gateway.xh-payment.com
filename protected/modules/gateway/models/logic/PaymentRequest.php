@@ -14,13 +14,12 @@ use yii\web\Cookie;
 
 class PaymentRequest
 {
-    const SUCCESS = 'TRUE';
-    const FAIL = 'FALSE';
-    const JSON_STATUS_KEY = 'is_success';
+    const SUCCESS = API_RESP_CODE_SUCCESS;
+    const FAIL = API_RESP_CODE_FAIL;
     const DEFAULT_JSON_RESPONSE = [
-        'is_success' => self::FAIL,
-        'sign'       => '',
-        'msg' => '',
+        API_RESP_FIELD_CODE => self::FAIL,
+        API_RESP_FIELD_SIGN => '',
+        API_RESP_FIELD_MESSAGE => '',
     ];
     const CLIENT_ID_IN_COOKIE = 'x_client_id';
 
@@ -47,9 +46,9 @@ class PaymentRequest
         'now_date'       => [Macro::CONST_PARAM_TYPE_INT],
         'account_name'   => [Macro::CONST_PARAM_TYPE_STRING, [1, 32]],
         'account_number' => [Macro::CONST_PARAM_TYPE_NUMERIC_STRING, [10, 32]],
-        'bank_province'  => [Macro::CONST_PARAM_TYPE_CHINESE, [0, 32]],
-        'bank_city'      => [Macro::CONST_PARAM_TYPE_CHINESE, [0, 32]],
-        'bank_branch'    => [Macro::CONST_PARAM_TYPE_CHINESE, [0, 32]],
+        'bank_province'  => [Macro::CONST_PARAM_TYPE_STRING, [0, 32]],
+        'bank_city'      => [Macro::CONST_PARAM_TYPE_STRING, [0, 32]],
+        'bank_branch'    => [Macro::CONST_PARAM_TYPE_STRING, [0, 32]],
     ];
 
     public function __construct(User $merchant,UserPaymentInfo $merchantPayment)

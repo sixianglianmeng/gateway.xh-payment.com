@@ -25,23 +25,8 @@ class PaymentNotifyJob extends BaseObject implements RetryableJobInterface
 
         $url = $this->url;
         try{
-            $body = Util::curlPostJson($url,$this->data);
+            $body = Util::curlPostJson($url,$this->data,[],10);
             $httpCode = 200;
-//            $client = new \GuzzleHttp\Client(
-//                [
-//                    'timeout' => 10,
-//                    'defaults' => [
-//                        'verify' => false
-//                    ]
-//                ]
-//            );
-//            $response = $client->request('POST', $url, [
-//                'timeout' => 10,
-//                'json' => json_encode($this->data,JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE),
-//            ]);
-////            $response = $client->get($url);
-//            $httpCode = $response->getStatusCode();
-//            $body = (string)$response->getBody();
 
         }catch (\Exception $e){
             $httpCode = $e->getCode();

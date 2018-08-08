@@ -110,7 +110,7 @@ class LtbBasePayment extends BasePayment
             $ret['data']['amount'] = $data['amount'];
             $ret['status'] = Macro::SUCCESS;
             $ret['data']['status'] = Macro::SUCCESS;
-            $ret['data']['trade_status'] = Order::STATUS_NOTPAY;
+            $ret['data']['trade_status'] = Order::STATUS_PAID;
         }
 
         return $ret;

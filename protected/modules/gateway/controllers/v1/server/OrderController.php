@@ -24,10 +24,6 @@ class OrderController extends BaseServerSignedRequestController
      * @author booter.ui@gmail.com
      */
     public function beforeAction($action){
-        //设置响应格式为商户接口json格式
-        Yii::$app->response->format = Macro::FORMAT_JSON;
-        Yii::$app->params['jsonFormatType'] = Macro::FORMAT_PAYMENT_GATEWAY_JSON;
-
         return parent::beforeAction($action);
     }
 
@@ -104,6 +100,7 @@ class OrderController extends BaseServerSignedRequestController
                 'trade_time'=>$order->paid_at,
                 'order_time'=>$order->merchant_order_time,
                 'order_amount'=>bcadd($order->amount,0,2),
+                'paid_amount'=>bcadd($order->paid_amount,0,2),
                 'trade_status'=>$status,
             ];
             $ret = Macro::SUCCESS;

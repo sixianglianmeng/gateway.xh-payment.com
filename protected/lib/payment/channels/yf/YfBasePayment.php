@@ -91,7 +91,7 @@ class YfBasePayment extends BasePayment
             $ret['data']['amount'] = $data['r3_Amt'];
             $ret['status'] = Macro::SUCCESS;
             $ret['data']['channel_order_no'] = $data['r2_TrxId'];
-            $ret['data']['trade_status'] = Order::STATUS_NOTPAY;
+            $ret['data']['trade_status'] = Order::STATUS_PAID;
         }
 
         return $ret;

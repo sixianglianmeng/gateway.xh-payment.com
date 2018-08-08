@@ -88,7 +88,7 @@ class HxBasePayment extends BasePayment
             $ret['amount'] = $data['order_amount'];
             $ret['status'] = Macro::SUCCESS;
             $ret['channel_order_no'] = $data['trade_no'];
-            $ret['data']['trade_status'] = Order::STATUS_NOTPAY;
+            $ret['data']['trade_status'] = Order::STATUS_PAID;
         }
         elseif(!empty($request['trade_status']) && $request['trade_status'] == self::TRADE_STATUS_FAIL) {
             $ret['status'] =  Macro::FAIL;

@@ -87,7 +87,7 @@ class YsBasePayment extends BasePayment
             $ret['data']['amount'] = $data['total_amount'];
             $ret['status'] = Macro::SUCCESS;
             $ret['data']['channel_order_no'] = $data['trade_no'];
-            $ret['data']['trade_status'] = Order::STATUS_NOTPAY;
+            $ret['data']['trade_status'] = Order::STATUS_PAID;
         }
 
         return $ret;

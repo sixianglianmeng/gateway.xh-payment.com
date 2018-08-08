@@ -71,7 +71,7 @@ class BasePayment
             'order_no'         => '',
             //订单实际支付金额
             'amount'           => 0,
-            'trade_status'     => Macro::FAIL,//业务状态，需转换为Order表状态,
+            'trade_status'     => Order::STATUS_NOTPAY,//业务状态，需转换为Order表状态,
             //充值结果描述
             'msg'              => 'fail',
             //三方订单流水号
@@ -302,7 +302,7 @@ class BasePayment
     {
         try {
             $client   = new \GuzzleHttp\Client();
-            $response = $client->get($url);
+            $response = $client->get($url,['timeout' => 10]);
             $httpCode = $response->getStatusCode();
             $body     = (string)$response->getBody();
         } catch (\Exception $e) {
@@ -327,17 +327,17 @@ class BasePayment
     public static function buildForm(array $params, string $url, bool $autoSubmit = true, $method = 'post', $buttonName = '确定')
     {
 
-        $sHtml = "<form id='paymentForm' name='paymentForm' action='" . $url . "' method='" . $method . "'>";
+        $sHtml = "<form id='paymentForm' name='paymentForm' action='" . $url . "' method='" . $method . "'>\n";
 
         foreach ($params as $key => $value) {
-            $sHtml .= "<input type='hidden' name='" . $key . "' value='" . $value . "'/>";
+            $sHtml .= "<input type='hidden' name='" . $key . "' value='" . $value . "'/>\n";
         }
 
         if ($autoSubmit) {
-            $sHtml = $sHtml . "<input type='submit' value='" . $buttonName . "' style='display:none;'></form>";
-            $sHtml = $sHtml . "<script>document.forms['paymentForm'].submit();</script>";
+            $sHtml = $sHtml . "<input type='submit' value='" . $buttonName . "' style='display:none;'>\n</form>\n";
+            $sHtml = $sHtml . "<script>document.forms['paymentForm'].submit();</script>\n";
         } else {
-            $sHtml = $sHtml . "<input type='submit' value='" . $buttonName . "' /></form>";
+            $sHtml = $sHtml . "<input type='submit' value='" . $buttonName . "' />\n</form>\n";
         }
 
         return $sHtml;
@@ -460,6 +460,14 @@ class BasePayment
     }
 
     /**
+     * 银行转账
+     */
+    public function bankTransfer()
+    {
+        throw new OperationFailureException("通道程序暂不支持此支付方式:" . $this->getCallChildClassName() . ':' . __FUNCTION__, Macro::ERR_UNKNOWN);
+    }
+
+    /**
      * 微信扫码支付
      */
     public function wechatQr()
@@ -576,6 +584,22 @@ class BasePayment
      * 京东扫码支付
      */
     public function jdQr()
+    {
+        throw new OperationFailureException("通道程序暂不支持此支付方式:" . $this->getCallChildClassName() . ':' . __FUNCTION__, Macro::ERR_UNKNOWN);
+    }
+
+    /**
+     * 支付宝转账
+     */
+    public function alipayTransfer()
+    {
+        throw new OperationFailureException("通道程序暂不支持此支付方式:" . $this->getCallChildClassName() . ':' . __FUNCTION__, Macro::ERR_UNKNOWN);
+    }
+
+    /**
+     * 微信转账
+     */
+    public function wechatTransfer()
     {
         throw new OperationFailureException("通道程序暂不支持此支付方式:" . $this->getCallChildClassName() . ':' . __FUNCTION__, Macro::ERR_UNKNOWN);
     }

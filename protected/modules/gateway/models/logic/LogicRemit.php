@@ -364,6 +364,7 @@ class LogicRemit
                 $ret = $payment->remit();
             }catch (\Exception $e){
                 $ret = BasePayment::REMIT_RESULT;
+                $ret['status'] = Macro::INTERNAL_SERVER_ERROR;
                 $ret['message'] = $e->getMessage();
             }
 
@@ -383,6 +384,8 @@ class LogicRemit
                     case  Remit::BANK_STATUS_FAIL:
                         $remit->status = Remit::STATUS_NOT_REFUND;
                         $remit->bank_status =  Remit::BANK_STATUS_FAIL;
+                        $remit->bank_ret.date('Ymd H:i:s').'银行提交失败:'.($ret['message']??'上游无返回');
+                        $remit->fail_msg = date('Ymd H:i:s').'银行提交失败:'.($ret['message']??'上游无返回');
                         break;
                     default:
                         throw new OperationFailureException('错误的银行返回值:'.$remit->order_no.' '.$ret['data']['bank_status']);
@@ -393,15 +396,19 @@ class LogicRemit
                     $remit->channel_order_no = $ret['data']['channel_order_no'];
                 }
 
-                $remit->bank_ret = $remit->bank_ret.date('Ymd H:i:s')." 已提交到银行\n";
+                if($remit->bank_status != Remit::BANK_STATUS_FAIL){
+                    $remit->bank_ret = $remit->bank_ret.date('Ymd H:i:s')." 已提交到银行\n";
+                }
             }
-            //提交失败暂不处理,记录失败原因
+            //提交失败订单标记为失败未退款，银行状态为失败
             else{
-                $remit->bank_ret = $remit->bank_ret.date('Ymd H:i:s').' 银行提交失败，请手工处理('.($ret['message']??'').")\n";
+                $remit->status = Remit::STATUS_NOT_REFUND;
+                $remit->bank_status =  Remit::BANK_STATUS_FAIL;
+                $remit->bank_ret = $remit->bank_ret.date('Ymd H:i:s').' 银行提交失败，请手工处理('.($ret['message']??'上游无返回').")\n";
                 if($ret['message'] && strpos(strtolower($ret['message']),'curl')!=='false'){
                     $ret['message'] = '网络超时错误';
                 }
-                $remit->fail_msg = '银行提交失败:'.($ret['message']??'');
+                $remit->fail_msg = '银行提交失败:'.($ret['message']??'上游无返回');
             }
 
             $remit->save();
@@ -483,9 +490,14 @@ class LogicRemit
                         if(!empty($remitRet['data']['amount'])
                             && bccomp($remitRet['data']['amount'],$remitRet['data']['remit']->amount,2)!==0
                         ){
-                            $remitRet['data']['remit']->status = Remit::STATUS_NOT_REFUND;
-                            $remitRet['data']['remit']->bank_status =  Remit::BANK_STATUS_FAIL;
-                            if($remitRet['message']) $remitRet['data']['remit']->bank_ret = date('Y-m-d H:i:s')." 实际出款金额({$remitRet['data']['amount']})与定单金额({$remitRet['data']['remit']->amount})不符合，请手工确认。\n";
+                            $remitRet['data']['remit']->status = Remit::STATUS_BANK_PROCESSING;//Remit::STATUS_NOT_REFUND;
+                            $remitRet['data']['remit']->bank_status =  Remit::BANK_STATUS_PROCESSING;//Remit::BANK_STATUS_FAIL;
+                            $msg = date('Y-m-d H:i:s')." 实际出款金额({$remitRet['data']['amount']})与订单金额({$remitRet['data']['remit']->amount})不符合，请手工确认。\n";
+                            Yii::error($remitRet['data']['remit']->order_no.' '.$msg);
+                            if(strpos($remitRet['data']['remit']->fail_msg,"实际出款金额({$remitRet['data']['amount']})与订单金额")===false){
+                                $remitRet['data']['remit']->fail_msg .= $msg;
+                                $remitRet['data']['remit']->bank_ret .= $msg;
+                            }
                         }else{
                             $remitRet['data']['remit']->status = Remit::STATUS_SUCCESS;
                             $remitRet['data']['remit']->bank_status =  Remit::BANK_STATUS_SUCCESS;
@@ -594,7 +606,7 @@ class LogicRemit
         $remit->remit_at =  time();
         if($opUsername) $bak.=date('Ymd H:i:s')." {$opUsername} 设置为成功状态\n";
         $remit->bak .=$bak;
-        $remit->bank_ret.=date('Ymd H:i:s')."管理员设置为成功状态\n";
+        $remit->bank_ret.=date('Ymd H:i:s')." 管理员设置为成功状态\n";
         $remit->save();
 
         self::afterSuccess($remit);
@@ -749,13 +761,17 @@ class LogicRemit
 
         //接口日志埋点
         Yii::$app->params['apiRequestLog'] = [
-            'event_id'=>$statusArr['merchant_order_no']??$merchantOrderNo,
+            'event_id'=>$merchantOrderNo?$merchantOrderNo:$orderNo,
             'event_type'=> LogApiRequest::EVENT_TYPE_IN_REMIT_QUERY,
             'merchant_id'=>$merchant->id,
             'merchant_name'=>$merchant->username,
             'channel_account_id'=>Yii::$app->params['merchantPayment']->remitChannel->id,
             'channel_name'=>Yii::$app->params['merchantPayment']->remitChannel->channel_name,
         ];
+
+        if(!$statusArr){
+            throw new OperationFailureException("订单不存在('platform_order_no:{$orderNo}','merchant_order_no:{$merchantOrderNo}')");
+        }
 
         return $statusArr;
     }

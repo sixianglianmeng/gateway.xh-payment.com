@@ -105,7 +105,7 @@ class MbBasePayment extends BasePayment
         if (!empty($data['payStatus']) && $data['payStatus'] == '00' && $data['transAmount']>0) {
             $ret['data']['transAmount'] = $data['transAmount'];
             $ret['status'] = Macro::SUCCESS;
-            $ret['data']['trade_status'] = Order::STATUS_NOTPAY;
+            $ret['data']['trade_status'] = Order::STATUS_PAID;
         }
         return $ret;
     }

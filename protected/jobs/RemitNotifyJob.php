@@ -2,15 +2,14 @@
 namespace app\jobs;
 
 use app\components\Util;
-use app\modules\gateway\models\logic\LogicRemit;
 use Yii;
 use app\common\models\logic\LogicApiRequestLog;
 use app\common\models\model\LogApiRequest;
 use app\components\Macro;
-use app\modules\gateway\models\logic\LogicOrder;
+use app\modules\gateway\models\logic\LogicRemit;
 use yii\base\BaseObject;
 use yii\queue\RetryableJobInterface;
-use app\common\models\model\Order;
+use app\common\models\model\Remit;
 
 class RemitNotifyJob extends BaseObject implements RetryableJobInterface
 {
@@ -27,25 +26,8 @@ class RemitNotifyJob extends BaseObject implements RetryableJobInterface
         $url = $this->url;
         try{
 
-            $body = Util::curlPostJson($url,$this->data);
+            $body = Util::curlPostJson($url,$this->data, [], 10);
             $httpCode = 200;
-
-//            $client = new \GuzzleHttp\Client(
-//                [
-//                    'timeout' => 10,
-//                    'defaults' => [
-//                        'verify' => false
-//                    ]
-//                ]
-//            );
-//            $response = $client->request('POST', $url, [
-//                'timeout' => 10,
-//                'json' => json_encode($this->data,JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE),
-//            ]);
-////            $response = $client->get($url);
-//            $httpCode = $response->getStatusCode();
-//            $body = (string)$response->getBody();
-
         }catch (\Exception $e){
             $httpCode = $e->getCode();
             $body = $e->getMessage();
@@ -60,12 +42,12 @@ class RemitNotifyJob extends BaseObject implements RetryableJobInterface
         Yii::$app->params['apiRequestLog']['event_type']=LogApiRequest::EVENT_TYPE_OUT_REMIT_NOTIFY;
         LogicApiRequestLog::outLog($url, 'POST', $body, $httpCode, $costTime, $this->data);
 
-        $noticeOk = Order::NOTICE_STATUS_NONE;
+        $noticeOk = Remit::NOTICE_STATUS_NONE;
         $bodyFiltered = str_replace(['"',"'"],'',strtolower($body));
         if($bodyFiltered=='success'){
-            $noticeOk = Order::NOTICE_STATUS_SUCCESS;
+            $noticeOk = Remit::NOTICE_STATUS_SUCCESS;
         }else{
-            $noticeOk = Order::NOTICE_STATUS_FAIL;
+            $noticeOk = Remit::NOTICE_STATUS_FAIL;
         }
         LogicRemit::updateNotifyResult($this->orderNo,$noticeOk,$body);
 

@@ -107,7 +107,7 @@ class MfBasePayment extends BasePayment
         ) {
             $ret['data']['amount'] = $data['amount'];
             $ret['status'] = Macro::SUCCESS;
-            $ret['data']['trade_status'] = Order::STATUS_NOTPAY;
+            $ret['data']['trade_status'] = Order::STATUS_PAID;
         }
         return $ret;
     }
@@ -372,15 +372,18 @@ class MfBasePayment extends BasePayment
         $params['sign'] = self::md5Sign($signParams, trim($this->paymentConfig['key']));
 
         $requestUrl = $this->paymentConfig['gateway_base_uri'].'/api/withdrawal';
-        $resTxt = self::post($requestUrl, $params);
+        $resTxt = self::post($requestUrl, $params,[],20);
         LogicApiRequestLog::outLog($requestUrl, 'POST', $resTxt, 200,0, $params);
 
         Yii::info('remit to bank raw result: '.$this->remit['order_no'].' '.$resTxt);
 
         if (!empty($resTxt)) {
             $res = json_decode($resTxt, true);
-            $localSign = self::md5Sign($res,trim($this->paymentConfig['key']));
-            Yii::info($this->remit['order_no'].'remit ret localSign '.$localSign.' remote sign:'.$res['sign']);
+            if($res){
+                $localSign = self::md5Sign($res,trim($this->paymentConfig['key']));
+                Yii::info($this->remit['order_no'].'remit ret localSign '.$localSign.' remote sign:'.$res['sign']);
+            }
+
             if (
                 isset($res['code']) && $res['code'] == '1000'
                 && isset($res['status'])

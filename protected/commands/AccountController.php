@@ -22,8 +22,9 @@ class AccountController extends BaseConsoleCommand
      *
      * ./protected/yii account/reset-quota
      */
-    public function actionResetQuota(){
-        UserPaymentInfo::updateAll(['remit_today' => 0,'recharge_today' => 0]);
-        ChannelAccount::updateAll(['remit_today' => 0,'recharge_today' => 0]);
+    public function actionResetQuota()
+    {
+        UserPaymentInfo::updateAll(['remit_today' => 0, 'recharge_today' => 0]);
+        ChannelAccount::updateAll(['remit_today' => 0, 'recharge_today' => 0]);
     }
 }

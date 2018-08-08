@@ -236,8 +236,8 @@ class LogicOrder
             throw new InValidRequestException('支付回调:支付结果对象为空:'.$noticeResult['data']['order_no']??'',Macro::ERR_PAYMENT_NOTICE_RESULT_OBJECT);
         }
 
-        if(empty($noticeResult['data']['amount'])){
-            throw new InValidRequestException('支付回调:回调金额为0:'.$noticeResult['data']['order_no']??'',Macro::ERR_PAYMENT_NOTICE_RESULT_OBJECT);
+        if(empty($noticeResult['data']['trade_status'])){
+            throw new InValidRequestException('支付回调:trade_status为空:'.$noticeResult['data']['order_no']??'',Macro::ERR_PAYMENT_NOTICE_RESULT_OBJECT);
         }
 
         if(!LogicChannelAccount::checkChannelIp($noticeResult['data']['order']->channel)){
@@ -260,10 +260,18 @@ class LogicOrder
             'channel_name'=>$order->channelAccount->channel_name,
         ];
 
+
+        if(empty($noticeResult['data']['amount'])){
+            Yii::info('支付回调:回调金额为0:'.$noticeResult['data']['order_no']??'',Macro::ERR_PAYMENT_NOTICE_RESULT_OBJECT);
+            return $order;
+        }
+
         //未处理
         if( $noticeResult['status'] === Macro::SUCCESS
             && $order->status !== Order::STATUS_PAID
             && $order->status !== Order::STATUS_SETTLEMENT
+            && $noticeResult['data']['amount'] > 0
+            && $noticeResult['data']['trade_status'] == Order::STATUS_PAID
             && bccomp($order->amount, $noticeResult['data']['amount'], 2)!==1
         ){
             self::paySuccess($order,$noticeResult['data']['amount'],$noticeResult['data']['channel_order_no']);
@@ -275,11 +283,14 @@ class LogicOrder
         //订单状态成功但是金额小于订单金额
         elseif($noticeResult['status'] === Macro::SUCCESS
             && bccomp($order->amount, $noticeResult['data']['amount'], 2)===1
+            && $noticeResult['data']['trade_status'] == Order::STATUS_PAID
         ){
             $order = self::payFail($order, "充值回调金额({$noticeResult['data']['amount']})与订单金额({$order->amount})不一致!");
         }
         //订单失败
-        elseif( $noticeResult['status'] === Macro::FAIL){
+        elseif( $noticeResult['status'] === Macro::SUCCESS
+            && $noticeResult['data']['trade_status'] == Order::STATUS_FAIL
+        ){
             $order = self::payFail($order,$noticeResult['msg']);
             Yii::info(__FUNCTION__.' order not paid: '.$noticeResult['data']['order_no']);
         }
@@ -711,11 +722,12 @@ class LogicOrder
         //接口日志埋点
         Yii::$app->params['apiRequestLog'] = [
             'event_id'=>$order->merchant_order_no,
+            'event_id'=>$merchantOrderNo?$merchantOrderNo:$orderNo,
             'event_type'=>LogApiRequest::EVENT_TYPE_IN_RECHARGE_QUERY,
             'merchant_id'=>$merchant->id,
             'merchant_name'=>$merchant->username,
-            'channel_account_id'=>$order->channel_merchant_id,
-            'channel_name'=>$order->channelAccount->channel_name,
+            'channel_account_id'=>$order?$order->channel_merchant_id:0,
+            'channel_name'=>$order?$order->channelAccount->channel_name:'',
         ];
 
         if(!$order){

@@ -28,10 +28,13 @@ class ApayBasePayment extends BasePayment
     const  PAY_TYPE_MAPS = [
         Channel::METHOD_WECHAT_QR   => 'WECHAT',
         Channel::METHOD_ALIPAY_QR   => 'ALIPAY',
+        Channel::METHOD_ALIPAY_H5   => 'ALIPAY',
         Channel::METHOD_QQ_QR       => 'QQ',
         Channel::METHOD_UNIONPAY_QR => 'UNION_QR',
         Channel::METHOD_JD_QR => 'JD',
         Channel::METHOD_BANK_QUICK => 'QUICK_PAY',
+        Channel::METHOD_BANK_TRANSFER => 'TRANSFER',
+        Channel::METHOD_ALIPAY_TRANSFER=> 'ALIPAY_TRANSFER',
     ];
 
     public function __construct(...$arguments)
@@ -81,6 +84,10 @@ class ApayBasePayment extends BasePayment
             throw new SignatureNotMatchException("签名验证失败");
         }
 
+        if($data['status'] != '200'){
+            throw new SignatureNotMatchException("订单状态错误");
+        }
+
         $ret = self::RECHARGE_NOTIFY_RESULT;
         $ret['data']['order'] = $order;
         $ret['data']['order_no'] = $order->order_no;
@@ -88,7 +95,7 @@ class ApayBasePayment extends BasePayment
         if (!empty($data['status']) && $data['status'] == '200'
             && $data['paid_amount']>0
         ) {
-            $ret['data']['trade_status'] = Order::STATUS_NOTPAY;
+            $ret['data']['trade_status'] = Order::STATUS_PAID;
             $ret['data']['amount'] = $data['paid_amount'];
             $ret['data']['channel_order_no'] = $data['merchant_billno'];
             $ret['status'] = Macro::SUCCESS;
@@ -204,6 +211,14 @@ class ApayBasePayment extends BasePayment
     }
 
     /**
+     * 支付宝h5支付
+     */
+    public function alipayH5()
+    {
+        return $this->wechatQr();
+    }
+
+    /**
      * QQ扫码支付
      */
     public function qqQr()
@@ -219,6 +234,21 @@ class ApayBasePayment extends BasePayment
         return $this->wechatQr();
     }
 
+    /**
+     * 银行转账
+     */
+    public function bankTransfer()
+    {
+        return $this->wechatQr();
+    }
+
+    /**
+     * 支付宝转账
+     */
+    public function alipayTransfer()
+    {
+        return $this->wechatQr();
+    }
 
     /**
      * 收款订单状态查询
@@ -336,7 +366,6 @@ class ApayBasePayment extends BasePayment
                     $ret['data']['bank_status'] = Remit::BANK_STATUS_PROCESSING;
                 }elseif($res['data']['status'] == '200'){
                     $ret['data']['bank_status'] = Remit::BANK_STATUS_SUCCESS;
-                    $ret['message'] = "出款提交失败({$resTxt})";
                 }elseif($res['data']['status'] == '300'){
                     $ret['data']['bank_status'] = Remit::BANK_STATUS_FAIL;
                     $ret['message'] = "出款提交失败({$resTxt})";

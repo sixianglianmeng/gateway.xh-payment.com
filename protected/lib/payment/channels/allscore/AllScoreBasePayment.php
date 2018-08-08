@@ -173,7 +173,7 @@ class AllScoreBasePayment extends BasePayment
                 $ret['data']['order'] = $order;
                 $ret['data']['order_no'] = $order->order_no;
                 $ret['data']['amount'] = $request['transAmt'];
-                $ret['data']['trade_status'] = Order::STATUS_NOTPAY;
+                $ret['data']['trade_status'] = Order::STATUS_PAID;
                 $ret['data']['channel_order_no'] = $request['localOrderId'];
             }
             elseif(!empty($request['trade_status']) && $request['trade_status'] == self::TRADE_STATUS_FAIL) {

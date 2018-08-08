@@ -1,6 +1,6 @@
 <?php
 
-namespace app\lib\payment\channels\ht;
+namespace app\lib\payment\channels\sf;
 
 use app\common\exceptions\OperationFailureException;
 use app\common\models\logic\LogicApiRequestLog;
@@ -17,7 +17,13 @@ use Symfony\Component\DomCrawler\Crawler;
 use app\common\models\model\Order;
 use Yii;
 
-class HtBasePayment extends BasePayment
+/**
+ * 速付
+ *
+ * Class SfBasePayment
+ * @package app\lib\payment\channels\sf
+ */
+class SfBasePayment extends BasePayment
 {
     const  TRADE_STATUS_SUCCESS = 'success';
     const  TRADE_STATUS_PROCESSING = 'paying';
@@ -30,7 +36,7 @@ class HtBasePayment extends BasePayment
         Channel::METHOD_QQ_QR=>5,
         Channel::METHOD_UNIONPAY_QR=>7,
         Channel::METHOD_WECHAT_H5=>10,
-        Channel::METHOD_ALIPAY_H5=>11,
+        Channel::METHOD_ALIPAY_H5=>3,
         Channel::METHOD_QQ_H5=>12,
         Channel::METHOD_BANK_QUICK=>13,
         Channel::METHOD_JD_H5=>14,
@@ -134,7 +140,7 @@ class HtBasePayment extends BasePayment
     {
 
         $bankCode = BankCodes::getChannelBankCode($this->order['channel_id'],$this->order['bank_code']);
-        if(empty($bankCode)){
+        if($this->order['pay_method_code']==Channel::METHOD_WEBBANK && empty($bankCode)){
             throw new OperationFailureException("银行代码配置错误:".$this->order['channel_id'].':'.$this->order['bank_code'],Macro::ERR_PAYMENT_BANK_CODE);
         }
 
@@ -162,14 +168,11 @@ class HtBasePayment extends BasePayment
         $getUrl = $requestUrl.'?'.http_build_query($params);
 
         //是否跳过汇通
-        $skipHt = true;
+        $skipHt = false;
         $form = '';
         if($skipHt){
             //跳过上游第一个地址,达到隐藏上游目的.
-            //        $htmlTxt = file_get_contents($getUrl);
             $htmlTxt = self::httpGet($getUrl);
-            //        $htmlTxt = '<form id="allscoresubmit" name="allscoresubmit" action="https://paymenta.allscore.com/olgateway/serviceDirect.htm" method="post"><input type="hidden"
-            //name="subject" value="在线支付"/><input type="hidden" name="channel" value="B2C"/><input type="hidden" name="sign" value="TWZSeUttekFsYXZGRDJBYkNhVHZCVXg2ZFFTaklWYm9FKzFPSDBGY3JLZFk1SmVvL2cyNTlJMzg5ZDQzNGRqQ2h2MTdFUXdJcURPdWk3N2lDZVNVMmh5TmJBM1M0L3F0V1lreGIwL3hmTVN0ME5EZ1VRdzJrdFdwUnd1dE5pYy9XQThJZmtoYUxjYWdiSXUvRzNTMDkrWURjWnppUyt3ZkRrV1VnY2FZeFVjPQ=="/><input type="hidden" name="body" value="在线支付"/><input type="hidden" name="defaultBank" value="CMB"/><input type="hidden" name="merchantId" value="001018050404891"/><input type="hidden" name="service" value="directPay"/><input type="hidden" name="payMethod" value="bankPay"/><input type="hidden" name="outOrderId" value="1090520601796603"/><input type="hidden" name="transAmt" value="10.00"/><input type="hidden" name="cardAttr" value="01"/><input type="hidden" name="signType" value="RSA"/><input type="hidden" name="notifyUrl" value="https://sync.huitongvip.com/shangyinxin/notify_url.html"/><input type="hidden" name="inputCharset" value="UTF-8"/><input type="hidden" name="detailUrl" value=""/><input type="hidden" name="returnUrl" value="https://api.huitongvip.com/shangyinxin/notify_page.html"/><input type="submit" value="确认" style="display:none;"></form><script>document.forms[\'allscoresubmit\'].submit();</script>';
 
             $crawler = new Crawler($htmlTxt);
             $jumpUrl = '';
@@ -183,26 +186,9 @@ class HtBasePayment extends BasePayment
                 $jumpParams[$field] = $input->getAttribute('value');
 
             }
-            Yii::info([$jumpUrl,$jumpParams]);
+//            Yii::info([$jumpUrl,$jumpParams]);
             if($jumpUrl && $jumpParams){
                 //第二跳
-//                $retTxt2 = self::post($jumpUrl,$jumpParams);
-//                //        $retTxt2 = "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\"> <html xmlns=\"http://www.w3.org/1999/xhtml\"> <head> <meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\"/> <title>网上支付系统</title> </head> <body> <body><form id = \"sform\" action=\"https://netpay.cmbchina.com/netpayment/BaseHttp.dll?PrePayC2?\" method=\"post\"><input type=\"hidden\" name=\"BranchID\" id=\"BranchID\" value=\"0010\"/><input type=\"hidden\" name=\"CoNo\" id=\"CoNo\" value=\"000254\"/><input type=\"hidden\" name=\"BillNo\" id=\"BillNo\" value=\"4204657401\"/><input type=\"hidden\" name=\"Amount\" id=\"Amount\" value=\"10.00\"/><input type=\"hidden\" name=\"Date\" id=\"Date\" value=\"20180601\"/><input type=\"hidden\" name=\"MerchantUrl\" id=\"MerchantUrl\" value=\"https://notice.allscore.com/ebank/cmb/pay/return\"/><input type=\"hidden\" name=\"MerchantPara\" id=\"MerchantPara\" value=\"\"/><input type=\"hidden\" name=\"MerchantCode\" id=\"MerchantCode\" value=\"|ApVquWqQM*mKe/BHWs7ZusA9jI/jw2CVpl8Bcv*weVMTPj9EfhM6bmPKcCaWKmdaMR3cqI8ZvamDl3g3GZjkG6Yysrt/lZQvVznw7zag9zN3hQa14p8Bnj*CBiFk7nkj8bge6FqWNz3H2tmgkZHbJUQxzz1wh6Yjq6rov6l825/h4uYAdA9Nf0SLT3Fj1fCMR0Bw*x8dYMlHQY8/Eebw9UDAEO373o*4fyM/7mdktAXwS8gMKLQB0toa4iSnbM6wNzbHhbptCjz1TxEz8CXcVr5OefvnTn1EN3bH6BdGahjdafLL18TM1KGgOc8cDimMXnbhsOI6neGaNK81eigzyjgI72XQvjduQAio/w==|5feddeb609c08f2ed7aa06ce00783a0d1d7e9f30\"/></form></body><script type=\"text/javascript\">document.getElementById(\"sform\").submit(); </script> </body> </html>";
-//
-//                $crawler = new Crawler($retTxt2);
-//                $jumpUrl = '';
-//                foreach ($crawler->filter('form') as $n){
-//                    $jumpUrl = $n->getAttribute('action');
-//                }
-//                $jumpParams = [];
-//                foreach ($crawler->filter('form > input') as $input) {
-//                    $field = $input->getAttribute('name');
-//                    if(!$field) continue;
-//                    $jumpParams[$field] = $input->getAttribute('value');
-//
-//                }
-//
-//                Yii::info([$jumpUrl,$jumpParams]);
 
                 $form = self::buildForm( $jumpParams, $jumpUrl);
             }
@@ -244,11 +230,9 @@ class HtBasePayment extends BasePayment
             'return_params'=>$this->order['order_no'],
         ];
         $params['sign'] = self::md5Sign($params,trim($this->paymentConfig['key']));
-
         $requestUrl = $this->paymentConfig['gateway_base_uri'].'/order.html';
         $resTxt = self::post($requestUrl,$params);
 
-        //"{"flag":"00","msg":"下单成功","orderId":"106030602907794","payType":"2","qrCodeUrl":"https://api.huitongvip.com/wf2/order.html?id=8a0c808663b537fd0163c03d4a8a2377","sign":"88d1b6ac0c708b386ab4a5af9f75574f","transId":"10218060219213554285555"}"
         $ret = self::RECHARGE_WEBBANK_RESULT;
         if (!empty($resTxt)) {
             $res = json_decode($resTxt, true);
@@ -323,7 +307,7 @@ class HtBasePayment extends BasePayment
      */
     public function alipayH5()
     {
-        return $this->wechatQr();
+        return $this->webBank();
     }
 
 
@@ -555,5 +539,33 @@ class HtBasePayment extends BasePayment
         }
 
         return ['url'=>$jumpUrl,'params'=>$jumpParams];
+    }
+
+    /**
+     *
+     * 获取参数排序md5签名
+     *
+     * @param array $params 要签名的参数数组
+     * @param string $signKey 签名密钥
+     *
+     * @return bool|string
+     */
+    public static function md5Sign(array $params, string $signKey)
+    {
+        unset($params['key']);
+
+        $signParams = [];
+        foreach ($params as $key => $value) {
+//            if ($value == '') continue;
+            $signParams[] = "$key=$value";
+        }
+
+        sort($signParams, SORT_STRING);
+        $strToSign = implode('&', $signParams);
+
+
+        $signStr = md5($strToSign . '&key=' . $signKey);
+        Yii::info('rsaSign string: '.$signStr.' raw: '.$strToSign);
+        return $signStr;
     }
 }

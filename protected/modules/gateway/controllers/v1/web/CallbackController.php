@@ -46,7 +46,10 @@ class CallbackController extends WebAppController
 
         $handleClass = "app\\lib\\payment\\channels\\".str_replace('/','\\',$channel->common_handle_class);
         $payment =  new $handleClass();
-        $noticeResult = $payment->parseNotifyRequest($this->allParams);
+        $channelRequestParams = $this->allParams;
+        //去掉附加的channelId参数，防止渠道签名校验变量污染
+        unset($channelRequestParams['channelId']);
+        $noticeResult = $payment->parseNotifyRequest($channelRequestParams);
 
         Yii::info("parseReturnRequest: {$channel->channel_code} ".\GuzzleHttp\json_encode($noticeResult));
 
@@ -82,7 +85,10 @@ class CallbackController extends WebAppController
 
         $handleClass = "app\\lib\\payment\\channels\\".str_replace('/','\\',$channel->common_handle_class);
         $payment =  new $handleClass();
-        $noticeResult = $payment->parseReturnRequest($this->allParams);
+        $channelRequestParams = $this->allParams;
+        //去掉附加的channelId参数，防止渠道签名校验变量污染
+        unset($channelRequestParams['channelId']);
+        $noticeResult = $payment->parseReturnRequest($channelRequestParams);
 
         Yii::info("parseReturnRequest: {$channel->channel_code} ".\GuzzleHttp\json_encode($noticeResult));
 
