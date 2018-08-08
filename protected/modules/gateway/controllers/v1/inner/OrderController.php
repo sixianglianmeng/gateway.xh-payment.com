@@ -34,11 +34,13 @@ class OrderController extends BaseInnerController
         $request['order_amount'] = ControllerParameterValidator::getRequestParam($this->allParams, 'amount', null,Macro::CONST_PARAM_TYPE_DECIMAL,'充值金额格式错误');
         $request['pay_type'] = ControllerParameterValidator::getRequestParam($this->allParams, 'pay_type', null,Macro::CONST_PARAM_TYPE_ALNUM,'充值渠道格式错误');
         $request['bank_code'] = ControllerParameterValidator::getRequestParam($this->allParams, 'bank_code', '',Macro::CONST_PARAM_TYPE_INT,'银行代码格式错误');
+        $type = ControllerParameterValidator::getRequestParam($this->allParams, 'type', 0,Macro::CONST_PARAM_TYPE_INT,'订单类型错误');
 
         $merchant = User::findOne(['username'=>$payeeName]);
         if(empty($merchant)){
             Util::throwException(Macro::ERR_USER_NOT_FOUND);
         }
+
         $payMethod = $merchant->paymentInfo->getPayMethodById($request['pay_type']);
         if(empty($payMethod)){
             Util::throwException(Macro::ERR_PAYMENT_TYPE_NOT_ALLOWED);
@@ -49,6 +51,7 @@ class OrderController extends BaseInnerController
         $request['op_username'] = $this->allParams['op_username'] ?? '';
         $request['client_ip']   = $this->allParams['op_ip'] ?? '';
         $request['order_time']  = time();
+        $request['type']  = $type;
         //生成订单
         $order = LogicOrder::addOrder($request, $merchant, $payMethod);
 

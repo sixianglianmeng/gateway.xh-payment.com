@@ -1,5 +1,5 @@
 <?php
-include("./project.php");
+include(__DIR__."/project.php");
 
 !defined('WWW_DIR') && define('WWW_DIR', realpath(__DIR__ . '/../../'));
 !defined('RUNTIME_DIR') && define('RUNTIME_DIR', WWW_DIR . '/runtime');

@@ -6,6 +6,7 @@ namespace app\modules\gateway\models\logic;
 use app\common\exceptions\InValidRequestException;
 use app\common\exceptions\OperationFailureException;
 use app\common\models\logic\LogicUser;
+use app\common\models\model\AccountOpenFee;
 use app\common\models\model\ChannelAccount;
 use app\common\models\model\ChannelAccountRechargeMethod;
 use app\common\models\model\Financial;
@@ -47,6 +48,7 @@ class LogicOrder
 //            return $hasOrder;
         }
 
+        $orderData['type']                 = $request['type']??1;
         $orderData['pay_method_code']      = $request['pay_type'];
         $orderData['amount']               = $request['order_amount'];
         $orderData['notify_url']           = $request['notify_url'] ?? '';
@@ -370,10 +372,23 @@ class LogicOrder
                 //D0,T0结算，自动进行结算
                 //或者系统启用自动结算
                 if(
-                    SiteConfig::cacheGetContent('check_remit_bank_no') &&
+                    SiteConfig::cacheGetContent('recharge_auto_settlement') &&
                     ($order->settlement_at<=time() && substr($order->settlement_type,1)=='0')
                 ){
                     self::settlement($order);
+                }
+
+                //开户费订单处理
+                if($order->type == Order::TYPE_ACCOUNT_OPEN){
+                    $accountOpenInfo = AccountOpenFee::findOne(['user_id'=>$order->merchant_id,'order_no'=>$order->order_no]);
+                    if(!$accountOpenInfo){
+                        Yii::error("未找到商户开户费订单对应用户:{$order->merchant_id}");
+                    }else{
+                        $accountOpenInfo->status = AccountOpenFee::STATUS_PAID;
+                        $accountOpenInfo->paid_at = time();
+                        $accountOpenInfo->fee_paid = $order->paid_amount;
+                        $accountOpenInfo->save();
+                    }
                 }
 
                 $transaction->commit();
