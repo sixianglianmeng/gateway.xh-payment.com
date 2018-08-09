@@ -4,11 +4,12 @@
  * 支付平台接口demo
  *
  * @version 1.2
+ * @require php>=7.0。如需支持PHP5.4+，请取消所有方法中的参数类型声明
  */
 class AwesomePaymentClientClient
 {
     //支付服务器地址
-    public $apiBaseUri = 'http://gateway.payment.com';
+    public $apiBaseUri = 'http://gateway.gd95516.com';
     //商户代码
     public $merchantCode = '';
     //商户密钥
@@ -34,17 +35,10 @@ class AwesomePaymentClientClient
     public static function testAll()
     {
 
-        $merchantCode = '10051';
-        $merchantKey = '3bf0fb6b-f42a-327f-7329-f194e8cf5b42';
+        $merchantCode = '303571';
+        $merchantKey = '3bf0sb6b-f4ka-32af-7329-f19de8cd5b42';
 
-//xh-dev
-        $apiBaseUri = 'http://dev.gateway.xh-payment.com';
-
-//xh-prod
-//$merchantCode = '3011641';
-//$merchantKey = 'c791732c-e24f-0cbe-a829-fb895bd10c83';
-//$apiBaseUri = 'https://gateway.gd95516.com';
-
+        $apiBaseUri = 'https://gateway.gd95516.com';
 
         $orderNo = date('YmdHis').mt_rand(10000,99999);
         $api = new AwesomePaymentClient($merchantCode, $merchantKey, $apiBaseUri);
@@ -67,13 +61,6 @@ class AwesomePaymentClientClient
         //余额查询
         AwesomePaymentClient::mlog("余额查询");
         $ret = $api->balance();
-
-//充值异步回调
-//请求参数：{"merchant_code":10051,"order_no":"2018070221470430896","order_amount":"0.00","order_time":1530539225,"return_params":"","trade_no":"118070221470556769","trade_time":0,"trade_status":"paying","notify_type":"back_notify","sign":"7db18cddd17680afc0fc4f41ad5adf61"}
-//参数排序后字符串：
-//merchant_code=10051&notify_type=back_notify&order_amount=0.00&order_no=2018070221470430896&order_time=1530539225&trade_no=118070221470556769&trade_status=paying
-//加上key后字符串：merchant_code=10051&notify_type=back_notify&order_amount=0.00&order_no=2018070221470430896&order_time=1530539225&trade_no=118070221470556769&trade_status=paying&key=3bf0fb6b-f42a-327f-7329-f194e8cf5b42
-//签名值：db18cddd17680afc0fc4f41ad5adf61
     }
 
     /**
