@@ -49,6 +49,7 @@ class LogicOrder
         }
 
         $orderData['type']                 = $request['type']??1;
+        $orderData['bak']                  = $request['bak']."\n"??'';
         $orderData['pay_method_code']      = $request['pay_type'];
         $orderData['amount']               = $request['order_amount'];
         $orderData['notify_url']           = $request['notify_url'] ?? '';
@@ -77,6 +78,9 @@ class LogicOrder
         $orderData['expect_settlement_at'] = MerchantRechargeMethod::getExpectSettlementTime($orderData['settlement_type']);
         $orderData['settlement_at']        = 0;
         $channelAccount                    = $rechargeMethod->channelAccount;
+        if(empty($channelAccount)){
+            throw new OperationFailureException("商户支付方式({$rechargeMethod->method_name})未配置渠道:{$rechargeMethod->channel_account_id}");
+        }
         $orderData['channel_merchant_id']  = $channelAccount->merchant_id;
         $orderData['channel_app_id']       = $channelAccount->app_id;
 
@@ -137,7 +141,6 @@ class LogicOrder
 
         $newOrder = new Order();
         $newOrder->setAttributes($orderData, false);
-        self::beforeAddOrder($newOrder, $merchant, $rechargeMethod->channelAccount, $rechargeMethod, $channelAccountRechargeConfig);
         $newOrder->save();
 
         //接口日志埋点
@@ -150,6 +153,12 @@ class LogicOrder
                 'channel_account_id'=>$rechargeMethod->id,
                 'channel_name'=>$rechargeMethod->channel_account_name,
             ];
+        }
+
+        try{
+            self::beforeAddOrder($newOrder, $merchant, $rechargeMethod->channelAccount, $rechargeMethod, $channelAccountRechargeConfig);
+        }catch (\Exception $e){
+            throw new OperationFailureException($e->getCode(),$e->getMessage());
         }
 
         return $newOrder;
@@ -379,7 +388,7 @@ class LogicOrder
                 }
 
                 //开户费订单处理
-                if($order->type == Order::TYPE_ACCOUNT_OPEN){
+                if(isset($order->type) && $order->type == Order::TYPE_ACCOUNT_OPEN){
                     $accountOpenInfo = AccountOpenFee::findOne(['user_id'=>$order->merchant_id,'order_no'=>$order->order_no]);
                     if(!$accountOpenInfo){
                         Yii::error("未找到商户开户费订单对应用户:{$order->merchant_id}");
