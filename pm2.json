@@ -55,7 +55,8 @@
       "script": "./protected/yii",
       "exec_interpreter": "php",
       "exec_mode": "fork",
-      "max_memory_restart": "256M"
+      "max_memory_restart": "256M",
+      "instances": 4
     },
     {
       "name": "remit-query-queue",
@@ -63,7 +64,8 @@
       "script": "./protected/yii",
       "exec_interpreter": "php",
       "exec_mode": "fork",
-      "max_memory_restart": "256M"
+      "max_memory_restart": "256M",
+      "instances": 4
     },
     {
       "name": "remit-bank-commit-queue",
@@ -71,7 +73,8 @@
       "script": "./protected/yii",
       "exec_interpreter": "php",
       "exec_mode": "fork",
-      "max_memory_restart": "256M"
+      "max_memory_restart": "256M",
+      "instances": 4
     },
     {
       "name": "remit-notify-queue-consumer",
@@ -79,7 +82,8 @@
       "script": "./protected/yii",
       "exec_interpreter": "php",
       "exec_mode": "fork",
-      "max_memory_restart": "256M"
+      "max_memory_restart": "256M",
+      "instances": 4
     }
   ]
 }
