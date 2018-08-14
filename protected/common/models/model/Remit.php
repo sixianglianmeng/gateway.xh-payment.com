@@ -80,6 +80,16 @@ class Remit extends BaseModel
         self::NOTICE_STATUS_FAIL=>'通知失败',
     ];
 
+    //订单类型
+    const TYPE_API = 1;
+    const TYPE_BACKEND = 2;
+    //订单类型 id=>描述
+    const ARR_TYPES = [
+        self::TYPE_API=>'API接口订单',
+        self::TYPE_BACKEND=>'后台订单',
+    ];
+
+
     /**
      * @inheritdoc
      */

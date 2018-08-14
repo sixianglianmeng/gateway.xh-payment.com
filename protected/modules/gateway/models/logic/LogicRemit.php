@@ -60,6 +60,7 @@ class LogicRemit
         }
 
         $remitData['amount']               = $request['order_amount'];
+        $remitData['type']                 = $request['type'] ??  Remit::TYPE_API;
         $remitData['bat_order_no']         = $request['bat_order_no'] ?? '';
         $remitData['bat_index']            = $request['bat_index'] ?? 0;
         $remitData['bat_count']            = $request['bat_count'] ?? 0;
@@ -301,7 +302,10 @@ class LogicRemit
 
                 $remit->status = Remit::STATUS_DEDUCT;
 
-                if ($remit->userPaymentInfo->allow_api_fast_remit == UserPaymentInfo::ALLOW_API_FAST_REMIT_YES) {
+                if ($remit->type == Remit::TYPE_API && $remit->amount <= $remit->userPaymentInfo->allow_api_fast_remit) {
+                    $remit->status = Remit::STATUS_CHECKED;
+                }
+                if ($remit->type == Remit::TYPE_BACKEND && $remit->amount <= $remit->userPaymentInfo->allow_manual_fast_remit) {
                     $remit->status = Remit::STATUS_CHECKED;
                 }
                 $remit->bank_ret = $remit->bank_ret.date('Ymd H:i:s')." 账户已扣款\n";
