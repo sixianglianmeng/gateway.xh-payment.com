@@ -439,8 +439,8 @@ class LogicOrder
         $transaction = $db->beginTransaction();
         try {
 
-            $logicUser->changeUserBalance($order->paid_amount, Financial::EVENT_TYPE_RECHARGE, $order->order_no, $order->amount, Yii::$app->request->userIP);
-
+            $user = $logicUser->changeUserBalance($order->paid_amount, Financial::EVENT_TYPE_RECHARGE, $order->order_no, $order->amount, Yii::$app->request->userIP);
+            $logicUser = new LogicUser($user);
             //需扣除充值手续费
             $logicUser->changeUserBalance(0-$order->fee_amount, Financial::EVENT_TYPE_RECHARGE_FEE, $order->order_no, $order->amount,
                 Yii::$app->request->userIP);
