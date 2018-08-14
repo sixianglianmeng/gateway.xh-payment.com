@@ -380,8 +380,10 @@ class LogicOrder
 
                 //D0,T0结算，自动进行结算
                 //或者系统启用自动结算
-                if(
-                    SiteConfig::cacheGetContent('recharge_auto_settlement') &&
+                $autoSettlemement = SiteConfig::cacheGetContent('recharge_auto_settlement');
+                Yii::info([__FUNCTION__.' '.$order->order_no.',settlement ',$autoSettlemement,date('Ymd H:i:s',$order->settlement_at),$order->settlement_type]);
+                if($autoSettlemement
+                     &&
                     ($order->settlement_at<=time() && substr($order->settlement_type,1)=='0')
                 ){
                     self::settlement($order);
