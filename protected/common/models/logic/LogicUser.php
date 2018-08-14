@@ -88,7 +88,7 @@ class LogicUser
                 $balanceUpdateRet = Yii::$app->db->createCommand()
                     ->update(User::tableName(),['balance' => new Expression("balance+{$amount}")],$filter)
                     ->execute();
-                $this->user->balance->balance +=$amount;
+                $this->user->balance +=$amount;
 
                 if(!$balanceUpdateRet){
                     $msg = '账户余额更新失败: '.$eventType.':'.$eventId;
