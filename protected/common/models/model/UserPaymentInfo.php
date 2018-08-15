@@ -1,6 +1,7 @@
 <?php
 namespace app\common\models\model;
 
+use app\components\Util;
 use Yii;
 use yii\behaviors\TimestampBehavior;
 use yii\db\ActiveRecord;
@@ -218,7 +219,7 @@ class UserPaymentInfo extends BaseModel
     public function checkAppServerIp()
     {
         if($this->app_server_ips){
-            $ip = Yii::$app->request->remoteIP;
+            $ip = Util::getClientIp();
             $allowIps = json_decode($this->app_server_ips);
 
             if(!$allowIps || !in_array($ip,$allowIps)){
