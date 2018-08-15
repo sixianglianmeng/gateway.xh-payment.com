@@ -391,7 +391,7 @@ class LogicOrder
 
                 //开户费订单处理
                 if(isset($order->type) && $order->type == Order::TYPE_ACCOUNT_OPEN){
-                    $accountOpenInfo = AccountOpenFee::findOne(['user_id'=>$order->merchant_id,'order_no'=>$order->order_no]);
+                    $accountOpenInfo = AccountOpenFee::findOne(['order_no'=>$order->order_no]);
                     if(!$accountOpenInfo){
                         Yii::error("未找到商户开户费订单对应用户:{$order->merchant_id}");
                     }else{
