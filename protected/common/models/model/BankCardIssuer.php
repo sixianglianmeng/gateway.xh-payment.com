@@ -98,7 +98,7 @@ class BankCardIssuer extends BaseModel
         if(empty($json['stat']) || $json['stat']!='ok'
          || empty($json['validated'])
         ){
-            Yii:error("error alipay get bank card info: {$bankNo},{$jsonStr}");
+            Yii:error("error alipay get bank card info: {$bankNo},{$jsonStr},$url");
             $json = [];
         }
 
