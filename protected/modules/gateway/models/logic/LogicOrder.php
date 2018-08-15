@@ -84,7 +84,6 @@ class LogicOrder
         $orderData['channel_merchant_id']  = $channelAccount->merchant_id;
         $orderData['channel_app_id']       = $channelAccount->app_id;
 
-
         $orderData['fee_rate']   = $rechargeMethod->fee_rate;
         //防止费率填写错误，手续费不大于订单金额
         if($orderData['fee_rate']>1) $orderData['fee_rate']=1;
@@ -100,12 +99,12 @@ class LogicOrder
         $parentConfigs = [];
         foreach ($parentConfigModels as $pc){
             //跳过未设置费率或小于自身费率或小于渠道费率的上级
-            if($pc->fee_rate<=0
-                || $pc->fee_rate<$orderData['plat_fee_rate']
-                || $pc->fee_rate<$orderData['fee_rate']
+            if($pc->fee_rate <= 0
+                || $pc->fee_rate < $orderData['plat_fee_rate']
+                || $pc->fee_rate > $orderData['fee_rate']
 
             ){
-                Yii::info(['parent fee is less',$orderData['order_no'],$orderData['merchant_account'],$pc->merchant_account,'pc fee_rate ',$pc->fee_rate,'plat_fee_rate',$orderData['plat_fee_rate'],'order fee',$orderData['fee_rate']]);
+                Yii::info(['parent fee is less',$orderData['order_no'],$orderData['merchant_account'],$pc->merchant_account,'plat_fee_rate',$orderData['plat_fee_rate'],'pc fee_rate ',$pc->fee_rate,'order fee',$orderData['fee_rate']]);
                 continue;
             }
             $parentConfigs[] = [
