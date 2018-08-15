@@ -45,9 +45,8 @@ class LogicRemit
      * @param array $request 请求数组
      * @param User $merchant 提款账户
      * @param ChannelAccount $paymentChannelAccount 提款的三方渠道账户
-     * @param boolean $skipCheck 是否跳过生成订单前检测,用于批量提交出款订单时保证都入库
      */
-    static public function addRemit(array $request, User $merchant, ChannelAccount $paymentChannelAccount, $skipCheck=false)
+    static public function addRemit(array $request, User $merchant, ChannelAccount $paymentChannelAccount)
     {
         $remitData                      = [];
         $remitData['app_id']              = $request['app_id'] ?? $merchant->id;
@@ -132,21 +131,18 @@ class LogicRemit
 
         $newRemit = new Remit();
         $newRemit->setAttributes($remitData,false);
-        //批量提款可跳过检测，先写入订单
-        if(!$skipCheck){
-            try{
-                self::beforeAddRemit($newRemit, $merchant, $paymentChannelAccount);
-                $newRemit->save();
+        try{
+            self::beforeAddRemit($newRemit, $merchant, $paymentChannelAccount);
+            $newRemit->save();
 
-                //下单后立即扣款
-                $newRemit = self::deduct($newRemit);
-            }catch (\Exception $e) {
-                Yii::error('beforeAddRemit error:'.$e->getMessage());
-                $newRemit->save();
-                $newRemit = self::setFail($newRemit, $e->getMessage());
+            //下单后立即扣款
+            $newRemit = self::deduct($newRemit);
+        }catch (\Exception $e) {
+            Yii::error('beforeAddRemit error:'.$e->getMessage());
+            $newRemit->save();
+            $newRemit = self::setFail($newRemit, $e->getMessage());
 
-                throw new OperationFailureException($e->getMessage(),Macro::FAIL);
-            }
+            throw new OperationFailureException($e->getMessage(),Macro::FAIL);
         }
 
         //接口日志埋点

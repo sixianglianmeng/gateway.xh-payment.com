@@ -137,7 +137,7 @@ class RemitController extends BaseInnerController
                 $request['type'] = Remit::TYPE_BACKEND;
 
                 //生成订单
-                $remit = LogicRemit::addRemit($request, $merchant, $channelAccount, true);
+                $remit = LogicRemit::addRemit($request, $merchant, $channelAccount);
                 $okRemits[] = [$remit->order_no];
             }
         }catch (\Exception $e){
