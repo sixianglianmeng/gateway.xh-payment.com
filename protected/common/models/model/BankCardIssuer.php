@@ -70,6 +70,8 @@ class BankCardIssuer extends BaseModel
                 }
 
                 $issuser->save();
+            }else{
+                return true;
             }
         }
 
