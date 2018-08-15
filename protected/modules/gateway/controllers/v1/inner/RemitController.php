@@ -141,7 +141,7 @@ class RemitController extends BaseInnerController
                 $okRemits[] = [$remit->order_no];
             }
         }catch (\Exception $e){
-            return ResponseHelper::formatOutput(Macro::ERR_UNKNOWN,'',['batOrderNo'=>$batOrderNo, 'errRemits'=>$errRemits, 'okRemits'=>$okRemits]);
+            return ResponseHelper::formatOutput(Macro::ERR_UNKNOWN,$e->getMessage(),['batOrderNo'=>$batOrderNo, 'errRemits'=>$errRemits, 'okRemits'=>$okRemits]);
         }
 
 
