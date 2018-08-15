@@ -102,9 +102,10 @@ class LogicOrder
             //跳过未设置费率或小于自身费率或小于渠道费率的上级
             if($pc->fee_rate<=0
                 || $pc->fee_rate<$orderData['plat_fee_rate']
-                || $orderData['fee_rate']
+                || $pc->fee_rate<$orderData['fee_rate']
 
             ){
+                Yii::info(['parent fee is less',$orderData['order_no'],$orderData['merchant_account'],$pc->merchant_account,'pc fee_rate ',$pc->fee_rate,'plat_fee_rate',$orderData['plat_fee_rate'],'order fee',$orderData['fee_rate']]);
                 continue;
             }
             $parentConfigs[] = [
