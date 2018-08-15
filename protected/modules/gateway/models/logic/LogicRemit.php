@@ -550,9 +550,8 @@ class LogicRemit
             $logicUser->changeUserBalance($amount, Financial::EVENT_TYPE_REFUND_REMIT, $remit->order_no, $remit->amount,$ip);
 
             //退回手续费
-            //手续费不退
-//            $amount =  $remit->remit_fee;
-//            $logicUser->changeUserBalance($amount, Financial::EVENT_TYPE_REFUND_REMIT_FEE, $remit->order_no, $remit->amount, $ip);
+            $amount =  $remit->remit_fee;
+            $logicUser->changeUserBalance($amount, Financial::EVENT_TYPE_REFUND_REMIT_FEE, $remit->order_no, $remit->amount, $ip);
 
             //退回分润
             //!!!!不需退回，因为目前为成功后才分润
