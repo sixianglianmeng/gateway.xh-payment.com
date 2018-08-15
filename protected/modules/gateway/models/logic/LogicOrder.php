@@ -399,6 +399,8 @@ class LogicOrder
                         $accountOpenInfo->paid_at = time();
                         $accountOpenInfo->fee_paid = $order->paid_amount;
                         $accountOpenInfo->save();
+
+                        $order->merchant->account_open_fee_status = AccountOpenFee::STATUS_PAID;
                     }
                 }
 
