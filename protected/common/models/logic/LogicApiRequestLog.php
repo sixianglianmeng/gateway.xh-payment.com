@@ -4,6 +4,7 @@ namespace app\common\models\logic;
 
 use app\common\models\model\LogApiRequest;
 use app\common\models\model\Order;
+use app\components\Util;
 use app\modules\gateway\models\logic\PaymentRequest;
 use Yii;
 
@@ -36,7 +37,7 @@ class LogicApiRequestLog
             $logData['post_data'] = json_encode(Yii::$app->getRequest()->getBodyParams(),JSON_UNESCAPED_UNICODE);
             $logData['response_data'] = json_encode($logResponse,JSON_UNESCAPED_UNICODE);
             $logData['http_status'] = Yii::$app->response->statusCode;
-            $logData['remote_ip'] = Yii::$app->request->getRemoteIP();
+            $logData['remote_ip'] = Util::getClientIp();
             $logData['referer'] = Yii::$app->request->referrer??'';
             $logData['useragent'] = Yii::$app->request->userAgent??'';
             $cookies = Yii::$app->request->cookies;
