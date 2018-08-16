@@ -113,7 +113,8 @@
             //return redirect|QrCode view|h5 call native
             $ret = $payment->$methodFnc();
             if ($ret['status']!==Macro::SUCCESS) {
-                return ResponseHelper::formatOutput(Macro::ERR_UNKNOWN, "上游订单生成失败:".$ret['message']);
+                Yii::error("订单生成失败. 订单号:{$order->order_no}, 支付方式:{$order->pay_method_code}, 通道:{$order->channelAccount->channel_name}, {$ret['message']}");
+                return ResponseHelper::formatOutput(Macro::ERR_UNKNOWN, "{$order->order_no}上游订单生成失败");
             }
             if (empty($ret['data']['type'])) {
                 return ResponseHelper::formatOutput(Macro::ERR_UNKNOWN, "无法找到支付表单渲染方式");
