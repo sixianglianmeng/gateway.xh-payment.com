@@ -25,7 +25,7 @@ class PaymentNotifyJob extends BaseObject implements RetryableJobInterface
 
         $url = $this->url;
         try{
-            $body = Util::curlPostJson($url,$this->data,[],10);
+            $body = Util::curlPostJson($url,$this->data,[],10000);
             $httpCode = 200;
 
         }catch (\Exception $e){
