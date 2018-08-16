@@ -32,7 +32,7 @@ define('RECHARGE_METHOD_WECHAT_TRANSFER','WXTRANS');
 
 define('API_RESP_FIELD_CODE','is_success');
 define('API_RESP_FIELD_DATA','data');
-define('API_RESP_FIELD_MESSAGE','error_msg');
+define('API_RESP_FIELD_MESSAGE','msg');
 define('API_RESP_FIELD_SIGN','sign');
 define('API_RESP_CODE_SUCCESS','TRUE');
 define('API_RESP_CODE_FAIL','FALSE');
