@@ -114,7 +114,7 @@ class OrderController extends BaseInnerController
         }
 
         $query =  Order::find()
-            ->andWhere(['status'=>Order::STATUS_PAID])
+            ->andWhere(['status'=>[Order::STATUS_PAID,Order::STATUS_SETTLEMENT]])
             ->andWhere(['!=','notify_status',Order::NOTICE_STATUS_SUCCESS]);
 
         //最长一天
