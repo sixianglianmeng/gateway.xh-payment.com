@@ -535,7 +535,7 @@ class LogicOrder
             $order->order_no, $order->amount, $ip, $bak, $opUid, $opUsername);
 
         //更改订单状态
-        $order->status = Order::STATUS_PAID;
+        $order->status = Order::STATUS_SETTLEMENT;
         if(empty($bak) && $opUsername) $bak="{$opUsername} set unfrozen at ".date('Ymd H:i:s')."\n";
         $order->bak .=$bak;
         $order->save();
@@ -637,6 +637,7 @@ class LogicOrder
 
         switch ($order->status){
             case Order::STATUS_PAID:
+            case Order::STATUS_SETTLEMENT:
                 $tradeStatus = 'success';
                 break;
             case Order::STATUS_NOTPAY:
@@ -787,6 +788,7 @@ class LogicOrder
 
             switch ($ret['data']['trade_status']){
                 case Order::STATUS_PAID:
+                case Order::STATUS_SETTLEMENT:
 
                     if($ret['data']['amount']>0){
                         $order->status = Order::STATUS_PAID;

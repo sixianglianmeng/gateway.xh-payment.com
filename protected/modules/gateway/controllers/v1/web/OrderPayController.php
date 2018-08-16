@@ -46,7 +46,7 @@
             if (!$order) {
                 return ResponseHelper::formatOutput(Macro::ERR_UNKNOWN, '订单不存在:'.$orderNo);
             }
-            if (Order::STATUS_PAID == $order->status) {
+            if (in_array($order->status, [Order::STATUS_PAID,Order::STATUS_SETTLEMENT])) {
                 return ResponseHelper::formatOutput(Macro::ERR_UNKNOWN, '订单已付款');
             }
 
