@@ -38,7 +38,7 @@ class OrderController extends BaseConsoleCommand
             $startTs = time()-($expire?$expire*60:1800);
 
             $query = Order::find()
-            ->where(['status'=>Order::STATUS_PAID,'notify_status'=>[Order::NOTICE_STATUS_NONE,Order::NOTICE_STATUS_FAIL]])
+            ->where(['status'=>[Order::STATUS_PAID,Order::STATUS_SETTLEMENT],'notify_status'=>[Order::NOTICE_STATUS_NONE,Order::NOTICE_STATUS_FAIL]])
             ->andWhere(['!=', 'notify_url', ''])
             ->andWhere(['>=', 'paid_at', $startTs])
             //最多通知10次
