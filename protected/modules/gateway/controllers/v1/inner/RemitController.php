@@ -8,6 +8,7 @@ use app\components\Util;
 use app\jobs\RemitQueryJob;
 use app\lib\helpers\ControllerParameterValidator;
 use app\lib\helpers\ResponseHelper;
+use app\lib\payment\ChannelPayment;
 use app\modules\gateway\controllers\v1\BaseInnerController;
 use app\modules\gateway\models\logic\LogicRemit;
 use Yii;
@@ -186,6 +187,55 @@ class RemitController extends BaseInnerController
         }
 
         return ResponseHelper::formatOutput(Macro::SUCCESS,'');
+    }
+
+    /**
+     * 实时到三方同步订单状态
+     * 仅仅查询结果返回显示,不进行业务处理
+     */
+    public function actionSyncStatusRealtime()
+    {
+        $orderNo = ControllerParameterValidator::getRequestParam($this->allParams, 'orderNo', null,Macro::CONST_PARAM_TYPE_ORDER_NO,'订单号列表错误');
+
+        $remit =  Remit::findOne(['order_no'=>$orderNo]);
+        if(!$remit){
+            return ResponseHelper::formatOutput(Macro::FAIL,'订单不存在');
+        }
+        $paymentChannelAccount = $remit->channelAccount;
+        $payment = new ChannelPayment($remit, $paymentChannelAccount);
+        $remitRet = $payment->remitStatus();
+
+        $msg = '';
+        if(
+            isset($remitRet['data']['bank_status'])
+            && !empty($remitRet['data']['remit'])
+        ){
+
+            if($remitRet['status'] === Macro::SUCCESS){
+                switch ($remitRet['data']['bank_status']){
+                    case Remit::BANK_STATUS_PROCESSING:
+                        $msg =date('Ymd H:i:s')." 银行处理中"."\n";
+                        break;
+                    case Remit::BANK_STATUS_SUCCESS:
+                        if(!empty($remitRet['data']['amount'])
+                            && bccomp($remitRet['data']['amount'],$remitRet['data']['remit']->amount,2)!==0
+                        ){
+                            $msg = date('Y-m-d H:i:s')." 实际出款金额({$remitRet['data']['amount']})与订单金额({$remitRet['data']['remit']->amount})不符合，请手工确认。\n";
+                            Yii::error($remitRet['data']['remit']->order_no.' '.$msg);
+                        }else{
+                            $msg = "出款成功";
+                        }
+                        break;
+                    case  Remit::BANK_STATUS_FAIL:
+                        $msg = date('Y-m-d H:i:s').' 出款失败:'.$remitRet['message']."\n";
+                        break;
+                }
+            }
+        }else{
+            $msg = '订单查询结果数据结构错误'.$remitRet['message'];
+        }
+
+        return ResponseHelper::formatOutput(Macro::SUCCESS, $msg);
     }
 
     /**

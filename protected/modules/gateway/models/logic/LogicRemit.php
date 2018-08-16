@@ -445,8 +445,6 @@ class LogicRemit
             'channel_name'=>$remit->channelAccount->channel_name,
         ];
         $paymentChannelAccount = $remit->channelAccount;
-        //提交到银行
-        //银行状态说明：00处理中，04成功，05失败或拒绝
         $payment = new ChannelPayment($remit, $paymentChannelAccount);
         $ret = $payment->remitStatus();
 
