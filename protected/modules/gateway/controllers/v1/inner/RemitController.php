@@ -1,6 +1,7 @@
 <?php
 namespace app\modules\gateway\controllers\v1\inner;
 
+use app\common\models\model\LogApiRequest;
 use app\common\models\model\Remit;
 use app\common\models\model\User;
 use app\components\Macro;
@@ -201,6 +202,17 @@ class RemitController extends BaseInnerController
         if(!$remit){
             return ResponseHelper::formatOutput(Macro::FAIL,'订单不存在');
         }
+
+        //接口日志埋点
+        Yii::$app->params['apiRequestLog'] = [
+            'event_id'=>$remit->order_no,
+            'event_type'=> LogApiRequest::EVENT_TYPE_OUT_REMIT_QUERY,
+            'merchant_id'=>$remit->channel_merchant_id,
+            'merchant_name'=>$remit->channelAccount->merchant_account,
+            'channel_account_id'=>$remit->channel_account_id,
+            'channel_name'=>$remit->channelAccount->channel_name,
+        ];
+
         $paymentChannelAccount = $remit->channelAccount;
         $payment = new ChannelPayment($remit, $paymentChannelAccount);
         $remitRet = $payment->remitStatus();

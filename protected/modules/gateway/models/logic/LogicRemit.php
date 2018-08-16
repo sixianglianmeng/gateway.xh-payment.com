@@ -210,6 +210,10 @@ class LogicRemit
         if(!$feeCanBeZero && $paymentChannelAccount->remit_fee <= 0){
             throw new OperationFailureException($remit->order_no." 通道出款费率不能设置为0:".Macro::ERR_CHANNEL_FEE_CONFIG);
         }
+        //检测渠道单笔最低限额
+        if($paymentChannelAccount->min_remit_pertime && $remit->amount < $paymentChannelAccount->min_remit_pertime){
+            throw new OperationFailureException("单笔最低限额为:".bcadd(0,$paymentChannelAccount->min_remit_pertime,2));
+        }
         //检测渠道单笔限额
         if($paymentChannelAccount->remit_quota_pertime && $remit->amount > $paymentChannelAccount->remit_quota_pertime){
             throw new OperationFailureException($remit->order_no." 超过渠道单笔限额:".$paymentChannelAccount->remit_quota_pertime,Macro::ERR_REMIT_REACH_CHANNEL_QUOTA_PER_TIME);
