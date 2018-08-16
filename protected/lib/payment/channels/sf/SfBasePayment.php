@@ -168,7 +168,7 @@ class SfBasePayment extends BasePayment
         $getUrl = $requestUrl.'?'.http_build_query($params);
 
         //是否跳过汇通
-        $skipHt = false;
+        $skipHt = true;
         $form = '';
         if($skipHt){
             //跳过上游第一个地址,达到隐藏上游目的.
@@ -213,7 +213,7 @@ class SfBasePayment extends BasePayment
     public function wechatQr()
     {
         if(empty(self::PAY_TYPE_MAP[$this->order['pay_method_code']])){
-            throw new OperationFailureException("HT通道配置不支持此支付方式:".$this->order['pay_method_code'],Macro::ERR_PAYMENT_TYPE_NOT_ALLOWED);
+            throw new OperationFailureException("通道配置不支持此支付方式:".$this->order['pay_method_code'],Macro::ERR_PAYMENT_TYPE_NOT_ALLOWED);
         }
 
         $params = [
