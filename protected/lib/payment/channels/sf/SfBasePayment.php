@@ -149,14 +149,14 @@ class SfBasePayment extends BasePayment
         }
 
         $params = [
-            'notify_url'=>$this->paymentConfig['paymentNotifyBaseUri']."/gateway/v1/web/ht/notify",
-            'return_url'=>$this->paymentConfig['paymentNotifyBaseUri']."/gateway/v1/web/ht/return",
+            'notify_url'=>str_replace('https','http',$this->getRechargeNotifyUrl()),//$this->paymentConfig['paymentNotifyBaseUri']."/gateway/v1/web/ht/notify",
+            'return_url'=>str_replace('https','http',$this->getRechargeReturnUrl()),//$this->paymentConfig['paymentNotifyBaseUri']."/gateway/v1/web/ht/return",
             'bank_code'=>$bankCode,
             'merchant_code'=>$this->order['channel_merchant_id'],
             'order_no'=>$this->order['order_no'],
             'pay_type'=>self::PAY_TYPE_MAP[$this->order['pay_method_code']],
             'order_amount'=>$this->order['amount'],
-            'req_referer'=>Yii::$app->request->referrer?Yii::$app->request->referrer:Yii::$app->request->getHostInfo().Yii::$app->request->url,
+            'req_referer'=>'127.0.0.1',//Yii::$app->request->referrer?Yii::$app->request->referrer:Yii::$app->request->getHostInfo().Yii::$app->request->url,
             'order_time'=>date("Y-m-d H:i:s"),
             'customer_ip'=>Yii::$app->request->remoteIP,
             'return_params'=>$this->order['order_no'],
@@ -217,14 +217,14 @@ class SfBasePayment extends BasePayment
         }
 
         $params = [
-            'notify_url'=>$this->paymentConfig['paymentNotifyBaseUri']."/gateway/v1/web/ht/notify",
-            'return_url'=>$this->paymentConfig['paymentNotifyBaseUri']."/gateway/v1/web/ht/return",
+            'notify_url'=>str_replace('https','http',$this->getRechargeNotifyUrl()),//$this->paymentConfig['paymentNotifyBaseUri']."/gateway/v1/web/ht/notify",
+            'return_url'=>str_replace('https','http',$this->getRechargeReturnUrl()),//$this->paymentConfig['paymentNotifyBaseUri']."/gateway/v1/web/ht/return",
             'bank_code'=>'',
             'merchant_code'=>$this->order['channel_merchant_id'],
             'order_no'=>$this->order['order_no'],
             'pay_type'=>self::PAY_TYPE_MAP[$this->order['pay_method_code']],
             'order_amount'=>$this->order['amount'],
-            'req_referer'=>Yii::$app->request->referrer?Yii::$app->request->referrer:Yii::$app->request->getHostInfo().Yii::$app->request->url,
+            'req_referer'=>'127.0.0.1',//Yii::$app->request->referrer?Yii::$app->request->referrer:Yii::$app->request->getHostInfo().Yii::$app->request->url,
             'order_time'=>date("Y-m-d H:i:s"),
             'customer_ip'=>Yii::$app->request->remoteIP,
             'return_params'=>$this->order['order_no'],
