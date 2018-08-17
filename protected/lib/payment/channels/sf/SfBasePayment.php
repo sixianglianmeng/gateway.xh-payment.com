@@ -307,7 +307,7 @@ class SfBasePayment extends BasePayment
      */
     public function alipayH5()
     {
-        return $this->webBank();
+        return $this->wechatQr();
     }
 
 
