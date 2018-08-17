@@ -190,11 +190,11 @@ class LogicOrder
         }
 
         //检测账户单笔限额
-        if($userPaymentConfig->recharge_quota_pertime && $order->amount > $userPaymentConfig->recharge_quota_pertime){
+        if($userPaymentConfig->recharge_quota_pertime>0 && $order->amount > $userPaymentConfig->recharge_quota_pertime){
             throw new OperationFailureException($order->order_no.' 超过商户单笔限额:'.$userPaymentConfig->recharge_quota_pertime,Macro::ERR_PAYMENT_REACH_ACCOUNT_QUOTA_PER_TIME);
         }
         //检测账户日限额
-        if($userPaymentConfig->recharge_quota_perday
+        if($userPaymentConfig->recharge_quota_perday>0
             && (($userPaymentConfig->recharge_today+$order->amount) > $userPaymentConfig->recharge_quota_perday)
         ){
             throw new OperationFailureException($order->order_no." 超过商户日限额{$userPaymentConfig->recharge_quota_perday},当前为$userPaymentConfig->recharge_today",Macro::ERR_PAYMENT_REACH_ACCOUNT_QUOTA_PER_DAY);
@@ -213,15 +213,15 @@ class LogicOrder
             throw new OperationFailureException($order->order_no.' 费率不能设置为0',Macro::ERR_CHANNEL_FEE_CONFIG);
         }
         //检测渠道单笔最低限额
-        if($paymentChannelAccount->min_recharge_pertime && $order->amount < $paymentChannelAccount->min_recharge_pertime){
+        if($paymentChannelAccount->min_recharge_pertime>0 && $order->amount < $paymentChannelAccount->min_recharge_pertime){
             throw new OperationFailureException("单笔最低限额为:".bcadd(0,$paymentChannelAccount->min_remit_pertime,2));
         }
         //检测渠道单笔限额
-        if($paymentChannelAccount->recharge_quota_pertime && $order->amount > $paymentChannelAccount->recharge_quota_pertime){
+        if($paymentChannelAccount->recharge_quota_pertime>0 && $order->amount > $paymentChannelAccount->recharge_quota_pertime){
             throw new OperationFailureException(null,Macro::ERR_PAYMENT_REACH_CHANNEL_QUOTA_PER_TIME);
         }
         //检测渠道日限额
-        if($paymentChannelAccount->recharge_quota_perday
+        if($paymentChannelAccount->recharge_quota_perday>0
             && (($paymentChannelAccount->recharge_today+$order->amount) > $paymentChannelAccount->recharge_quota_perday)
         ){
             throw new OperationFailureException(null,Macro::ERR_PAYMENT_REACH_CHANNEL_QUOTA_PER_DAY);

@@ -188,11 +188,11 @@ class LogicRemit
         }
 
         //检测账户单笔限额
-        if($userPaymentConfig->remit_quota_pertime && $remit->amount > $userPaymentConfig->remit_quota_pertime){
+        if($userPaymentConfig->remit_quota_pertime>0 && $remit->amount > $userPaymentConfig->remit_quota_pertime){
             throw new OperationFailureException($remit->order_no." 超过账户单笔限额:".$userPaymentConfig->remit_quota_pertime,Macro::ERR_REMIT_REACH_ACCOUNT_QUOTA_PER_TIME);
         }
         //检测账户日限额
-        if($userPaymentConfig->remit_quota_perday
+        if($userPaymentConfig->remit_quota_perday>0
             && (($remit->remit_today+$remit->amount) > $userPaymentConfig->remit_quota_perday)
         ){
             throw new OperationFailureException($remit->order_no." 超过账户日限额:".$userPaymentConfig->remit_quota_perday.',当前已使用:'.$remit->remit_today,Macro::ERR_REMIT_REACH_ACCOUNT_QUOTA_PER_DAY);
@@ -211,15 +211,15 @@ class LogicRemit
             throw new OperationFailureException($remit->order_no." 通道出款费率不能设置为0:".Macro::ERR_CHANNEL_FEE_CONFIG);
         }
         //检测渠道单笔最低限额
-        if($paymentChannelAccount->min_remit_pertime && $remit->amount < $paymentChannelAccount->min_remit_pertime){
+        if($paymentChannelAccount->min_remit_pertime>0 && $remit->amount < $paymentChannelAccount->min_remit_pertime){
             throw new OperationFailureException("单笔最低限额为:".bcadd(0,$paymentChannelAccount->min_remit_pertime,2));
         }
         //检测渠道单笔限额
-        if($paymentChannelAccount->remit_quota_pertime && $remit->amount > $paymentChannelAccount->remit_quota_pertime){
+        if($paymentChannelAccount->remit_quota_pertime>0 && $remit->amount > $paymentChannelAccount->remit_quota_pertime){
             throw new OperationFailureException($remit->order_no." 超过渠道单笔限额:".$paymentChannelAccount->remit_quota_pertime,Macro::ERR_REMIT_REACH_CHANNEL_QUOTA_PER_TIME);
         }
         //检测渠道日限额
-        if($paymentChannelAccount->remit_quota_perday
+        if($paymentChannelAccount->remit_quota_perday>0
             && (($paymentChannelAccount->remit_today+$remit->amount) > $paymentChannelAccount->remit_quota_perday)
         ){
             throw new OperationFailureException($remit->order_no." 超过渠道日限额:".$paymentChannelAccount->remit_quota_perday.',当前已使用:'.$paymentChannelAccount->remit_today,Macro::ERR_REMIT_REACH_CHANNEL_QUOTA_PER_DAY);
