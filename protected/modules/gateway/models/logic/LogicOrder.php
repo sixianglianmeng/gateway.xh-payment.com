@@ -74,7 +74,7 @@ class LogicOrder
         $orderData['channel_id']           = $rechargeMethod->channel_id;
         $orderData['channel_account_id']   = $rechargeMethod->channel_account_id;
         $orderData['method_config_id']     = $rechargeMethod->id;
-        $orderData['settlement_type']      = $rechargeMethod->settlement_type;
+        $orderData['settlement_type']      = $rechargeMethod->settlement_type?$rechargeMethod->settlement_type:SiteConfig::cacheGetContent('default_settlement_type');
         $orderData['expect_settlement_at'] = MerchantRechargeMethod::getExpectSettlementTime($orderData['settlement_type']);
         $orderData['settlement_at']        = 0;
         $channelAccount                    = $rechargeMethod->channelAccount;
