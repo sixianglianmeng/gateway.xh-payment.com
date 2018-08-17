@@ -212,7 +212,7 @@ class LogicRemit
         }
         //检测渠道单笔最低限额
         if($paymentChannelAccount->min_remit_pertime && $remit->amount < $paymentChannelAccount->min_remit_pertime){
-//            throw new OperationFailureException("单笔最低限额为:".bcadd(0,$paymentChannelAccount->min_remit_pertime,2));
+            throw new OperationFailureException("单笔最低限额为:".bcadd(0,$paymentChannelAccount->min_remit_pertime,2));
         }
         //检测渠道单笔限额
         if($paymentChannelAccount->remit_quota_pertime && $remit->amount > $paymentChannelAccount->remit_quota_pertime){

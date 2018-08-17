@@ -214,7 +214,7 @@ class LogicOrder
         }
         //检测渠道单笔最低限额
         if($paymentChannelAccount->min_recharge_pertime && $order->amount < $paymentChannelAccount->min_recharge_pertime){
-//            throw new OperationFailureException("单笔最低限额为:".bcadd(0,$paymentChannelAccount->min_remit_pertime,2));
+            throw new OperationFailureException("单笔最低限额为:".bcadd(0,$paymentChannelAccount->min_remit_pertime,2));
         }
         //检测渠道单笔限额
         if($paymentChannelAccount->recharge_quota_pertime && $order->amount > $paymentChannelAccount->recharge_quota_pertime){
