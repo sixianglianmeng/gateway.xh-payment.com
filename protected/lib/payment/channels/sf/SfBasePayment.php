@@ -35,13 +35,13 @@ class SfBasePayment extends BasePayment
         Channel::METHOD_ALIPAY_QR=>3,
         Channel::METHOD_QQ_QR=>5,
         Channel::METHOD_UNIONPAY_QR=>7,
-        Channel::METHOD_WECHAT_H5=>10,
+        Channel::METHOD_WECHAT_H5=>2,
         Channel::METHOD_ALIPAY_H5=>3,
-        Channel::METHOD_QQ_H5=>12,
-        Channel::METHOD_BANK_QUICK=>13,
+        Channel::METHOD_QQ_H5=>5,
+        Channel::METHOD_BANK_QUICK=>1,
         Channel::METHOD_JD_H5=>14,
         Channel::METHOD_JD_QR=>17,
-        Channel::METHOD_UNIONPAY_H5=>18,
+        Channel::METHOD_UNIONPAY_H5=>7,
     ];
 
     public function __construct(...$arguments)
@@ -145,7 +145,7 @@ class SfBasePayment extends BasePayment
         }
 
         if(empty(self::PAY_TYPE_MAP[$this->order['pay_method_code']])){
-            throw new OperationFailureException("HT通道配置不支持此支付方式:".$this->order['pay_method_code'],Macro::ERR_PAYMENT_TYPE_NOT_ALLOWED);
+            throw new OperationFailureException("通道配置不支持此支付方式:".$this->order['pay_method_code'],Macro::ERR_PAYMENT_TYPE_NOT_ALLOWED);
         }
 
         $params = [
