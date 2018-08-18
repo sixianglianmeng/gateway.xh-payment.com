@@ -218,12 +218,16 @@ class UserPaymentInfo extends BaseModel
      */
     public function checkAppServerIp()
     {
+        $mustCheck  = SiteConfig::cacheGetContent('merchant_server_ip_check');
+
         if($this->app_server_ips){
             $ip = Util::getClientIp();
             $allowIps = json_decode($this->app_server_ips);
-            if(!$allowIps || !in_array($ip,$allowIps)){
+            if(!$allowIps && $mustCheck || !in_array($ip,$allowIps)){
                 return false;
             }
+        }elseif($mustCheck){
+            return false;
         }
 
         return true;
