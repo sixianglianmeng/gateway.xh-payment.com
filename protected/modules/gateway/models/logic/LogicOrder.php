@@ -213,11 +213,11 @@ class LogicOrder
             throw new OperationFailureException($order->order_no.' 费率不能设置为0',Macro::ERR_CHANNEL_FEE_CONFIG);
         }
         //检测渠道单笔最低限额
-        if($paymentChannelAccount->min_recharge_pertime && $order->amount < $paymentChannelAccount->min_recharge_pertime){
-            throw new OperationFailureException("单笔最低限额为:".bcadd(0,$paymentChannelAccount->min_remit_pertime,2));
+        if($paymentChannelAccount->min_recharge_pertime && bccomp($order->amount, $paymentChannelAccount->min_recharge_pertime, 2)===-1){
+            throw new OperationFailureException("单笔最低限额为:".bcadd(0,$paymentChannelAccount->min_recharge_pertime,2)." {$order->amount}");
         }
         //检测渠道单笔限额
-        if($paymentChannelAccount->recharge_quota_pertime && $order->amount > $paymentChannelAccount->recharge_quota_pertime){
+        if($paymentChannelAccount->recharge_quota_pertime && bccomp($order->amount, $paymentChannelAccount->recharge_quota_pertime, 2)===1){
             throw new OperationFailureException(null,Macro::ERR_PAYMENT_REACH_CHANNEL_QUOTA_PER_TIME);
         }
         //检测渠道日限额

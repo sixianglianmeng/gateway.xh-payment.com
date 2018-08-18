@@ -2,6 +2,7 @@
 namespace app\modules\gateway\controllers\v1;
 
 use app\common\exceptions\OperationFailureException;
+use app\components\Util;
 use Yii;
 use app\components\Macro;
 use app\components\RequestSignController;
@@ -21,9 +22,13 @@ class BaseServerSignedRequestController extends RequestSignController
         Yii::$app->response->format = Macro::FORMAT_JSON;
         Yii::$app->params['jsonFormatType'] = Macro::FORMAT_PAYMENT_GATEWAY_JSON;
 
-        //检测IP白名单
-        if(!Yii::$app->controller->merchantPayment->checkAppServerIp()){
-            throw new OperationFailureException("IP禁止",Macro::ERR_API_IP_DENIED);
+        $actionsSkipIpCheck = ['v1/server/order/order'];
+        if(
+            !in_array("{$this->id}/{$this->action->id}",$actionsSkipIpCheck)
+            //检测IP白名单
+           && !Yii::$app->controller->merchantPayment->checkAppServerIp())
+        {
+            throw new OperationFailureException("非法IP: ".Util::getClientIp(),Macro::ERR_API_IP_DENIED);
         }
 
         return $ret;
