@@ -57,8 +57,9 @@ class RemitController extends BaseConsoleCommand
     public function actionBankCommitQueueProducer(){
         $doCheck = true;
         while ($doCheck) {
-            Yii::info('actionBankCommitQueueProducer');
-            if(LogicRemit::canCommitToBank()){
+            $canCommit = LogicRemit::canCommitToBank();
+            Yii::info(['actionBankCommitQueueProducer',$canCommit]);
+            if($canCommit=='1'){
                 //获取配置:出款多少分钟之后不再自动查询状态,默认半小时
                 $expire = SiteConfig::cacheGetContent('remit_check_expire');
                 $startTs = time()-($expire?$expire*60:1800);
