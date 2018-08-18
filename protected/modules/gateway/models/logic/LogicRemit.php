@@ -193,7 +193,7 @@ class LogicRemit
         }
         //检测账户日限额
         if($userPaymentConfig->remit_quota_perday
-            && (($remit->remit_today+$remit->amount) > $userPaymentConfig->remit_quota_perday)
+            && (($userPaymentConfig->remit_today+$remit->amount) > $userPaymentConfig->remit_quota_perday)
         ){
             throw new OperationFailureException($remit->order_no." 超过账户日限额:".$userPaymentConfig->remit_quota_perday.',当前已使用:'.$remit->remit_today,Macro::ERR_REMIT_REACH_ACCOUNT_QUOTA_PER_DAY);
         }
