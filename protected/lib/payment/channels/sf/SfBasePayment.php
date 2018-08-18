@@ -354,7 +354,7 @@ class SfBasePayment extends BasePayment
             throw new OperationFailureException('未传入出款订单对象',Macro::ERR_UNKNOWN);
         }
 
-        $bankCode = BankCodes::getChannelBankCode($this->remit['channel_id'],$this->remit['bank_code']);
+        $bankCode = BankCodes::getChannelBankCode($this->remit['channel_id'],$this->remit['bank_code'],'remit');
         if(empty($bankCode)){
             throw new OperationFailureException("银行代码配置错误:".$this->remit['channel_id'].':'.$this->remit['bank_code'],Macro::ERR_PAYMENT_BANK_CODE);
         }
