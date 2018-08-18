@@ -58,12 +58,11 @@
 
     setInterval(function () {
       $.post("/order/check_status.html",data,function(result){
-        console.log(result);
         if(result.code == 0){
             // $('.pay-ok').show();
             $('.pay-btn').removeClass('btn-primary').addClass('btn-success').text('付款已成功');
         }
       });
-    },2000)
+    },15000)
   });
 </script>

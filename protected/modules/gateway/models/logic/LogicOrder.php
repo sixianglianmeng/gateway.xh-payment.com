@@ -404,9 +404,8 @@ class LogicOrder
                         $accountOpenInfo->paid_at = time();
                         $accountOpenInfo->fee_paid = $order->paid_amount;
                         $accountOpenInfo->save();
-
-                        $order->merchant->account_open_fee_status = AccountOpenFee::STATUS_PAID;
-                        $order->merchant->save();
+                        Yii::info([__FUNCTION__.' '.$order->order_no.',AccountOpenFee updated',$accountOpenInfo->user_id,$accountOpenInfo->status ]);
+                        User::updateAll(['account_open_fee_status' => AccountOpenFee::STATUS_PAID], ['id', $accountOpenInfo->user_id]);
                     }
                 }
 
