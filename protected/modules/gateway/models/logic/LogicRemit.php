@@ -308,6 +308,9 @@ class LogicRemit
                 if ($remit->type == Remit::TYPE_BACKEND && $remit->amount <= $remit->userPaymentInfo->allow_manual_fast_remit) {
                     $remit->status = Remit::STATUS_CHECKED;
                 }
+                if($remit->status != Remit::STATUS_CHECKED){
+                    Util::sendTelegramMessage("有出款需要审核,订单号:{$remit->order_no},金额:{$remit->amount},商户:{$remit->merchant_account}");
+                }
                 $remit->bank_ret = $remit->bank_ret.date('Ymd H:i:s')." 账户已扣款\n";
                 $remit->save();
 

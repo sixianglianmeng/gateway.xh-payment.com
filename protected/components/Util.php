@@ -972,16 +972,23 @@ class Util
      * 发送telegram消息
      *
      * @param string|array $message 消息内容
-     * @param string $chatId 会话id,默认为系统通知会话id
+     * @param string $chatId 会话id,默认为系统普通通知会话id
      * @return bool
      */
     public static function sendTelegramMessage($message, $chatId=''){
         $telgramKey = SiteConfig::cacheGetContent('sys_notice_tegram_key');
         $telgramUrl = SiteConfig::cacheGetContent('sys_notice_tegram_url');
         if(!$chatId){
-            $chatId = SiteConfig::cacheGetContent('sys_notice_tegram_chatid');
+            $chatId = SiteConfig::cacheGetContent('sys_notice_tegram_business_chatid');
         }
         if(!is_string($message)) $message = json_encode($message,JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE);
+        $title = gethostname();
+        if(Yii::$app->request->getIsConsoleRequest()){
+            $title.=" ".pathinfo(WWW_DIR)['basename'];
+        }else{
+            $title.=" ".Yii::$app->request->hostName;
+        }
+        $message = "{$message}\n{$title}";
         if($telgramKey && $telgramUrl && $chatId){
             $data = [
                 'msg'=> $message,
