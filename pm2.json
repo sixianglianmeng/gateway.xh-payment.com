@@ -56,7 +56,7 @@
       "exec_interpreter": "php",
       "exec_mode": "fork",
       "max_memory_restart": "256M",
-      "instances": 1
+      "instances": 4
     },
     {
       "name": "remit-query-queue",
@@ -65,7 +65,7 @@
       "exec_interpreter": "php",
       "exec_mode": "fork",
       "max_memory_restart": "256M",
-      "instances": 1
+      "instances": 4
     },
     {
       "name": "remit-bank-commit-queue",
@@ -74,7 +74,7 @@
       "exec_interpreter": "php",
       "exec_mode": "fork",
       "max_memory_restart": "256M",
-      "instances": 1
+      "instances": 4
     },
     {
       "name": "remit-notify-queue-consumer",
@@ -83,7 +83,7 @@
       "exec_interpreter": "php",
       "exec_mode": "fork",
       "max_memory_restart": "256M",
-      "instances": 1
+      "instances": 4
     }
   ]
 }

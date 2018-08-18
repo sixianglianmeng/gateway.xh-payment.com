@@ -65,7 +65,7 @@ class RemitController extends BaseInnerController
         Yii::info(['minAmount maxAmount',$merchantUsername,$minAmount, $maxAmount, ($channelAccount->remit_quota_pertime > 0), $channelAccount->remit_quota_pertime]);
         foreach ($rawRemits as $i => $remitArr) {
             //单笔大于5w的自动拆分
-            if ($remitArr['amount'] >= $maxAmount) {
+            if ($maxAmount>0 && $remitArr['amount'] >= $maxAmount) {
                 $leftAmount   = $remitArr['amount'];
                 $splitAmounts = [];
                 while ($leftAmount > 0) {
