@@ -396,10 +396,10 @@ class LogicOrder
                 Yii::info([__FUNCTION__.' '.$order->order_no.',AccountOpenFee ',$order->type]);
                 if(isset($order->type) && $order->type == Order::TYPE_ACCOUNT_OPEN){
                     $accountOpenInfo = AccountOpenFee::findOne(['order_no'=>$order->order_no]);
-                    Yii::info([__FUNCTION__.' '.$order->order_no.',AccountOpenFee user',$accountOpenInfo->username]);
                     if(!$accountOpenInfo){
                         Yii::error("未找到商户开户费订单对应用户:{$order->merchant_id}");
                     }else{
+                        Yii::info([__FUNCTION__.' '.$order->order_no.',AccountOpenFee user',$accountOpenInfo->username]);
                         $accountOpenInfo->status = AccountOpenFee::STATUS_PAID;
                         $accountOpenInfo->paid_at = time();
                         $accountOpenInfo->fee_paid = $order->paid_amount;
