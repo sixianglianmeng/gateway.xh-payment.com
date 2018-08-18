@@ -49,7 +49,7 @@ class LogicOrder
         }
 
         $orderData['type']                 = $request['type']??1;
-        $orderData['bak']                  = $request['bak']."\n"??'';
+        $orderData['bak']                  = !empty($request['bak'])?$request['bak']."\n":'';
         $orderData['pay_method_code']      = $request['pay_type'];
         $orderData['amount']               = $request['order_amount'];
         $orderData['notify_url']           = $request['notify_url'] ?? '';

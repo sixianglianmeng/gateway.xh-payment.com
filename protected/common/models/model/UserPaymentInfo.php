@@ -221,7 +221,6 @@ class UserPaymentInfo extends BaseModel
         if($this->app_server_ips){
             $ip = Util::getClientIp();
             $allowIps = json_decode($this->app_server_ips);
-
             if(!$allowIps || !in_array($ip,$allowIps)){
                 return false;
             }

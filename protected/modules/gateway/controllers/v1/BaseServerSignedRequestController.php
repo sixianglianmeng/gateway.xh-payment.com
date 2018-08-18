@@ -23,7 +23,7 @@ class BaseServerSignedRequestController extends RequestSignController
 
         //检测IP白名单
         if(!Yii::$app->controller->merchantPayment->checkAppServerIp()){
-            throw new OperationFailureException(Macro::ERR_API_IP_DENIED);
+            throw new OperationFailureException("IP禁止",Macro::ERR_API_IP_DENIED);
         }
 
         return $ret;
