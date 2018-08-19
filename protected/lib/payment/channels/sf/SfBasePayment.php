@@ -212,6 +212,14 @@ class SfBasePayment extends BasePayment
      */
     public function wechatQr()
     {
+        //检测缓存中是否已经有此订单的下单结果,如果有直接使用,防止报重复下单错误
+        $cacheKey = "channel_cashier_url_{$this->order['order_no']}";
+        $hasRequest =  Yii::$app->redis->get($cacheKey);
+        if($hasRequest){
+            Yii::info("get cached url, will not request sf:{$this->order['order_no']}, {$hasRequest}");
+            return json_decode($hasRequest,true);
+        }
+
         if(empty(self::PAY_TYPE_MAP[$this->order['pay_method_code']])){
             throw new OperationFailureException("通道配置不支持此支付方式:".$this->order['pay_method_code'],Macro::ERR_PAYMENT_TYPE_NOT_ALLOWED);
         }
@@ -255,6 +263,9 @@ class SfBasePayment extends BasePayment
                 $ret['message'] = $res['msg']??'付款提交失败';
             }
         }
+
+        //下单结果写入缓存
+        Yii::$app->redis->set($cacheKey,json_encode($ret,JSON_UNESCAPED_UNICODE),300);
 
         return $ret;
     }
