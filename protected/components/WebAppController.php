@@ -64,7 +64,7 @@ class WebAppController extends Controller
         } catch (UnauthorizedHttpException $e) {
             return ResponseHelper::formatOutput(Macro::ERR_PERMISSION, $e->getMessage());
         } catch (OperationFailureException $e) {
-            return $this->handleException($e);
+            return $this->handleException($e, true);
         } catch (\Exception $e) {
             LogHelper::error(
                 sprintf(
@@ -79,7 +79,12 @@ class WebAppController extends Controller
         }
     }
 
-    protected function handleException($e)
+    /**
+     * @param $e 异常对象
+     * @param bool $showRawExceptionMessage 是否显示原始的异常信息,建议未捕捉的异常不显示
+     * @return array
+     */
+    protected function handleException($e, $showRawExceptionMessage = false)
     {
         $errCode = $e->getCode();
         $msg     = $e->getMessage();
@@ -89,17 +94,18 @@ class WebAppController extends Controller
 
         if ($errCode === Macro::SUCCESS) $errCode = Macro::FAIL;
         if (YII_DEBUG) {
-                throw $e;
-                return ResponseHelper::formatOutput($errCode, $msg);
-            } else {
-                $code = Macro::INTERNAL_SERVER_ERROR;
-                if (property_exists($e, 'statusCode')) {
-                    $code                           = $e->statusCode;
-                    Yii::$app->response->statusCode = $code;
-                }
-                return ResponseHelper::formatOutput($errCode, $msg);
+            throw $e;
+            return ResponseHelper::formatOutput($errCode, $msg);
+        } else {
+            $code = Macro::INTERNAL_SERVER_ERROR;
+            if (property_exists($e, 'statusCode')) {
+                $code                           = $e->statusCode;
+                Yii::$app->response->statusCode = $code;
             }
+            if(!$showRawExceptionMessage) $msg = "服务器繁忙,请稍候重试(500)";
+            return ResponseHelper::formatOutput($errCode, $msg);
         }
+    }
 
 
     protected function getAllParams()

@@ -129,6 +129,13 @@ class LogicRemit
         unset($parentConfigs);
         unset($parentConfigModels);
 
+        //设置出款商户自审核参数
+        $remitData['merchant_check_status'] = 0;
+        $remitData['need_merchant_check'] = 0;
+        if($merchant->paymentInfo->can_check_remit_status == 1){
+            $remitData['need_merchant_check'] = 1;
+        }
+
         $newRemit = new Remit();
         $newRemit->setAttributes($remitData,false);
 
@@ -180,9 +187,10 @@ class LogicRemit
         //站点是否允许费率设置为0
         $feeCanBeZero = SiteConfig::cacheGetContent('remit_fee_can_be_zero');
 
-        if(SiteConfig::cacheGetContent('check_remit_bank_no') && !BankCardIssuer::checkBankNoBankCode($remit->bank_no, $remit->bank_code)){
-            throw new OperationFailureException($remit->order_no." 银行卡号与银行不匹配",Macro::ERR_PAYMENT_BANK_CODE);
-        }
+        //统一异步检测,只做记录用
+//        if(SiteConfig::cacheGetContent('check_remit_bank_no') && !BankCardIssuer::checkBankNoBankCode($remit->bank_no, $remit->bank_code)){
+//            throw new OperationFailureException($remit->order_no." 银行卡号与银行不匹配",Macro::ERR_PAYMENT_BANK_CODE);
+//        }
 
         $bankCode = BankCodes::getChannelBankCode($remit['channel_id'],$remit['bank_code'],'remit');
         if(empty($bankCode)){
