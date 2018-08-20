@@ -69,7 +69,7 @@ class ChannelController extends BaseConsoleCommand
             $accounts = ChannelAccount::findAll(['status'=>ChannelAccount::STATUS_ACTIVE]);
             foreach ($accounts as $account){
                 if($account->balance>0 && $account->balance<=$threshold){
-                    Util::sendTelegramMessage("通道余额不足. 通道号: {$accounts->channel_name},当前余额:{$account->balance}");
+                    Util::sendTelegramMessage("通道余额不足. 通道号: {$account->channel_name},当前余额:{$account->balance}");
                 }
             }
 
