@@ -67,12 +67,13 @@ class ChannelController extends BaseConsoleCommand
             $threshold = SiteConfig::cacheGetContent('channel_balance_alert_threshold');
 
             $accounts = ChannelAccount::findAll(['status'=>ChannelAccount::STATUS_ACTIVE]);
+            $alertArr = [];
             foreach ($accounts as $account){
                 if($account->balance>0 && $account->balance<=$threshold){
-                    Util::sendTelegramMessage("通道余额不足. 通道号: {$account->channel_name},当前余额:{$account->balance}");
+                    $alertArr[] = "通道号: {$account->channel_name},当前余额:{$account->balance}";
                 }
             }
-
+            if($alertArr) Util::sendTelegramMessage("三方通道余额不足. ".implode($alertArr,"; "));
             sleep(120);
         }
     }
