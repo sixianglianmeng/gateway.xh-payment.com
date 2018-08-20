@@ -89,6 +89,17 @@ class Remit extends BaseModel
         self::TYPE_BACKEND=>'后台订单',
     ];
 
+    const STATUS_LIST_PROCESSING = [self::STATUS_CHECKED,self::STATUS_DEDUCT,self::STATUS_BANK_PROCESSING];
+    const STATUS_LIST_FAIL = [self::STATUS_NOT_REFUND,self::STATUS_BANK_NET_FAIL,self::STATUS_BANK_PROCESS_FAIL];
+
+    const MERCHANT_CHECK_STATUS_NONE = 0;
+    const MERCHANT_CHECK_STATUS_CHECKED = 1;
+    const MERCHANT_CHECK_STATUS_DENIED = 2;
+    const ARR_MERCHANT_CHECK_STATUS = [
+        self::MERCHANT_CHECK_STATUS_NONE => '未审核',
+        self::MERCHANT_CHECK_STATUS_CHECKED => '通过',
+        self::MERCHANT_CHECK_STATUS_DENIED => '拒绝',
+    ];
 
     /**
      * @inheritdoc

@@ -289,10 +289,10 @@ class LogicOrder
             && bccomp($order->amount, $noticeResult['data']['amount'], 2)!==1
         ){
             self::paySuccess($order,$noticeResult['data']['amount'],$noticeResult['data']['channel_order_no']);
-
-            if($order->notify_status != Order::NOTICE_STATUS_SUCCESS){
-                self::notify($order);
-            }
+              //不立即通知
+//            if($order->notify_status != Order::NOTICE_STATUS_SUCCESS){
+//                self::notify($order);
+//            }
         }
         //订单状态成功但是金额小于订单金额
         elseif($noticeResult['status'] === Macro::SUCCESS
@@ -701,6 +701,11 @@ class LogicOrder
         $order = self::getOrderByOrderNo($orderNo);
         if(!$order){
             throw new OperationFailureException("updateNotifyResult 订单不存在：{$orderNo}");
+        }
+
+        //已经成功的不再更新
+        if($order->notify_status == Order::NOTICE_STATUS_SUCCESS){
+            return $order;
         }
 
         $order->notify_at = time();

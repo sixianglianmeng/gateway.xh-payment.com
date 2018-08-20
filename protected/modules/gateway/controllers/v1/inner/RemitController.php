@@ -361,4 +361,36 @@ class RemitController extends BaseInnerController
 
         return ResponseHelper::formatOutput(Macro::SUCCESS);
     }
+
+    /**
+     * 商户审核订单
+     */
+    public function actionMerchantCheck()
+    {
+        $rawOrderList = ControllerParameterValidator::getRequestParam($this->allParams, 'remitIdList', null,Macro::CONST_PARAM_TYPE_ARRAY,'订单ID错误');
+        $status = ControllerParameterValidator::getRequestParam($this->allParams, 'status', null,Macro::CONST_PARAM_TYPE_ENUM,'状态错误',[1,2]);
+
+        if(empty($rawOrderList)){
+            Util::throwException(Macro::PARAMETER_VALIDATION_FAILED);
+        }
+
+        foreach ($rawOrderList as $k=>$v){
+            $rawOrderList[$k] = intval($v);
+        }
+
+        $remits = Remit::findAll(['id'=>$rawOrderList,'status'=>Remit::STATUS_DEDUCT,'need_merchant_check'=>1,'merchant_check_status'=>0]);
+        $msgs = [];
+        foreach ($remits as $remit){
+            try{
+                LogicRemit::merchantCheck($remit,$status,$this->allParams['op_uid'],$this->allParams['op_username']);
+            }catch (\Exception $e){
+                $msgs[] = $e->getMessage();
+            }
+
+        }
+
+        $msgs = implode(';',$msgs);
+
+        return ResponseHelper::formatOutput(Macro::SUCCESS,$msgs);
+    }
 }

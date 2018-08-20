@@ -316,18 +316,27 @@ class LogicRemit
                 $logicUser->changeUserBalance($amount, Financial::EVENT_TYPE_REMIT_FEE, $remit->order_no, $remit->amount, $ip);
 
                 $remit->status = Remit::STATUS_DEDUCT;
-
-                if ($remit->type == Remit::TYPE_API && $remit->amount <= $remit->userPaymentInfo->allow_api_fast_remit) {
-                    $remit->status = Remit::STATUS_CHECKED;
-                }
-                if ($remit->type == Remit::TYPE_BACKEND && $remit->amount <= $remit->userPaymentInfo->allow_manual_fast_remit) {
-                    $remit->status = Remit::STATUS_CHECKED;
-                }
-                if($remit->status != Remit::STATUS_CHECKED){
-                    Util::sendTelegramMessage("有出款需要审核,订单号:{$remit->order_no},金额:{$remit->amount},商户:{$remit->merchant_account}");
-                }
                 $remit->bank_ret = $remit->bank_ret.date('Ymd H:i:s')." 账户已扣款\n";
                 $remit->save();
+
+                //不需要商户前置审核才能自动审核
+                if (!$remit->need_merchant_check){
+                    //符合免审核条件的订单自动审核
+                    if (
+                        $remit->type == Remit::TYPE_API && $remit->amount <= $remit->userPaymentInfo->allow_api_fast_remit
+                        || $remit->type == Remit::TYPE_BACKEND && $remit->amount <= $remit->userPaymentInfo->allow_manual_fast_remit
+                    ) {
+                        LogicRemit::setChecked($remit,0,'系统自动');
+                    }
+                    //发送审核提醒
+                    else{
+                        Util::sendTelegramMessage("有出款需要审核,订单号:{$remit->order_no},金额:{$remit->amount},商户:{$remit->merchant_account}");
+                    }
+                }
+                //需要商户前置审核
+                else{
+
+                }
 
                 return $remit;
             }catch (\Exception $ex){
@@ -528,8 +537,8 @@ class LogicRemit
                         $remitRet['data']['remit']->status = Remit::STATUS_NOT_REFUND;
                         $remitRet['data']['remit']->bank_status =  Remit::BANK_STATUS_FAIL;
                         if($remitRet['message']){
-                            $remitRet['data']['remit']->bank_ret = date('Y-m-d H:i:s').' '.$remitRet['message']."\n";
-                            $remitRet['data']['remit']->fail_msg = date('Y-m-d H:i:s').' '.$remitRet['message'];
+                            $remitRet['data']['remit']->bank_ret .= date('Y-m-d H:i:s').' '.$remitRet['message']."\n";
+                            $remitRet['data']['remit']->fail_msg .= date('Y-m-d H:i:s').' '.$remitRet['message'];
                         }
                         break;
                 }
@@ -590,7 +599,8 @@ class LogicRemit
 //            }
 
                 $remit->status = Remit::STATUS_REFUND;
-                $remit->bank_ret.=date('Ymd H:i:s')." 订单失败已退款"."\n";
+                $reason = $reason?"订单已退款:{$reason}":"订单已退款";
+                $remit->bank_ret.=date('Ymd H:i:s')." {$reason}\n";
                 $remit->save();
 
                 $transaction->commit();
@@ -694,7 +704,7 @@ class LogicRemit
 
         self::setFail($remit, $failMsg, $opUid, $opUsername);
 
-        $remit = self::refund($remit);
+        $remit = self::refund($remit, $failMsg);
 
         return $remit;
     }
@@ -741,6 +751,15 @@ class LogicRemit
     {
         Yii::info(__CLASS__ . ':' . __FUNCTION__ . ' ' . $remit->order_no);
 
+        //需要先行判断是否需要商户审核
+        if($remit->need_merchant_check == 1
+            && $remit->merchant_check_status == Remit::MERCHANT_CHECK_STATUS_NONE
+
+        ){
+            Util::throwException(Macro::ERR_UNKNOWN, "订单{$remit->order_no}需要商户先行审核");
+            return $remit;
+        }
+
         //账户未扣款的先扣款
         if($remit->status == Remit::STATUS_NONE){
             $remit = self::deduct($remit);
@@ -752,6 +771,41 @@ class LogicRemit
         $remit->save();
 
         self::updateToRedis($remit);
+
+        return $remit;
+    }
+
+    /*
+     * 商户审核订单
+     *
+     * @param Remit $remit 订单对象
+     * @param String $failMsg 失败描述信息
+     */
+    public static function merchantCheck(Remit &$remit, $status, $opUid, $opUsername)
+    {
+        Yii::info(__CLASS__ . ':' . __FUNCTION__ . ' ' . $remit->order_no);
+
+        if(
+            $remit->status != Remit::STATUS_DEDUCT
+            || $remit->need_merchant_check != 1
+            || $remit->merchant_check_status != Remit::MERCHANT_CHECK_STATUS_NONE
+
+        ){
+            Util::throwException(Macro::ERR_UNKNOWN, "订单{$remit->order_no}不需要商户审核");
+            return $remit;
+        }
+
+        $remit->merchant_check_status = $status;
+        $statusStr = Remit::ARR_MERCHANT_CHECK_STATUS[$status];
+        if($opUsername) $bak=date('Ymd H:i:s')." 商户{$opUsername}审核为: $statusStr\n";
+        $remit->bak .=$bak;
+        $remit->bank_ret .=$bak;
+        $remit->merchant_check_bak .=date('Ymd H:i:s')." {$opUsername}审核为: $statusStr\n";;
+        $remit->save();
+
+        if($status == Remit::MERCHANT_CHECK_STATUS_DENIED){
+            self::setFailAndRefund($remit, "商户{$opUsername}审核为: $statusStr");
+        }
 
         return $remit;
     }
