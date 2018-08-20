@@ -102,7 +102,6 @@ $config = [
                 //余额查询
                 '/balance.html' => '/gateway/v1/server/account/balance',
                 '/api/v1/balance' => '/gateway/v1/server/account/balance',
-
                 //充值回调
                 '/api/v1/callback/recharge-notify/<channelId:\d+>' => '/gateway/v1/web/callback/recharge-notify',
                 '/api/v1/callback/recharge-return/<channelId:\d+>' => '/gateway/v1/web/callback/recharge-return',
@@ -209,6 +208,9 @@ $config = [
                 ],
             ],
         ],
+	
+	     //订单通知,出款提交银行等队列配置
+	     //充值订单通知
         'paymentNotifyQueue' => [
             'class' => \yii\queue\redis\Queue::class,
             'redis' => 'redis',
@@ -217,24 +219,28 @@ $config = [
 //            'strictJobType' => false,
 //            'serializer' => \yii\queue\serializers\JsonSerializer::class,
         ],
+	    //出款提交银行
         'remitBankCommitQueue' => [
             'class' => \yii\queue\redis\Queue::class,
             'redis' => 'redis',
             'as log' => \yii\queue\LogBehavior::class,
             'channel' => REDIS_PREFIX.'tq_rbc',
         ],
+	    //出款查询
         'remitQueryQueue' => [
             'class' => \yii\queue\redis\Queue::class,
             'redis' => 'redis',
             'as log' => \yii\queue\LogBehavior::class,
             'channel' => REDIS_PREFIX.'tq_rq',
         ],
+        //出款通知
         'remitNotifyQueue' => [
             'class' => \yii\queue\redis\Queue::class,
             'redis' => 'redis',
             'as log' => \yii\queue\LogBehavior::class,
             'channel' => REDIS_PREFIX.'tq_rnq',
         ],
+	    //充值查询
         'orderQueryQueue' => [
             'class' => \yii\queue\redis\Queue::class,
             'redis' => 'redis',

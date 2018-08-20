@@ -104,6 +104,7 @@ class Macro
 
     //下级管理
     const ERR_ACCOUNT_ORDER = 10301;
+    const ERR_ACCOUNT_PAYMENT_RATE = 10302;
 
     //批量excel处理错误
     const ERR_EXCEL_BATCH_REMIT = 10311;
@@ -174,7 +175,7 @@ class Macro
     const FORMAT_PAYMENT_GATEWAY_JSON = 'payment_json';
 
     const SELECT_OPTION_ALL = '__ALL__';
-    const PAGINATION_DEFAULT_PAGE_SIZE = 15;
+    const PAGINATION_DEFAULT_PAGE_SIZE = 10;
 
     const CACHE_HSET_USER_PERMISSION = "user_permission";
     const CACHE_HSET_SITE_CONFIG = "site_config";

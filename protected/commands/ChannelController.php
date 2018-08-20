@@ -2,7 +2,9 @@
 namespace app\commands;
 use app\common\models\model\ChannelAccount;
 use app\common\models\model\Remit;
+use app\common\models\model\SiteConfig;
 use app\components\Macro;
+use app\components\Util;
 use app\jobs\RemitCommitJob;
 use app\jobs\RemitQueryJob;
 use app\modules\gateway\models\logic\LogicChannelAccount;
@@ -46,9 +48,32 @@ class ChannelController extends BaseConsoleCommand
             if($runOnce==1){
                 $doCheck = false;
             }else{
-                sleep(1800);
+                sleep(300);
             }
 
+        }
+    }
+
+
+    /**
+     * 渠道号余额检测报警
+     *
+     * ./protected/yii channel/account-balance-check
+     */
+    public function actionAccountBalanceCheck(){
+        $doCheck = true;
+
+        while ($doCheck) {
+            $threshold = SiteConfig::cacheGetContent('channel_balance_alert_threshold');
+
+            $accounts = ChannelAccount::findAll(['status'=>ChannelAccount::STATUS_ACTIVE]);
+            foreach ($accounts as $account){
+                if($account->balance>0 && $account->balance<=$threshold){
+                    Util::sendTelegramMessage("通道余额不足. 通道号: {$accounts->channel_name},当前余额:{$account->balance}");
+                }
+            }
+
+            sleep(120);
         }
     }
 }
