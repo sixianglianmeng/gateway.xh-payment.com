@@ -40,7 +40,7 @@ class RemitController extends BaseServerSignedRequestController
     public function actionSingle()
     {
        $needParams = ['merchant_code', 'order_no', 'order_amount', 'order_time', 'bank_code', 'account_name', 'account_number',
-            'bank_province','bank_city','bank_branch','sign'];
+            'bank_province','bank_city','bank_branch','notify_url','sign'];
 
         $paymentRequest = new  PaymentRequest($this->merchant, $this->merchantPayment);
         //检测参数合法性，判断用户合法性

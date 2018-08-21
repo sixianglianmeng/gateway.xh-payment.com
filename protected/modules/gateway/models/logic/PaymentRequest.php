@@ -69,7 +69,7 @@ class PaymentRequest
     {
         foreach ($needParams as $p) {
             $valid = false;
-            $rule = self::REQUEST_PARAM_RULES[$p]??($rules[$p]??null);
+            $rule = $rules[$p]??(self::REQUEST_PARAM_RULES[$p]??null);
             if (
                 !empty($allParams[$p])
                 && !empty($rule)
@@ -81,11 +81,13 @@ class PaymentRequest
             }
 
             //允许为空且没有的,校验通过
-            if(!empty($rule[2]) && !isset($allParams[$p])){
+            if(!empty($rule[2]) && (!isset($allParams[$p]) || $allParams[$p]=='')){
                 $valid = true;
             }
-
-            if (true !== $valid) {
+            if(!$valid){
+                Yii::info(json_encode(['request validate',$p,$allParams[$p],$rule]));
+            }
+            if (!empty($allParams[$p]) && true !== $valid) {
                 $msg = "参数格式校验失败({$p},{$allParams[$p]})";
                 throw  new ParameterValidationExpandException($msg);
                 return false;

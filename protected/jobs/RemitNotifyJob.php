@@ -16,6 +16,7 @@ class RemitNotifyJob extends BaseObject implements RetryableJobInterface
     public $orderNo;
     public $url;
     public $data;
+    public $format;
 
     public function execute($queue)
     {
@@ -26,14 +27,22 @@ class RemitNotifyJob extends BaseObject implements RetryableJobInterface
         $url = $this->url;
         try{
 
-            $body = Util::curlPostJson($url,$this->data, [], 10000);
+//            $body = Util::curlPostJson($url,$this->data, [], 10000);
+            $method = 'post';
+            $format = 'json';
+            if($this->format){
+                $formatRule = json_decode($this->format,true);
+                if($formatRule['method']) $method = $formatRule['method'];
+                if($formatRule['format']) $format = $formatRule['format'];
+            }
+            $body = Util::sendCurlHttpRequest($url,$this->data,[],10000,$method,$format);
             $httpCode = 200;
         }catch (\Exception $e){
             $httpCode = $e->getCode();
             $body = $e->getMessage();
         }
 
-        Yii::info('RemitNotifyJob ret: '.$this->orderNo.' '.$httpCode.' '.$body);
+        Yii::info("RemitNotifyJob ret: {$this->orderNo} {$this->url} {$this->format} {$body} {$httpCode}");
         $costTime = bcsub(microtime(true),$ts,4);
 
         //接口日志埋点

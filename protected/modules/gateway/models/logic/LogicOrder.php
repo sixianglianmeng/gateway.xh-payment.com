@@ -729,11 +729,18 @@ class LogicOrder
             return true;
         }
 
+        $format = Yii::$app->cache->get('api_response_rule:'.$order->merchant_id);
+        if(!$format){
+            $format = $order->userPaymentInfo->api_response_rule;
+            Yii::$app->cache->set('api_response_rule:'.$order->merchant_id,$format);
+        }
+        Yii::info(['$format$format',$format]);
         $arrParams = self::createNotifyParameters($order);
         $job = new PaymentNotifyJob([
             'orderNo'=>$order->order_no,
             'url' => $order->notify_url,
             'data' => $arrParams,
+            'format' => $format,
         ]);
         Yii::$app->paymentNotifyQueue->push($job);//->delay(10)
     }

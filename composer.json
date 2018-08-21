@@ -17,11 +17,9 @@
     "require": {
         "guzzlehttp/guzzle": "~6.0",
         "php": ">=7.2",
-        "ext-redis": "4.*",
         "yiisoft/yii2": "2.*",
         "symfony/console": "2.*",
         "power/yii2": "^0.1.0",
-        "filsh/yii2-oauth2-server": "*",
         "yiisoft/yii2-redis": "^2.0",
         "paragonie/random_compat": "~1.4",
         "yiisoft/yii2-swiftmailer": "^2.1",
@@ -37,7 +35,15 @@
         "yiisoft/yii2-gii": "^2.0"
     },
     "config": {
-        "process-timeout": 1800
+        "process-timeout": 1800,
+        "fxp-asset": {
+            "repositories": {
+                "bower-asset/jquery.inputmask": {
+                    "type": "bower-github",
+                    "url": "https://github.com/petrabarus/jquery.inputmask"
+                }
+            }
+        }
     },
     "extra": {
         "asset-installer-paths": {

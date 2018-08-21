@@ -300,6 +300,9 @@ class LogicRemit
         Yii::info(__CLASS__.':'.__FUNCTION__.' '.$remit->order_no);
         //账户余额扣款
         if($remit->status == Remit::STATUS_NONE){
+            $db = Yii::$app->db;
+            $transaction = $db->beginTransaction();
+
             try{
                 $balanceNeed = bcadd($remit->amount,$remit->remit_fee);
                 if($remit->merchant->balance < $balanceNeed){
@@ -341,16 +344,21 @@ class LogicRemit
 
                 }
 
+                $transaction->commit();
+
                 return $remit;
-            }catch (\Exception $ex){
+            } catch(\Exception $e) {
+                $transaction->rollBack();
+
                 $remit->status = Remit::STATUS_REFUND;
                 $remit->bank_status =  Remit::BANK_STATUS_FAIL;
                 $remit->save();
-                $remit->bank_ret = $remit->bank_ret.date('Ymd H:i:s')." 账户扣款失败:".$ex->getMessage()."\n";
+                $remit->bank_ret = $remit->bank_ret.date('Ymd H:i:s')." 账户扣款失败:".$e->getMessage()."\n";
                 self::updateToRedis($remit);
 
-                throw $ex;
+                throw $e;
             }
+
 
             return $remit;
         }else{
@@ -929,10 +937,17 @@ class LogicRemit
         }
 
         $arrParams = self::createNotifyParameters($order);
+        $format = Yii::$app->cache->get('api_response_rule:'.$order->merchant_id);
+        if(!$format){
+            $format = $order->userPaymentInfo->api_response_rule;
+            Yii::$app->cache->set('api_response_rule:'.$order->merchant_id,$format);
+        }
+        Yii::info(['$format$format',$format]);
         $job = new RemitNotifyJob([
             'orderNo'=>$order->order_no,
             'url' => $order->notify_url,
             'data' => $arrParams,
+            'format' => $format,
         ]);
         Yii::$app->remitNotifyQueue->push($job);//->delay(10)
     }
