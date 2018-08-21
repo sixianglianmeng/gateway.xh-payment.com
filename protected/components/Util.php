@@ -508,12 +508,12 @@ class Util
 
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         if ($httpCode!=200) {
-            Yii::error('post request failed. url-' . $url . ' params-' . json_encode($data) .' '. $result);
+            Yii::error('post request failed. url-' . $url.' '. $result);
 
             throw new OperationFailureException('请求远程失败:'.$result, $httpCode);
         }
         if (curl_errno($ch)) {
-            Yii::error('post request failed. url-' . $url . ' params-' . json_encode($data) . ' errno-' . curl_errno($ch) . ' error-' . curl_error($ch));
+            Yii::error('post request failed. url-' . $url . ' errno-' . curl_errno($ch) . ' error-' . curl_error($ch));
 
             throw new OperationFailureException('请求远程失败:'.curl_error($ch), $httpCode);
         }
@@ -1002,5 +1002,58 @@ class Util
         }else{
             Yii::info("telegram message config error,{$telgramKey},{$chatId},{$telgramUrl}");
         }
+    }
+
+    /**
+     * 发送http请求
+     *
+     * param string $url 请求的URL
+     * param array $data post的数组
+     * param array $headers 请求header
+     * param int $timeoutMs 超时毫秒数
+     * param string $method 请求方法 POST|GET
+     * param string $method 请求格式 json|x-www-form-urlencoded
+     */
+    public static function sendCurlHttpRequest(string $url, array $data, array $headers=[], $timeoutMs=5000, string $method='POST',  string $format='x-www-form-urlencoded'){
+            $ch        = curl_init();
+            $headers[] = "Accept-Charset: utf-8";
+            if($format == 'json'){
+                $headers[] = "Accept:application/json";
+                $headers[] = "Content-Type:application/json;charset=utf-8";
+            }
+            elseif($format == 'x-www-form-urlencoded'){
+                $headers[] = "Accept:application/text";
+                $headers[] = "Content-Type: application/x-www-form-urlencoded";
+            }
+
+            curl_setopt($ch, CURLOPT_URL, $url);
+            curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+            curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.87 Safari/537.36');
+            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
+            curl_setopt($ch, CURLOPT_AUTOREFERER, 1);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data,JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE));
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_TIMEOUT_MS, $timeoutMs);
+            $result = curl_exec($ch);
+
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            if ($httpCode!=200) {
+                Yii::error('post request failed. url-' . $url . ' params-' . json_encode($data) .' '. $result);
+
+                throw new OperationFailureException('请求远程失败:'.$result, $httpCode);
+            }
+            if (curl_errno($ch)) {
+                Yii::error('post request failed. url-' . $url . ' params-' . json_encode($data) . ' errno-' . curl_errno($ch) . ' error-' . curl_error($ch));
+
+                throw new OperationFailureException('请求远程失败:'.curl_error($ch), $httpCode);
+            }
+
+            curl_close($ch);
+
+            return $result;
+
     }
 }
