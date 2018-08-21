@@ -39,7 +39,7 @@ class RemitController extends BaseServerSignedRequestController
      */
     public function actionSingle()
     {
-       $needParams = ['merchant_code', 'order_no', 'order_amount', 'order_time', 'bank_code', ' account_name', 'account_number',
+       $needParams = ['merchant_code', 'order_no', 'order_amount', 'order_time', 'bank_code', 'account_name', 'account_number',
             'bank_province','bank_city','bank_branch','sign'];
 
         $paymentRequest = new  PaymentRequest($this->merchant, $this->merchantPayment);

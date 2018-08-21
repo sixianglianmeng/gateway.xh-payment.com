@@ -35,7 +35,7 @@ class PaymentRequest
         'order_amount'   => [Macro::CONST_PARAM_TYPE_DECIMAL, [1, 32]],
         'order_time'     => [Macro::CONST_PARAM_TYPE_INT],
         'query_time'     => [Macro::CONST_PARAM_TYPE_INT],
-        'req_referer'    => [Macro::CONST_PARAM_TYPE_STRING, [0, 255]],
+        'req_referer'    => [Macro::CONST_PARAM_TYPE_STRING, [0, 255], true],
         'customer_ip'    => [Macro::CONST_PARAM_TYPE_IPv4, [], true],
         'notify_url'     => [Macro::CONST_PARAM_TYPE_STRING, [1, 255]],
         'return_url'     => [Macro::CONST_PARAM_TYPE_STRING, [1, 255]],
@@ -46,9 +46,9 @@ class PaymentRequest
         'now_date'       => [Macro::CONST_PARAM_TYPE_INT],
         'account_name'   => [Macro::CONST_PARAM_TYPE_STRING, [1, 32]],
         'account_number' => [Macro::CONST_PARAM_TYPE_NUMERIC_STRING, [10, 32]],
-        'bank_province'  => [Macro::CONST_PARAM_TYPE_STRING, [0, 32]],
-        'bank_city'      => [Macro::CONST_PARAM_TYPE_STRING, [0, 32]],
-        'bank_branch'    => [Macro::CONST_PARAM_TYPE_STRING, [0, 32]],
+        'bank_province'  => [Macro::CONST_PARAM_TYPE_STRING, [0, 32], true],
+        'bank_city'      => [Macro::CONST_PARAM_TYPE_STRING, [0, 32], true],
+        'bank_branch'    => [Macro::CONST_PARAM_TYPE_STRING, [0, 32], true],
     ];
 
     public function __construct(User $merchant,UserPaymentInfo $merchantPayment)
@@ -80,8 +80,13 @@ class PaymentRequest
                 );
             }
 
-            if ( !empty($allParams[$p]) && empty($rule[2]) && true !== $valid) {
-                $msg = '参数格式校验失败(' . $p . ':' . ($allParams[$p] ?? '') . json_encode($valid) . ')';
+            //允许为空且没有的,校验通过
+            if(!empty($rule[2]) && !isset($allParams[$p])){
+                $valid = true;
+            }
+
+            if (true !== $valid) {
+                $msg = "参数格式校验失败({$p},{$allParams[$p]})";
                 throw  new ParameterValidationExpandException($msg);
                 return false;
             }
