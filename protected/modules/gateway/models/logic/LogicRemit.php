@@ -326,11 +326,14 @@ class LogicRemit
                         $remit->type == Remit::TYPE_API && $remit->amount <= $remit->userPaymentInfo->allow_api_fast_remit
                         || $remit->type == Remit::TYPE_BACKEND && $remit->amount <= $remit->userPaymentInfo->allow_manual_fast_remit
                     ) {
-                        LogicRemit::setChecked($remit,0,'系统自动');
+                        $remit = LogicRemit::setChecked($remit,0,'系统自动');
                     }
                     //发送审核提醒
                     else{
-                        Util::sendTelegramMessage("有出款需要审核,订单号:{$remit->order_no},金额:{$remit->amount},商户:{$remit->merchant_account}");
+                        try{
+                            Util::sendTelegramMessage("有出款需要审核,订单号:{$remit->order_no},金额:{$remit->amount},商户:{$remit->merchant_account}");
+                        }catch (\Exception $e){
+                        }
                     }
                 }
                 //需要商户前置审核

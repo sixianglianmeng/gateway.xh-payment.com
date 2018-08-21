@@ -98,7 +98,11 @@ class SystemNoticeLogger extends Target
                 'key'=> $telgramKey,
                 'chatId'=> $telgramChatId,
             ];
-            $ret = Util::curlPost($telgramUrl,$data);
+            try{
+                $ret = Util::curlPost($telgramUrl,$data,[],3000);
+            }catch (\Exception $e){
+                $ret = '';
+            }
             if($ret!='ok'){
 
             }
