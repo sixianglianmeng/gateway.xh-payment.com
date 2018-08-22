@@ -58,11 +58,14 @@ class RemitController extends BaseInnerController
         }
 
         $maxAmount = $channelAccount->remit_quota_pertime ? $channelAccount->remit_quota_pertime : Remit::MAX_REMIT_PER_TIME; //渠道单次限额,默认49999
-        if ($maxAmount > $merchant->paymentInfo->remit_quota_pertime) $maxAmount = $merchant->paymentInfo->remit_quota_pertime; //用户单次限额
+        if ($merchant->paymentInfo->remit_quota_pertime && $maxAmount > $merchant->paymentInfo->remit_quota_pertime) $maxAmount = $merchant->paymentInfo->remit_quota_pertime; //用户单次限额
+        $maxSplitConfigAmount = SiteConfig::cacheGetContent('remit_order_split_max_amount');//系统配置的拆单最高金额
+        if($maxSplitConfigAmount || $maxSplitConfigAmount<$maxAmount) $maxSplitConfigAmount = $maxSplitConfigAmount;
+
         $minAmount = SiteConfig::cacheGetContent('remit_order_split_min_amount');//35000;
         if(!$minAmount || $minAmount>=$maxAmount) $minAmount = intval($maxAmount * 0.8);
 
-        Yii::info(json_encode(['minAmount maxAmount',$merchantUsername,$minAmount, $maxAmount, ($channelAccount->remit_quota_pertime > 0), $channelAccount->remit_quota_pertime]));
+        Yii::info(json_encode(['remit add split to minAmount maxAmount',$merchantUsername,$minAmount, $maxAmount,$channelAccount->remit_quota_pertime,$merchant->paymentInfo->remit_quota_pertime]));
         foreach ($rawRemits as $i => $remitArr) {
             //单笔大于5w的自动拆分
             if ($maxAmount>0 && $remitArr['amount'] >= $maxAmount) {
@@ -79,7 +82,7 @@ class RemitController extends BaseInnerController
                     $splitAmounts[] = $per;
                 }
 
-                Yii::info("{$merchantUsername}，{$remitArr['amount']},{$remitArr['bank_no']} split to: " . implode(',', $splitAmounts) . ' sum is:' . array_sum($splitAmounts));
+                Yii::info("{$merchantUsername}，{$remitArr['amount']},{$remitArr['bank_no']} remit add  split to: " . implode(',', $splitAmounts) . ' sum is:' . array_sum($splitAmounts));
                 unset($rawRemits[$i]);
                 foreach ($splitAmounts as $sa) {
                     $rawRemits[] = array_merge($remitArr, ['amount' => $sa]);
