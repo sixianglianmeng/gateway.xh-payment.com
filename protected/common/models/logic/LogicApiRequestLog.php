@@ -67,6 +67,7 @@ class LogicApiRequestLog
      */
     public static function outLog($url, $method, $logResponse, $httpStatus, $costTime = 0, $logRequest=[])
     {
+        Yii::info(Yii::$app->params['apiRequestLog']);
         //设置了请求日志，写入日志表
         if(!empty(Yii::$app->params['apiRequestLog'])){
             $logData = Yii::$app->params['apiRequestLog'];
@@ -87,6 +88,8 @@ class LogicApiRequestLog
             $logData['referer'] = '';
             $logData['useragent'] = '';
             $logData['device_id'] = '';
+            $logData['merchant_id'] = $logData['merchant_id']??0;
+            $logData['merchant_name'] = $logData['merchant_name']??'';
             $logData['channel_account_id'] = $logData['channel_account_id']??0;
             $logData['cost_time'] = $costTime;
             $logData['channel_name'] = $logData['channel_name']??'';

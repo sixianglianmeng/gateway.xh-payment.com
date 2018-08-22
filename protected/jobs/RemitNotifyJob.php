@@ -47,6 +47,8 @@ class RemitNotifyJob extends BaseObject implements RetryableJobInterface
 
         //接口日志埋点
         Yii::$app->params['apiRequestLog'] = [];
+        Yii::$app->params['apiRequestLog']['merchant_id']=$this->data['merchant_code'];
+        Yii::$app->params['apiRequestLog']['merchant_name']='';
         Yii::$app->params['apiRequestLog']['event_id']=$orderNo;
         Yii::$app->params['apiRequestLog']['event_type']=LogApiRequest::EVENT_TYPE_OUT_REMIT_NOTIFY;
         LogicApiRequestLog::outLog($url, 'POST', $body, $httpCode, $costTime, $this->data);
