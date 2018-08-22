@@ -306,7 +306,7 @@ class LogicRemit
             try{
                 $balanceNeed = bcadd($remit->amount,$remit->remit_fee);
                 if($remit->merchant->balance < $balanceNeed){
-                    throw new \Exception("账户余额不足：需要{$balanceNeed}，当前余额{$remit->merchant->balance}");
+                    throw new \Exception("账户余额不足：订单号:{$remit->order_no},需要{$balanceNeed}，当前余额{$remit->merchant->balance}");
                 }
 
                 //账户扣款
