@@ -179,14 +179,14 @@ class LogicOrder
         //站点是否允许费率设置为0
         $feeCanBeZero = SiteConfig::cacheGetContent('recharge_fee_can_be_zero');
 
-        //账户费率检测
-        if(!$feeCanBeZero && $rechargeMethod->fee_rate <= 0){
-            throw new OperationFailureException($order->order_no.' 费率不能设置为0',Macro::ERR_MERCHANT_FEE_CONFIG);
-        }
-
         //账户支付方式开关检测
         if($rechargeMethod->status != MerchantRechargeMethod::STATUS_ACTIVE){
             throw new OperationFailureException($order->order_no.' 商户此支付方式通道开关未打开',Macro::ERR_PAYMENT_TYPE_NOT_ALLOWED);
+        }
+
+        //账户费率检测
+        if(!$feeCanBeZero && $rechargeMethod->fee_rate <= 0){
+            throw new OperationFailureException($order->order_no.' 费率不能设置为0',Macro::ERR_MERCHANT_FEE_CONFIG);
         }
 
         //检测账户单笔限额
