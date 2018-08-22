@@ -729,7 +729,10 @@ class LogicRemit
      */
     public static function setFail(Remit &$remit, $failMsg='', $opUid=0, $opUsername='', $setToRefundStatus=false)
     {
-        Yii::info(__CLASS__ . ':' . __FUNCTION__ . ' ' . $remit->order_no);
+        Yii::info(__CLASS__ . ':' . __FUNCTION__ . ' ' . $remit->order_no . ' ' .$remit->status);
+        if(!in_array($remit->status,[Remit::STATUS_DEDUCT,Remit::STATUS_CHECKED,Remit::STATUS_BANK_PROCESSING,Remit::STATUS_SUCCESS,Remit::STATUS_NONE])){
+            return $remit;
+        }
 
         if($failMsg) $remit->fail_msg = $remit->fail_msg."; ".date('Ymd H:i:s').' '.$failMsg;
         $remit->status = Remit::STATUS_BANK_PROCESS_FAIL;
@@ -760,7 +763,11 @@ class LogicRemit
      */
     public static function setChecked(Remit &$remit, $opUid=0, $opUsername='')
     {
-        Yii::info(__CLASS__ . ':' . __FUNCTION__ . ' ' . $remit->order_no);
+        Yii::info(__CLASS__ . ':' . __FUNCTION__ . ' ' . $remit->order_no. ' ' .$remit->status);
+        if(!in_array($remit->status,[Remit::STATUS_DEDUCT,Remit::STATUS_NONE])){
+            Util::throwException(Macro::ERR_UNKNOWN, "订单{$remit->order_no}只有未付款或未审核的订才能进行审核!");
+            return $remit;
+        }
 
         //需要先行判断是否需要商户审核
         if($remit->need_merchant_check == 1
