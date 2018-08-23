@@ -548,7 +548,7 @@ class LogicRemit
                     case  Remit::BANK_STATUS_FAIL:
                         $remitRet['data']['remit']->status = Remit::STATUS_NOT_REFUND;
                         //查询到失败并不进行失败处理,等待人工确认
-                        $remitRet['data']['remit']->bank_status =  Remit::BANK_STATUS_PROCESSINGL;
+                        $remitRet['data']['remit']->bank_status =  Remit::BANK_STATUS_PROCESSING;
                         if($remitRet['message']){
                             $remitRet['data']['remit']->bank_ret .= date('Y-m-d H:i:s').' '.$remitRet['message']."\n";
                             $remitRet['data']['remit']->fail_msg .= date('Y-m-d H:i:s').' '.$remitRet['message'];
