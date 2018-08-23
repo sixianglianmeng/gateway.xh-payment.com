@@ -158,6 +158,7 @@ class LogicOrder
         try{
             self::beforeAddOrder($newOrder, $merchant, $rechargeMethod->channelAccount, $rechargeMethod, $channelAccountRechargeConfig);
         }catch (\Exception $e){
+            self::payFail($newOrder,$e->getMessage());
             throw new OperationFailureException($e->getMessage(),$e->getCode());
         }
 
