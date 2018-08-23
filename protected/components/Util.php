@@ -995,9 +995,13 @@ class Util
                 'key'=> $telgramKey,
                 'chatId'=> $chatId,
             ];
-            $ret = Util::curlPost($telgramUrl,$data,[],3000);
+            try{
+                $ret = Util::curlPost($telgramUrl,$data,[],3000);
+            }catch (\Exception $e){
+                $ret = $e->getMessage();
+            }
             if($ret!='ok'){
-                Yii::info("error to send telegram message:{$chatId},{$message}");
+                Yii::info("error to send telegram message:{$chatId},{$message},{$ret}");
             }
         }else{
             Yii::info("telegram message config error,{$telgramKey},{$chatId},{$telgramUrl}");

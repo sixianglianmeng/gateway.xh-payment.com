@@ -451,6 +451,7 @@ class LogicRemit
                     $ret['message'] = '网络超时错误';
                 }
                 $remit->fail_msg = '银行提交失败:'.($ret['message']??'上游无返回');
+                Util::sendTelegramMessage("出款提交银行失败,订单号:{$remit->order_no},金额:{$remit->amount},商户:{$remit->merchant_account},原因:{$remit->fail_msg}");
             }
 
             $remit->save();
@@ -546,11 +547,13 @@ class LogicRemit
                         break;
                     case  Remit::BANK_STATUS_FAIL:
                         $remitRet['data']['remit']->status = Remit::STATUS_NOT_REFUND;
-                        $remitRet['data']['remit']->bank_status =  Remit::BANK_STATUS_FAIL;
+                        //查询到失败并不进行失败处理,等待人工确认
+                        $remitRet['data']['remit']->bank_status =  Remit::BANK_STATUS_PROCESSINGL;
                         if($remitRet['message']){
                             $remitRet['data']['remit']->bank_ret .= date('Y-m-d H:i:s').' '.$remitRet['message']."\n";
                             $remitRet['data']['remit']->fail_msg .= date('Y-m-d H:i:s').' '.$remitRet['message'];
                         }
+                        Util::sendTelegramMessage("出款提交银行失败,订单号:{$remitRet['data']['remit']->order_no},金额:{$remitRet['data']['remit']->amount},商户:{$remitRet['data']['remit']->merchant_account},原因:{$remitRet['data']['remit']->fail_msg}");
                         break;
                 }
 
