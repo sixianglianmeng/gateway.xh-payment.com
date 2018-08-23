@@ -88,7 +88,7 @@ class PaymentRequest
                 Yii::info(json_encode(['request validate',$p,$allParams[$p],$rule]));
             }
             if (true !== $valid) {
-                $msg = "参数格式校验失败({$p},{$allParams[$p]})";
+                $msg = "参数格式校验失败({$p})";
                 throw  new ParameterValidationExpandException($msg);
                 return false;
             }
