@@ -218,7 +218,7 @@ class LogicOrder
         }
         //检测渠道单笔限额
         if($paymentChannelAccount->recharge_quota_pertime && bccomp($order->amount, $paymentChannelAccount->recharge_quota_pertime, 2)===1){
-            throw new OperationFailureException(null,Macro::ERR_PAYMENT_REACH_CHANNEL_QUOTA_PER_TIME);
+            throw new OperationFailureException("当前支付方式限额单笔最高{$paymentChannelAccount->recharge_quota_pertime }",Macro::ERR_PAYMENT_REACH_CHANNEL_QUOTA_PER_TIME);
         }
         //检测渠道日限额
         if($paymentChannelAccount->recharge_quota_perday

@@ -58,8 +58,8 @@ class RemitController extends BaseConsoleCommand
         $doCheck = true;
         while ($doCheck) {
             $canCommit = LogicRemit::canCommitToBank();
-            Yii::info(['actionBankCommitQueueProducer',$canCommit]);
-            if($canCommit=='1'){
+            Yii::info(json_encode(['actionBankCommitQueueProducer',$canCommit]));
+            if($canCommit){
                 //获取配置:出款多少分钟之后不再自动查询状态,默认半小时
                 $expire = SiteConfig::cacheGetContent('remit_check_expire');
                 $startTs = time()-($expire?$expire*60:1800);
@@ -70,7 +70,7 @@ class RemitController extends BaseConsoleCommand
                     ->andWhere(['<', 'commit_to_bank_times', LogicRemit::MAX_TIME_COMMIT_TO_BANK])
                     ->limit(100)->all();
 
-                Yii::info('find remit to commit bank: '.count($remits));
+                Yii::info('BankCommitQueueProducer find remit to commit bank: '.count($remits));
                 foreach ($remits as $remit){
                     Yii::info('BankCommitQueueProducer: '.$remit->order_no);
 

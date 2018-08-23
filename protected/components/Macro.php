@@ -235,7 +235,7 @@ class Macro
         self::ERR_PAYMENT_REACH_ACCOUNT_QUOTA_PER_DAY => '已达到账户单日充值最大额度',
         self::ERR_PAYMENT_REACH_ACCOUNT_QUOTA_PER_TIME => '已达到账户单次充值最大额度',
         self::ERR_PAYMENT_REACH_CHANNEL_QUOTA_PER_DAY => '已达到渠道单日充值最大额度',
-        self::ERR_PAYMENT_REACH_CHANNEL_QUOTA_PER_TIME => '已达到渠道单日充值最大额度',
+        self::ERR_PAYMENT_REACH_CHANNEL_QUOTA_PER_TIME => '超过单笔充值限额',
         self::ERR_PAYMENT_API_NOT_ALLOWED => '商户不支持API充值',
         self::ERR_PAYMENT_MANUAL_NOT_ALLOWED => '商户不支持手工充值',
         self::ERR_PAYMENT_TYPE_NOT_ALLOWED => '商户不支持此充值方式',
