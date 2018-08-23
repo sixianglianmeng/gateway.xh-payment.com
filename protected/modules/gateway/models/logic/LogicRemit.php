@@ -931,12 +931,11 @@ class LogicRemit
         return $arrParams;
     }
 
-
     /*
      * 异步通知商户
      */
     static public function notify(Remit $order){
-        Yii::trace((new \ReflectionClass(__CLASS__))->getShortName().'-'.__FUNCTION__.' '.$order->order_no);
+        Yii::debug(__CLASS__.'-'.__FUNCTION__.' '.$order->order_no);
         if(!$order->notify_url
             || $order->status != Remit::STATUS_SUCCESS
         ){
@@ -949,7 +948,7 @@ class LogicRemit
             $format = $order->userPaymentInfo->api_response_rule;
             Yii::$app->cache->set('api_response_rule:'.$order->merchant_id,$format);
         }
-        Yii::info(['$format$format',$format]);
+
         $job = new RemitNotifyJob([
             'orderNo'=>$order->order_no,
             'url' => $order->notify_url,
