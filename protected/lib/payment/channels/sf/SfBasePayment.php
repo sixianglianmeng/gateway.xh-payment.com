@@ -173,7 +173,7 @@ class SfBasePayment extends BasePayment
         if($skipHt){
             //跳过上游第一个地址,达到隐藏上游目的.
             $htmlTxt = self::httpGet($getUrl);
-
+            Yii::info(['sf jump: '.$getUrl,$htmlTxt]);
             $crawler = new Crawler($htmlTxt);
             $jumpUrl = '';
             foreach ($crawler->filter('form') as $n){
