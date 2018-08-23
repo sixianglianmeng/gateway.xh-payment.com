@@ -124,7 +124,8 @@
                     $code                           = $e->statusCode;
                     Yii::$app->response->statusCode = $code;
                 }
-//                if(!$showRawExceptionMessage) $msg = "服务器繁忙,请稍候重试(500)";
+
+                if(!$showRawExceptionMessage) $msg = "请求失败,请稍候重试(500)";
                 return ResponseHelper::formatOutput($errCode, $msg);
             }
         }
