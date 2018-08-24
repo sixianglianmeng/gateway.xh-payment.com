@@ -134,7 +134,12 @@
         protected function getAllParams()
         {
             $arrQueryParams  = Yii::$app->getRequest()->getQueryParams();
-            $arrBodyParams   = Yii::$app->getRequest()->getBodyParams();
+            try{
+                $arrBodyParams   = Yii::$app->getRequest()->getBodyParams();
+            }catch (\Exception $e){
+                Yii::error("请求参数获取失败:getBodyParams ".$e->getMessage());
+                $arrBodyParams = [];
+            }
             $this->allParams = $arrQueryParams + $arrBodyParams;
 
             return $this->allParams;
