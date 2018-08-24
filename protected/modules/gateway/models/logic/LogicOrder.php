@@ -260,6 +260,14 @@ class LogicOrder
         }
 
         $order = $noticeResult['data']['order'];
+        //加锁,防止三方并发回调
+        $isProcessing = Yii::$app->cache->get('recharge_notify_process:'.$order->order_no);
+        if(!$isProcessing){
+            Yii::$app->cache->set('recharge_notify_process:'.$order->order_no,time(),10);
+        }else{
+            Yii::error("充值订单并发回调:{$order->order_no}");
+            throw new OperationFailureException("订单处理中:{$order->order_no}");
+        }
 
         //接口日志埋点
         $eventType = LogApiRequest::EVENT_TYPE_IN_RECHARGE_RETURN;
