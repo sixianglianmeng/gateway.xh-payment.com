@@ -975,7 +975,9 @@ class LogicRemit
         $order->notify_ret = $retContent;
         $order->next_notify_time = time()+self::NOTICE_DELAY;
 
-        $bak=date('Ymd H:i:s')."出款结果通知商户：{$retContent}({$retCode})\n";
+        //防止对方异常返回大量字符串
+        $retContent = substr($retContent,0,32);
+        $bak=date('Ymd H:i:s')." 出款结果通知商户：{$retContent}({$retCode})\n";
         $order->bak .=$bak;
         $order->bank_ret.=$bak;
 

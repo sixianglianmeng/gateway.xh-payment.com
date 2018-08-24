@@ -716,7 +716,9 @@ class LogicOrder
         if($order->notify_status == Order::NOTICE_STATUS_SUCCESS){
             return $order;
         }
-
+        //防止对方异常返回大量字符串
+        $retContent = substr($retContent,0,32);
+        $order->bak .= date('Ymd H:i:s')." 充值结果通知商户：{$retContent}({$retCode})\n";
         $order->notify_at = time();
         $order->notify_status = $retCode;
         $order->notify_ret = $retContent;
