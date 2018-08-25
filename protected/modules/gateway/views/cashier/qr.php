@@ -36,6 +36,7 @@
             <h4 class="mb-3"><?php echo $data['order']['pay_method_str']; ?>付款</h4>
             <form class="needs-validation" novalidate>
                 <div class="row" style="text-align: center">
+<!--                  <img style="width:300px;height:300px;" src="http://qr.liantu.com/api.php?text=--><?php //echo urlencode($data['data']['qr']); ?><!--"/>-->
                     <div id="qrcode"></div>
                 </div>
             </form>
@@ -59,7 +60,7 @@
     setInterval(function () {
       $.post("/order/check_status.html",data,function(result){
         if(result.code == 0){
-            // $('.pay-ok').show();
+            $('.pay-ok').show();
             $('.pay-btn').removeClass('btn-primary').addClass('btn-success').text('付款已成功');
         }
       });

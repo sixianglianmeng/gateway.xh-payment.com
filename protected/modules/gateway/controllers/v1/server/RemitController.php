@@ -43,8 +43,11 @@ class RemitController extends BaseServerSignedRequestController
             'bank_province','bank_city','bank_branch','notify_url','sign'];
 
         $paymentRequest = new  PaymentRequest($this->merchant, $this->merchantPayment);
+        $rules =     [
+            'bank_code'      => [Macro::CONST_PARAM_TYPE_ALNUM, [1, 32]]
+        ];
         //检测参数合法性，判断用户合法性
-        $paymentRequest->validate($this->allParams, $needParams);
+        $paymentRequest->validate($this->allParams, $needParams, $rules);
 
         $paymentChannelAccount = $this->merchantPayment->remitChannel;
         if(!$paymentChannelAccount){

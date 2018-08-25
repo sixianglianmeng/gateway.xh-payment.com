@@ -31,7 +31,7 @@ class PaymentRequest
         'merchant_code'  => [Macro::CONST_PARAM_TYPE_ALNUM_DASH_UNDERLINE, [1, 32]],
         'order_no'       => [Macro::CONST_PARAM_TYPE_ALNUM_DASH_UNDERLINE, [1, 32]],
         'pay_type'       => [Macro::CONST_PARAM_TYPE_PAYTYPE, []],
-        'bank_code'      => [Macro::CONST_PARAM_TYPE_STRING, [0, 32], true],//[Macro::CONST_PARAM_TYPE_BANKCODE, [], true],
+        'bank_code'      => [Macro::CONST_PARAM_TYPE_ALNUM, [1, 32], true],//[Macro::CONST_PARAM_TYPE_BANKCODE, [], true],
         'order_amount'   => [Macro::CONST_PARAM_TYPE_DECIMAL, [1, 32]],
         'order_time'     => [Macro::CONST_PARAM_TYPE_INT],
         'query_time'     => [Macro::CONST_PARAM_TYPE_INT],
