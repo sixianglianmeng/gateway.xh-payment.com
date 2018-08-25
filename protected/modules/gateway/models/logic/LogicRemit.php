@@ -322,27 +322,8 @@ class LogicRemit
                 $remit->bank_ret = $remit->bank_ret.date('Ymd H:i:s')." 账户已扣款\n";
                 $remit->save();
 
-                //不需要商户前置审核才能自动审核
-                if (!$remit->need_merchant_check){
-                    //符合免审核条件的订单自动审核
-                    if (
-                        $remit->type == Remit::TYPE_API && $remit->amount <= $remit->userPaymentInfo->allow_api_fast_remit
-                        || $remit->type == Remit::TYPE_BACKEND && $remit->amount <= $remit->userPaymentInfo->allow_manual_fast_remit
-                    ) {
-                        $remit = LogicRemit::setChecked($remit,0,'系统自动');
-                    }
-                    //发送审核提醒
-                    else{
-                        try{
-                            Util::sendTelegramMessage("有出款需要审核,订单号:{$remit->order_no},金额:{$remit->amount},商户:{$remit->merchant_account}");
-                        }catch (\Exception $e){
-                        }
-                    }
-                }
-                //需要商户前置审核
-                else{
-
-                }
+                //自动审核订单
+                LogicRemit::autoCheck($remit);
 
                 $transaction->commit();
 
@@ -377,7 +358,8 @@ class LogicRemit
             'event_type'=> LogApiRequest::EVENT_TYPE_OUT_REMIT_ADD,
             'merchant_id'=>$remit->channel_merchant_id,
             'merchant_name'=>$remit->channelAccount->merchant_account,
-            'channel_account_id'=>$remit->channel_account_id,
+            'channel_ac
+            count_id'=>$remit->channel_account_id,
             'channel_name'=>$remit->channelAccount->channel_name,
         ];
         //账户未扣款的先扣款
@@ -827,6 +809,10 @@ class LogicRemit
         if($status == Remit::MERCHANT_CHECK_STATUS_DENIED){
             self::setFailAndRefund($remit, "商户{$opUsername}审核为: $statusStr");
         }
+        //商户审核通过,尝试系统自动审核
+        elseif($status == Remit::MERCHANT_CHECK_STATUS_CHECKED){
+            LogicRemit::autoCheck($remit);
+        }
 
         return $remit;
     }
@@ -985,6 +971,40 @@ class LogicRemit
         $order->updateCounters(['notify_times' => 1]);
 
         return $order;
+    }
+
+    /**
+     * 自动审核订单
+     *
+     * @param Remit $order
+     */
+    public static function autoCheck(Remit &$remit){
+        Yii::debug(__CLASS__.'-'.__FUNCTION__.' '.$remit->order_no);
+        //不需要商户前置审核,或者需要审核且审核状态为已审核才能自动审核
+        if (
+            $remit->need_merchant_check != 1
+            || $remit->need_merchant_check == 1 && $remit->merchant_check_status == Remit::MERCHANT_CHECK_STATUS_CHECKED
+        ){
+            //符合免审核条件的订单自动审核
+            if (
+                $remit->type == Remit::TYPE_API && $remit->amount <= $remit->userPaymentInfo->allow_api_fast_remit
+                || $remit->type == Remit::TYPE_BACKEND && $remit->amount <= $remit->userPaymentInfo->allow_manual_fast_remit
+            ) {
+                $remit = LogicRemit::setChecked($remit,0,'系统自动');
+            }
+            //发送审核提醒
+            else{
+                try{
+                    Util::sendTelegramMessage("有出款需要审核,订单号:{$remit->order_no},金额:{$remit->amount},商户:{$remit->merchant_account}");
+                }catch (\Exception $e){
+
+                }
+            }
+        }else{
+            Yii::error("出款订单状态错误,不需要自动审核.订单号:{$remit->order_no},need_merchant_check:{$remit->need_merchant_check},merchant_check_status:{$remit->merchant_check_status}");
+        }
+
+        return $remit;
     }
 
 }
