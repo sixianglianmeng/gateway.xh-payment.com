@@ -352,8 +352,8 @@ class LogicRemit
 
                 $remit->status = Remit::STATUS_REFUND;
                 $remit->bank_status =  Remit::BANK_STATUS_FAIL;
-                $remit->save();
                 $remit->bank_ret = $remit->bank_ret.date('Ymd H:i:s')." 账户扣款失败:".$e->getMessage()."\n";
+                $remit->save();
                 self::updateToRedis($remit);
 
                 throw $e;
