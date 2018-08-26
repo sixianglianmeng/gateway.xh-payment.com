@@ -1054,7 +1054,7 @@ class Util
 
             $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
             if ($httpCode!=200) {
-                Yii::error('post request failed. url-' . $url . ' params-' . json_encode($data) .' '. $result);
+                Yii::error('post request failed. url-' . $url . ' params-' . json_encode($data) .' '. $result . ' error-' . curl_error($ch));
 
                 throw new OperationFailureException('请求远程失败:'.$result, $httpCode);
             }
