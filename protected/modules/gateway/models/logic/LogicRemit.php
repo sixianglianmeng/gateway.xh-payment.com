@@ -329,7 +329,7 @@ class LogicRemit
                 $transaction->commit();
 
                 return $remit;
-            } catch(\Exception $e) {
+            } catch(OperationFailureException $e) {
                 $transaction->rollBack();
 
                 $remit->status = Remit::STATUS_REFUND;
