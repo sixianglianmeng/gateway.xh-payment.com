@@ -47,6 +47,7 @@ class LogicApiRequestLog
             $logData['channel_account_id'] = $logData['channel_account_id']??0;
             $logData['channel_name'] = $logData['channel_name']??'';
             $logData['deleted_at'] = 0;
+            $logData['merchant_order_no'] = $logData['merchant_order_no']??'';
 
             $apiRequestLog = new LogApiRequest();
             $apiRequestLog->setAttributes($logData,false);
