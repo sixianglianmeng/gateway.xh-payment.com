@@ -400,6 +400,7 @@ class SfBasePayment extends BasePayment
                 $ret['message'] = $res['errror_msg']??"出款提交失败({$resTxt})";
             }
         }
+        $ret['rawMessage'] = $resTxt;
 
         return  $ret;
     }
@@ -444,7 +445,7 @@ class SfBasePayment extends BasePayment
                 $ret['message'] = $res['errror_msg']??"出款查询失败({$resTxt})";;
             }
         }
-
+        $ret['rawMessage'] = $resTxt;
         return  $ret;
     }
 

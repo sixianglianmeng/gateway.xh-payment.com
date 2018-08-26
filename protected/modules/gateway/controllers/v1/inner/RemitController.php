@@ -252,13 +252,17 @@ class RemitController extends BaseInnerController
                     case  Remit::BANK_STATUS_FAIL:
                         $msg = date('Y-m-d H:i:s').' 出款失败:'.$remitRet['message']."\n";
                         break;
+                    default:
+                        $msg = date('Y-m-d H:i:s').' :'.$remitRet['rawMessage']."\n";
+                        break;
+
                 }
             }
         }else{
             $msg = '订单查询结果数据结构错误'.$remitRet['message'];
         }
 
-        $msg = '本地状态:'.Remit::ARR_STATUS[$remit->status]."\n上游状态:".$msg;
+        $msg = '本地状态:'.Remit::ARR_STATUS[$remit->status]."\n上游状态:".$msg." \n".$remitRet['rawMessage'];
 
         return ResponseHelper::formatOutput(Macro::SUCCESS, $msg);
     }
