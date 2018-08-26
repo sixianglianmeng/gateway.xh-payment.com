@@ -146,7 +146,8 @@ class LogicOrder
         //接口日志埋点
         if(empty($orderData['op_uid']) && empty($orderData['op_username'])){
             Yii::$app->params['apiRequestLog'] = [
-                'event_id'=>$newOrder->merchant_order_no,
+                'event_id'=>$newOrder->order_no,
+                'merchant_order_no'=>$newOrder->merchant_order_no,
                 'event_type'=>LogApiRequest::EVENT_TYPE_IN_RECHARGE_ADD,
                 'merchant_id'=>$order->merchant_id??$merchant->id,
                 'merchant_name'=>$order->merchant_account??$merchant->username,
@@ -276,6 +277,7 @@ class LogicOrder
         }
         Yii::$app->params['apiRequestLog'] = [
             'event_id'=>$order->order_no,
+            'merchant_order_no'=>$order->merchant_order_no,
             'event_type'=>$eventType,
             'merchant_id'=>$order->merchant_id,
             'merchant_name'=>$order->merchant_account,
@@ -772,14 +774,15 @@ class LogicOrder
             $order = Order::findOne(['merchant_order_no'=>$merchantOrderNo,'merchant_id'=>$merchant->id]);
         }
         elseif($orderNo){
-            $order = Order::findOne(['order_no'=>$merchantOrderNo]);
+            $order = Order::findOne(['order_no'=>$orderNo,'merchant_id'=>$merchant->id]);
         }else{
             throw new OperationFailureException("参数错误,平台订单号及商户订单号不能都为空.");
         }
 
         //接口日志埋点
         Yii::$app->params['apiRequestLog'] = [
-            'event_id'=>$order->merchant_order_no,
+            'event_id'=>$order->order_no,
+            'merchant_order_no'=>$order->merchant_order_no,
             'event_id'=>$merchantOrderNo?$merchantOrderNo:$orderNo,
             'event_type'=>LogApiRequest::EVENT_TYPE_IN_RECHARGE_QUERY,
             'merchant_id'=>$merchant->id,

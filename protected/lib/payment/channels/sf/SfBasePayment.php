@@ -97,6 +97,7 @@ class SfBasePayment extends BasePayment
         //接口日志埋点
         Yii::$app->params['apiRequestLog'] = [
             'event_id'=>$order->order_no,
+            'merchant_order_no'=>$order->merchant_order_no,
             'event_type'=> LogApiRequest::EVENT_TYPE_IN_RECHARGE_NOTIFY,
             'merchant_id'=>$order->merchant_id,
             'merchant_name'=>$order->merchant_account,

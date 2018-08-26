@@ -44,7 +44,8 @@ class VerifySign extends ActionFilter
         if($logEventType = array_search($distUri,$events)){
             Yii::$app->params['apiRequestLog']['event_type'] = $logEventType;
         }
-        Yii::$app->params['apiRequestLog']['event_id'] = $allParams['order_no']??'';
+        Yii::$app->params['apiRequestLog']['event_id'] = $allParams['trade_no']??'';
+        Yii::$app->params['apiRequestLog']['merchant_order_no'] = $allParams['order_no']??'';
         Yii::$app->params['apiRequestLog']['merchant_id'] = $allParams['merchant_code']??'';
 
         $strSig = ControllerParameterValidator::getRequestParam($allParams, 'sign', null, Macro::CONST_PARAM_TYPE_MD5,"签名错误");
@@ -67,15 +68,6 @@ class VerifySign extends ActionFilter
         $strSecret = $merchant->paymentInfo->app_key_md5;
         Yii::$app->params['merchantPayment'] = $merchant->paymentInfo;
         Yii::$app->controller->merchantPayment = $merchant->paymentInfo;
-
-        // qa、test环境万能签名.
-        if (defined('APPLICATION_ENV') && 
-            in_array(APPLICATION_ENV, ['dev', 'test']) == true
-        ) {
-            if ($this->godSig && $strSig === $this->godSig) {
-                return true;
-            }
-        }
 
         $arrParams = $allParams;
         foreach ($arrParams as $strKey => $strVal) {

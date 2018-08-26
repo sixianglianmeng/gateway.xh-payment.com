@@ -150,7 +150,8 @@ class LogicRemit
 
         //接口日志埋点
         Yii::$app->params['apiRequestLog'] = [
-            'event_id'=>$newRemit->merchant_order_no,
+            'event_id'=>$newRemit->order_no,
+            'merchant_order_no'=>$newRemit->merchant_order_no,
             'event_type'=> LogApiRequest::EVENT_TYPE_IN_REMIT_ADD,
             'merchant_id'=>$newRemit->merchant_id??$merchant->id,
             'merchant_name'=>$newRemit->merchant_account??$merchant->username,
@@ -355,6 +356,7 @@ class LogicRemit
         //接口日志埋点
         Yii::$app->params['apiRequestLog'] = [
             'event_id'=>$remit->order_no,
+            'merchant_order_no'=>$remit->merchant_order_no,
             'event_type'=> LogApiRequest::EVENT_TYPE_OUT_REMIT_ADD,
             'merchant_id'=>$remit->channel_merchant_id,
             'merchant_name'=>$remit->channelAccount->merchant_account,
@@ -463,6 +465,7 @@ class LogicRemit
         //接口日志埋点
         Yii::$app->params['apiRequestLog'] = [
             'event_id'=>$remit->order_no,
+            'merchant_order_no'=>$remit->merchant_order_no,
             'event_type'=> LogApiRequest::EVENT_TYPE_OUT_REMIT_QUERY,
             'merchant_id'=>$remit->channel_merchant_id,
             'merchant_name'=>$remit->channelAccount->merchant_account,
@@ -830,6 +833,8 @@ class LogicRemit
             'order_no'=>$remit->order_no,
             'bank_status'=>$remit->bank_status,
             'fail_msg'=>$remit->fail_msg,
+            'channel_account_id'=>$remit->channelAccount->id,
+            'channel_name'=>$remit->channelAccount->channel_name,
         ];
         $json = \GuzzleHttp\json_encode($data);
         Yii::$app->redis->hmset(self::REDIS_CACHE_KEY, $remit->merchant_id.'-'.$remit->merchant_order_no, $json);
@@ -864,12 +869,13 @@ class LogicRemit
 
         //接口日志埋点
         Yii::$app->params['apiRequestLog'] = [
-            'event_id'=>$merchantOrderNo?$merchantOrderNo:$orderNo,
+            'event_id'=>$statusArr['order_no']??$orderNo,
+            'merchant_order_no'=>$statusArr['merchant_order_no']??$merchantOrderNo,
             'event_type'=> LogApiRequest::EVENT_TYPE_IN_REMIT_QUERY,
             'merchant_id'=>$merchant->id,
             'merchant_name'=>$merchant->username,
-            'channel_account_id'=>Yii::$app->params['merchantPayment']->remitChannel->id,
-            'channel_name'=>Yii::$app->params['merchantPayment']->remitChannel->channel_name,
+            'channel_account_id'=>$statusArr['channel_account_id']??Yii::$app->params['merchantPayment']->remitChannel->id,
+            'channel_name'=>$statusArr['channel_name']??Yii::$app->params['merchantPayment']->remitChannel->channel_name,
         ];
 
         if(!$statusArr){

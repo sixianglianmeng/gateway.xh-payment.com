@@ -216,6 +216,7 @@ class RemitController extends BaseInnerController
         //接口日志埋点
         Yii::$app->params['apiRequestLog'] = [
             'event_id'=>$remit->order_no,
+            'merchant_order_no'=>$remit->merchant_order_no,
             'event_type'=> LogApiRequest::EVENT_TYPE_OUT_REMIT_QUERY,
             'merchant_id'=>$remit->channel_merchant_id,
             'merchant_name'=>$remit->channelAccount->merchant_account,

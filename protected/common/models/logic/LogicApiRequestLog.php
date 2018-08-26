@@ -93,6 +93,7 @@ class LogicApiRequestLog
             $logData['channel_account_id'] = $logData['channel_account_id']??0;
             $logData['cost_time'] = $costTime;
             $logData['channel_name'] = $logData['channel_name']??'';
+            $logData['merchant_order_no'] = $logData['merchant_order_no']??'';
 
             $apiRequestLog = new LogApiRequest();
             $apiRequestLog->setAttributes($logData,false);
@@ -113,6 +114,7 @@ class LogicApiRequestLog
         //接口日志埋点
         Yii::$app->params['apiRequestLog'] = [
             'event_id'=>$order->order_no,
+            'merchant_order_no'=>$order->merchant_order_no,
             'event_type'=> LogApiRequest::EVENT_TYPE_OUT_RECHARGE_ADD,
             'merchant_id'=>$order->merchant_id,
             'merchant_name'=>$order->merchant_account,
