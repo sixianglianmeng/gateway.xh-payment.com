@@ -225,7 +225,7 @@ class BasePayment
      *
      * @return bool|string
      */
-    public static function post(string $url, array $postData, $header = [], $timeout = 10)
+    public static function post(string $url, array $postData, $header = [], $timeout = 20)
     {
         $headers = [];
         try {
