@@ -136,7 +136,7 @@ class RemitController extends BaseConsoleCommand
             $query = Remit::find()
                 ->where(['status'=>[Remit::STATUS_SUCCESS, Remit::STATUS_REFUND], 'notify_status'=>[Remit::NOTICE_STATUS_NONE, Remit::NOTICE_STATUS_FAIL]])
                 ->andWhere(['!=', 'notify_url', ''])
-                ->andWhere(['>=', 'remit_at', $startTs])
+                ->andWhere(['>=', 'created_at', $startTs])
                 //最多通知10次
                 ->andWhere(['<', 'notify_times', $remitMaxNotifyTimes])
                 //已经到达通知时间

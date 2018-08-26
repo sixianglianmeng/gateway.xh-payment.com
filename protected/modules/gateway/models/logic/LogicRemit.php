@@ -360,8 +360,7 @@ class LogicRemit
             'event_type'=> LogApiRequest::EVENT_TYPE_OUT_REMIT_ADD,
             'merchant_id'=>$remit->channel_merchant_id,
             'merchant_name'=>$remit->channelAccount->merchant_account,
-            'channel_ac
-            count_id'=>$remit->channel_account_id,
+            'channel_account_id'=>$remit->channel_account_id,
             'channel_name'=>$remit->channelAccount->channel_name,
         ];
         //账户未扣款的先扣款

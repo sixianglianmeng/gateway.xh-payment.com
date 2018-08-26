@@ -385,9 +385,10 @@ class SfBasePayment extends BasePayment
         $requestUrl = $this->paymentConfig['gateway_base_uri'] . '/remit.html';
         $resTxt = self::post($requestUrl, $params);
         Yii::info('remit to bank result: '.$this->remit['order_no'].' '.$resTxt);
-        LogicApiRequestLog::outLog($requestUrl, 'POST', $resTxt, 200,0, $params);
+        LogicApiRequestLog::outLog($requestUrl, 'POST', $resTxt, Yii::$app->params['apiRequestLog']['http_code']??200,0, $params);
 
         $ret = self::REMIT_RESULT;
+        $ret['data']['rawMessage'] = $resTxt;
         if (!empty($resTxt)) {
             $res = json_decode($resTxt, true);
             //仅代表请求成功,不代表业务成功
@@ -400,7 +401,6 @@ class SfBasePayment extends BasePayment
                 $ret['message'] = $res['errror_msg']??"出款提交失败({$resTxt})";
             }
         }
-        $ret['rawMessage'] = $resTxt;
 
         return  $ret;
     }

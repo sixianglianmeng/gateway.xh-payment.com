@@ -244,6 +244,7 @@ class BasePayment
             $httpCode = $e->getCode();
             $body     = $e->getMessage();
         }
+        Yii::$app->params['apiRequestLog']['http_code'] = $httpCode;
 
         Yii::info('request to channel: ' . $url . ' ' . json_encode($postData, JSON_UNESCAPED_UNICODE) . ' ' . $body);
 

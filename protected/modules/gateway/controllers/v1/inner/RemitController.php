@@ -262,7 +262,10 @@ class RemitController extends BaseInnerController
             $msg = '订单查询结果数据结构错误'.$remitRet['message'];
         }
 
-        $msg = '本地状态:'.Remit::ARR_STATUS[$remit->status]."\n上游状态:".$msg." \n".$remitRet['rawMessage'];
+        $msg = '本地状态:'.Remit::ARR_STATUS[$remit->status]."\n上游状态:".$msg;
+        if(!empty($remitRet['data']['rawMessage'])){
+            $msg.=" \n原始消息".$remitRet['data']['rawMessage'];
+        }
 
         return ResponseHelper::formatOutput(Macro::SUCCESS, $msg);
     }
