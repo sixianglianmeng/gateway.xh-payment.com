@@ -144,6 +144,8 @@ class ShBasePayment extends BasePayment
 
         $requestUrl = $this->paymentConfig['gateway_base_uri'].'/order.html';
         $resTxt = self::post($requestUrl,$params,[],25);
+        //接口日志记录
+        LogicApiRequestLog::rechargeAddLog($this->order, $requestUrl, $resTxt, $params);
 
         $ret = self::RECHARGE_WEBBANK_RESULT;
         if (!empty($resTxt)) {

@@ -174,6 +174,8 @@ class SfBasePayment extends BasePayment
         if($skipHt){
             //跳过上游第一个地址,达到隐藏上游目的.
             $htmlTxt = self::httpGet($getUrl);
+            //接口日志记录
+            LogicApiRequestLog::rechargeAddLog($this->order, $requestUrl, $htmlTxt, $params);
             $crawler = new Crawler($htmlTxt);
             $jumpUrl = '';
             foreach ($crawler->filter('form') as $n){
@@ -240,7 +242,8 @@ class SfBasePayment extends BasePayment
         $params['sign'] = self::md5Sign($params,trim($this->paymentConfig['key']));
         $requestUrl = $this->paymentConfig['gateway_base_uri'].'/order.html';
         $resTxt = self::post($requestUrl,$params);
-
+        //接口日志记录
+        LogicApiRequestLog::rechargeAddLog($this->order, $requestUrl, $resTxt, $params);
         $ret = self::RECHARGE_WEBBANK_RESULT;
         if (!empty($resTxt)) {
             $res = json_decode($resTxt, true);
