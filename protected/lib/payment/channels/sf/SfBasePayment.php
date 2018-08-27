@@ -432,6 +432,7 @@ class SfBasePayment extends BasePayment
         $ret = self::REMIT_QUERY_RESULT;
         $ret['data']['remit'] = $this->remit;
         $ret['data']['order_no'] = $this->remit->order_no;
+        $ret['data']['rawMessage'] = $resTxt;
         if (!empty($resTxt)) {
             $res = json_decode($resTxt, true);
             //仅代表请求成功,不代表业务成功
@@ -448,7 +449,6 @@ class SfBasePayment extends BasePayment
                 $ret['message'] = $res['errror_msg']??"出款查询失败({$resTxt})";;
             }
         }
-        $ret['rawMessage'] = $resTxt;
         return  $ret;
     }
 
@@ -468,6 +468,7 @@ class SfBasePayment extends BasePayment
         $resTxt = self::post($requestUrl, $params);
 
         $ret = self::REMIT_QUERY_RESULT;
+        $ret['data']['rawMessage'] = $resTxt;
         if (!empty($resTxt)) {
             $res = json_decode($resTxt, true);
             if (isset($res['is_success']) && strtoupper($res['is_success']) == 'TRUE') {

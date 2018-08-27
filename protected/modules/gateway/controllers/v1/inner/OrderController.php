@@ -1,12 +1,14 @@
 <?php
 namespace app\modules\gateway\controllers\v1\inner;
 
+use app\common\models\model\LogApiRequest;
 use app\common\models\model\Order;
 use app\common\models\model\User;
 use app\components\Macro;
 use app\components\Util;
 use app\lib\helpers\ControllerParameterValidator;
 use app\lib\helpers\ResponseHelper;
+use app\lib\payment\ChannelPayment;
 use app\modules\gateway\controllers\v1\BaseInnerController;
 use app\modules\gateway\models\logic\LogicOrder;
 use Yii;
@@ -99,6 +101,63 @@ class OrderController extends BaseInnerController
         }
 
         return ResponseHelper::formatOutput(Macro::SUCCESS,'');
+    }
+
+
+    /**
+     * 到三方同步查询订单状态
+     */
+    public function actionSyncStatusRealtime()
+    {
+        $orderNo = ControllerParameterValidator::getRequestParam($this->allParams, 'orderNo', null,Macro::CONST_PARAM_TYPE_ORDER_NO,'订单号列表错误');
+
+
+        $order =  Order::findOne(['order_no'=>$orderNo]);
+        if(!$order){
+            return ResponseHelper::formatOutput(Macro::FAIL,'订单不存在');
+        }
+
+        //接口日志埋点
+        Yii::$app->params['apiRequestLog'] = [
+            'event_id'=>$order->order_no,
+            'merchant_order_no'=>$order->merchant_order_no,
+            'event_type'=> LogApiRequest::EVENT_TYPE_OUT_RECHARGE_QUERY,
+            'merchant_id'=>$order->channel_merchant_id,
+            'merchant_name'=>$order->channelAccount->merchant_account,
+            'channel_account_id'=>$order->channel_account_id,
+            'channel_name'=>$order->channelAccount->channel_name,
+        ];
+
+        $paymentChannelAccount = $order->channelAccount;
+        $payment = new ChannelPayment($order, $paymentChannelAccount);
+        $ret = $payment->orderStatus();
+
+        $msg = '';
+        if($ret['status'] === 0){
+            switch ($ret['data']['trade_status']){
+                case Order::STATUS_PAID:
+                case Order::STATUS_SETTLEMENT:
+
+                    if($ret['data']['amount']>0){
+                        $msg = "付款成功,付款金额{$ret['data']['amount']},上游订单号{$ret['data']['channel_order_no']}";
+                    }
+
+                    break;
+                case Order::STATUS_FAIL:
+                    $msg = $ret['message']?$ret['message']:'上游返回返回订单失败';
+                    break;
+            }
+        }
+        //失败
+        else{
+            $msg = "订单查询失败";
+        }
+        $msg = '本地状态:'.Order::ARR_STATUS[$order->status]."\n上游状态:".$msg;
+        if(!empty($ret['data']['rawMessage'])){
+            $msg.=" \n原始消息".$ret['data']['rawMessage'];
+        }
+
+        return ResponseHelper::formatOutput(Macro::SUCCESS,$msg);
     }
 
     /**
