@@ -218,41 +218,6 @@ class BasePayment
 
     /**
      *
-     * 发送post请求
-     *
-     * @param string $url 请求地址
-     * @param array $postData 请求数据
-     *
-     * @return bool|string
-     */
-    public static function post(string $url, array $postData, $header = [], $timeout = 20)
-    {
-        $headers = [];
-        try {
-            $client   = new \GuzzleHttp\Client();
-            $response = $client->request('POST', $url, [
-                'headers'     => $headers,
-                'timeout'     => $timeout,
-                'body'        => http_build_query($postData),
-                'form_params' => ($postData),
-            ]);
-
-            //            $response = $client->get($url.'?'.http_build_query($postData));
-            $httpCode = $response->getStatusCode();
-            $body     = (string)$response->getBody();
-        } catch (\Exception $e) {
-            $httpCode = $e->getCode();
-            $body     = $e->getMessage();
-        }
-        Yii::$app->params['apiRequestLog']['http_code'] = $httpCode;
-
-        Yii::info('request to channel: ' . $url . ' ' . json_encode($postData, JSON_UNESCAPED_UNICODE) . ' ' . $body);
-
-        return $body;
-    }
-
-    /**
-     *
      * curl发送post请求
      *
      * @param string $url 请求地址
@@ -299,19 +264,64 @@ class BasePayment
      *
      * @return bool|string
      */
-    public static function httpGet($url, $headers = [])
+    public static function httpGet($url, $headers = [], $timeout = 20)
     {
         try {
             $client   = new \GuzzleHttp\Client();
-            $response = $client->get($url,['timeout' => 10]);
+            $response = $client->get($url,['timeout' => $timeout]);
             $httpCode = $response->getStatusCode();
             $body     = (string)$response->getBody();
         } catch (\Exception $e) {
-            $httpCode = $e->getCode();
-            $body     = $e->getMessage();
+            if ($e->hasResponse()) {
+                $httpCode = $e->getResponse()->getStatusCode();
+                $body = (string)$e->getResponse()->getBody();
+            } else {
+                $body = $e->getMessage();
+                $httpCode = 403;
+            }
         }
 
         Yii::info('request to channel: ' . $url . ' ' . $httpCode . ' ' . $body);
+
+        return $body;
+    }
+
+    /**
+     *
+     * 发送post请求
+     *
+     * @param string $url 请求地址
+     * @param array $postData 请求数据
+     *
+     * @return bool|string
+     */
+    public static function post(string $url, array $postData, $header = [], $timeout = 20)
+    {
+        $headers = [];
+        try {
+            $client   = new \GuzzleHttp\Client();
+            $response = $client->request('POST', $url, [
+                'headers'     => $headers,
+                'timeout'     => $timeout,
+                'body'        => http_build_query($postData),
+                'form_params' => ($postData),
+            ]);
+
+            //            $response = $client->get($url.'?'.http_build_query($postData));
+            $httpCode = $response->getStatusCode();
+            $body     = (string)$response->getBody();
+        } catch (\Exception $e) {
+            if ($e->hasResponse()) {
+                $httpCode = $e->getResponse()->getStatusCode();
+                $body = (string)$e->getResponse()->getBody();
+            } else {
+                $body = $e->getMessage();
+                $httpCode = 403;
+            }
+        }
+        Yii::$app->params['apiRequestLog']['http_code'] = $httpCode;
+
+        Yii::info('request to channel: ' . $url . ' ' . json_encode($postData, JSON_UNESCAPED_UNICODE) . ' ' . $body);
 
         return $body;
     }
