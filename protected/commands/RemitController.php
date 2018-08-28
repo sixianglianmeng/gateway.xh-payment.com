@@ -68,7 +68,7 @@ class RemitController extends BaseConsoleCommand
                     ->andWhere(['status'=>[Remit::STATUS_CHECKED]])
                     ->andWhere(['>=', 'updated_at', $startTs])
                     ->andWhere(['<', 'commit_to_bank_times', LogicRemit::MAX_TIME_COMMIT_TO_BANK])
-                    ->limit(100)->all();
+                    ->limit(200)->all();
 
                 Yii::info('BankCommitQueueProducer find remit to commit bank: '.count($remits));
                 foreach ($remits as $remit){
@@ -83,7 +83,7 @@ class RemitController extends BaseConsoleCommand
                 Yii::info('system set stop commit to bank');
             }
 
-            sleep(mt_rand(30,40));
+            sleep(mt_rand(5,10));
         }
     }
 
