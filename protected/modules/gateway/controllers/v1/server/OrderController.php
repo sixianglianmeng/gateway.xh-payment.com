@@ -1,6 +1,8 @@
 <?php
 namespace app\modules\gateway\controllers\v1\server;
 
+use app\common\exceptions\InValidRequestException;
+use app\common\exceptions\OperationFailureException;
 use app\common\models\model\LogApiRequest;
 Use Yii;
 use app\common\models\model\Channel;
@@ -80,7 +82,7 @@ class OrderController extends BaseServerSignedRequestController
         $orderNo = $this->allParams['trade_no']??'';
         $merchantOrderNo = $this->allParams['order_no']??'';
         if(empty($orderNo) && empty($merchantOrderNo)){
-            throw new InValidRequestException('请求参数错误');
+            throw new OperationFailureException('请求参数错误');
         }
 
         //状态查询
