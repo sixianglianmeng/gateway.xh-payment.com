@@ -1054,14 +1054,14 @@ class Util
 
             $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
             if ($httpCode!=200) {
-                Yii::error('post request failed. url-' . $url . ' params-' . json_encode($data) .' '. $result . ' error-' . curl_error($ch));
+                Yii::error('post request failed. url-' . $url . ' params:' . json_encode($data) .' ret:'. $result .' httpcode:'. $httpCode  . ' error:' . curl_error($ch));
 
                 throw new OperationFailureException('请求远程失败:'.curl_error($ch), $httpCode);
             }
             if (curl_errno($ch)) {
-                Yii::error('post request failed. url-' . $url . ' params-' . json_encode($data) . ' errno-' . curl_errno($ch) . ' error-' . curl_error($ch));
+                Yii::error('post request failed. url-' . $url . ' params:' . json_encode($data) .' ret:'. $result .' httpcode:'. $httpCode  . ' error:' . curl_error($ch));
 
-                throw new OperationFailureException('请求远程失败:'.curl_error($ch), $httpCode);
+                throw new OperationFailureException('请求远程失败: ret:'. $result .' httpcode:'. $httpCode  . ' error:' . curl_error($ch), $httpCode);
             }
 
             curl_close($ch);
