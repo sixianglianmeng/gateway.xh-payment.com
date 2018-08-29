@@ -68,7 +68,6 @@ class LogicApiRequestLog
      */
     public static function outLog($url, $method, $logResponse, $httpStatus, $costTime = 0, $logRequest=[])
     {
-        Yii::info(Yii::$app->params['apiRequestLog']);
         //设置了请求日志，写入日志表
         if(!empty(Yii::$app->params['apiRequestLog'])){
             $logData = Yii::$app->params['apiRequestLog'];

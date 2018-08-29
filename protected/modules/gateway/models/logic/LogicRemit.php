@@ -73,6 +73,7 @@ class LogicRemit
         $remitData['op_uid']               = $request['op_uid'] ?? 0;
         $remitData['op_username']          = $request['op_username'] ?? '';
         $remitData['notify_url']           = $request['notify_url'] ?? '';
+        $remitData['split_raw_amount']     = $request['split_raw_amount'] ?? $remitData['amount'];
         $remitData['commit_to_bank_times'] = 0;
 
         $remitData['status']           = Remit::STATUS_NONE;

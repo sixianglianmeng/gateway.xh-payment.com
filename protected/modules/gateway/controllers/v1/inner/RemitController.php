@@ -82,10 +82,10 @@ class RemitController extends BaseInnerController
                     $splitAmounts[] = $per;
                 }
 
-                Yii::info("{$merchantUsername}，{$remitArr['amount']},{$remitArr['bank_no']} remit add  split to: " . implode(',', $splitAmounts) . ' sum is:' . array_sum($splitAmounts));
+                Yii::info("{$merchantUsername}，{$remitArr['amount']},{$remitArr['bank_no']} remit add  split to: " . implode(',', $splitAmounts) . ' sum is:' . array_sum($splitAmounts),' rawAmount: '.$remitArr['amount']);
                 unset($rawRemits[$i]);
                 foreach ($splitAmounts as $sa) {
-                    $rawRemits[] = array_merge($remitArr, ['amount' => $sa]);
+                    $rawRemits[] = array_merge($remitArr, ['amount' => $sa , 'split_raw_amount'=>$remitArr['amount']]);
                 }
 
             }
@@ -131,7 +131,6 @@ class RemitController extends BaseInnerController
             );
         }
 
-
         try{
             foreach ($remits as $remit){
                 $request['trade_no'] = LogicRemit::generateMerchantRemitNo();
@@ -146,6 +145,7 @@ class RemitController extends BaseInnerController
                 $request['account_name'] = $remit['bank_account'];
                 $request['account_number'] = $remit['bank_no'];
                 $request['order_amount'] = $remit['amount'];
+                $request['split_raw_amount'] = $remit['split_raw_amount']??$request['order_amount'];
                 $request['type'] = Remit::TYPE_BACKEND;
 
                 //生成订单
