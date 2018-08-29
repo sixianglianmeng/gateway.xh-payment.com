@@ -93,21 +93,31 @@ class LogicRemit
         $remitData['created_at']          = time();
         $remitData['order_no']            = self::generateRemitNo($remitData);
 
-        $parentConfigModels = UserPaymentInfo::findAll(['app_id'=>$merchant->getAllParentAgentId()]);
-        //把自己也存进去
-        $parentConfigModels[] = $merchant->paymentInfo;
-        $parentConfigs = [];
-        foreach ($parentConfigModels as $pc){
-            $parentConfigs[] = [
-                'channel_account_id'=>$pc->remit_channel_account_id,
-                'fee'=>$pc->remit_fee,
-                'fee_rebate'=>$pc->remit_fee_rebate,
-                'app_id'=>$pc->app_id,
-                'merchant_id'=>$pc->user_id,
-            ];
+        //金额大于系统设置的可以免去手续费
+        $freeFeeQuota = SiteConfig::cacheGetContent('remit_fee_free_quota');
+        if($freeFeeQuota && bccomp($remitData['split_raw_amount'],$freeFeeQuota,3) === 1){
+            $remitData['remit_fee'] = 0;
+            $remitData['bak'] = "原始订单金额{$remitData['split_raw_amount']}大于{$freeFeeQuota},免去手续费";
         }
-        $remitData['all_parent_remit_config'] = json_encode($parentConfigs);
 
+        $parentConfigs = $parentConfigModels = [];
+        //没有手续费的不需要查询上级进行返点
+        if($remitData['remit_fee'] > 0){
+            $parentConfigModels = UserPaymentInfo::findAll(['app_id'=>$merchant->getAllParentAgentId()]);
+            //把自己也存进去,才能计算自己上级应得返点
+            $parentConfigModels[] = $merchant->paymentInfo;
+            foreach ($parentConfigModels as $pc){
+                $parentConfigs[] = [
+                    'channel_account_id'=>$pc->remit_channel_account_id,
+                    'fee'=>$pc->remit_fee,
+                    'fee_rebate'=>$pc->remit_fee_rebate,
+                    'app_id'=>$pc->app_id,
+                    'merchant_id'=>$pc->user_id,
+                ];
+            }
+        }
+
+        $remitData['all_parent_remit_config'] = json_encode($parentConfigs);
         $remitData['plat_fee_amount']     = $paymentChannelAccount->remit_fee;
         $remitData['plat_fee_profit']     = 0;//bcsub($topestPrent['fee'], $remitData['plat_fee_amount'],6);
         //如果上级列表不仅有自己
@@ -255,6 +265,11 @@ class LogicRemit
             return $remit;
         }
 
+        if (!$remit->remit_fee) {
+            Yii::info(__FUNCTION__ . ' no remit fee, will not bonus and return ' . $remit->order_no);
+            return $remit;
+        }
+
         //所有上级代理UID
         $parentIds = $remit->merchant->getAllParentAgentId();
         //从自己开始算
@@ -317,8 +332,10 @@ class LogicRemit
                 $ip = Yii::$app->request->userIP??'';
                 $logicUser->changeUserBalance($amount, Financial::EVENT_TYPE_REMIT, $remit->order_no, $remit->amount, $ip);
                 //手续费
-                $amount =  0-$remit->remit_fee;
-                $logicUser->changeUserBalance($amount, Financial::EVENT_TYPE_REMIT_FEE, $remit->order_no, $remit->amount, $ip);
+                if($remit->remit_fee > 0){
+                    $amount =  0-$remit->remit_fee;
+                    $logicUser->changeUserBalance($amount, Financial::EVENT_TYPE_REMIT_FEE, $remit->order_no, $remit->amount, $ip);
+                }
 
                 $remit->status = Remit::STATUS_DEDUCT;
                 $remit->bank_ret = $remit->bank_ret.date('Ymd H:i:s')." 账户已扣款\n";
