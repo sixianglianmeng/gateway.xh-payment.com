@@ -351,7 +351,7 @@ class LogicRemit
     /*
      * 提交提款请求到银行
      */
-    static public function commitToBank(Remit &$remit){
+    static public function commitToBank(Remit &$remit,$force=false){
         Yii::info(__CLASS__.':'.__FUNCTION__.' '.$remit->order_no);
         //接口日志埋点
         Yii::$app->params['apiRequestLog'] = [
@@ -370,8 +370,8 @@ class LogicRemit
 
         if($remit->status == Remit::STATUS_CHECKED){
             Yii::info('commit_to_bank_times '.$remit->order_no.' '.$remit->commit_to_bank_times);
-            //最大出款提交次数检测
-            if($remit->commit_to_bank_times>=self::MAX_TIME_COMMIT_TO_BANK){
+            //非强制提交情况下,最大出款提交次数检测
+            if(!$force && $remit->commit_to_bank_times>=self::MAX_TIME_COMMIT_TO_BANK){
                 $remit->status = Remit::STATUS_NOT_REFUND;
                 $remit->bank_status =  Remit::BANK_STATUS_FAIL;
                 $remit->bank_ret = $remit->bank_ret.date('Ymd H:i:s')." 超过银行最大提交次数:".self::MAX_TIME_COMMIT_TO_BANK."\n";
@@ -431,7 +431,7 @@ class LogicRemit
                 $remit->bank_status =  Remit::BANK_STATUS_PROCESSING;
                 $remit->bank_ret = $remit->bank_ret.date('Ymd H:i:s').' 银行提交失败，请手工处理('.($ret['message']??'上游无返回').")\n";
                 if($ret['message'] && strpos(strtolower($ret['message']),'curl')!=='false'){
-                    $ret['message'] = '网络超时错误';
+                    $ret['message'] = '网络超时错误:'.$ret['message'];
                 }
                 $remit->fail_msg = '银行提交失败:'.($ret['message']??'上游无返回');
                 Util::sendTelegramMessage("出款提交银行失败,请手工退款.订单号:{$remit->order_no},金额:{$remit->amount},商户:{$remit->merchant_account},原因:{$remit->fail_msg}");
@@ -747,11 +747,12 @@ class LogicRemit
      *
      * @param Remit $remit 订单对象
      * @param String $failMsg 失败描述信息
+     * @param bool $force 是否强制设置,用于重新提交上游等场景
      */
-    public static function setChecked(Remit &$remit, $opUid=0, $opUsername='')
+    public static function setChecked(Remit &$remit, $opUid=0, $opUsername='', $bak='', $force=false)
     {
         Yii::info(__CLASS__ . ':' . __FUNCTION__ . ' ' . $remit->order_no. ' ' .$remit->status);
-        if(!in_array($remit->status,[Remit::STATUS_DEDUCT,Remit::STATUS_NONE])){
+        if(!$force && !in_array($remit->status,[Remit::STATUS_DEDUCT,Remit::STATUS_NONE])){
             Util::throwException(Macro::ERR_UNKNOWN, "订单{$remit->order_no}只有未付款或未审核的订才能进行审核!");
             return $remit;
         }
@@ -771,7 +772,7 @@ class LogicRemit
         }
 
         $remit->status = Remit::STATUS_CHECKED;
-        if($opUsername) $bak=date('Ymd H:i:s')." {$opUsername}审核通过\n";
+        if($opUsername) $bak=date('Ymd H:i:s')." {$opUsername}审核通过.{$bak}\n";
         $remit->bak .=$bak;
         $remit->save();
 
