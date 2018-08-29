@@ -615,6 +615,7 @@ class LogicRemit
 //            }
 
                 $remit->status = Remit::STATUS_REFUND;
+                $remit->bank_status = Remit::BANK_STATUS_FAIL;
                 $reason = $reason?"订单已退款:{$reason}":"订单已退款";
                 $remit->bank_ret.=date('Ymd H:i:s')." {$reason}\n";
                 $remit->save();
@@ -628,6 +629,8 @@ class LogicRemit
                 $transaction->rollBack();
                 throw $e;
             }
+
+            self::updateToRedis($remit);
 
             return $remit;
         }else{
@@ -719,7 +722,7 @@ class LogicRemit
         Yii::info(__CLASS__ . ':' . __FUNCTION__ . ' ' . $remit->order_no);
 
         self::setFail($remit, $failMsg, $opUid, $opUsername);
-
+        if(empty($failMsg)) $failMsg = "{$opUsername}手工退款";
         $remit = self::refund($remit, $failMsg);
 
         return $remit;
