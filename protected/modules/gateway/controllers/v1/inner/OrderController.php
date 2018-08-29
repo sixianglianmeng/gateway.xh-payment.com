@@ -152,7 +152,7 @@ class OrderController extends BaseInnerController
         else{
             $msg = "订单查询失败";
         }
-        $msg = '本地状态:'.Order::ARR_STATUS[$order->status]."\n上游状态:".$msg;
+        $msg = '本地状态:'.$order->getStatusStr()."\n上游状态:".$msg;
         if(!empty($ret['data']['rawMessage'])){
             $msg.=" \n原始消息".$ret['data']['rawMessage'];
         }
