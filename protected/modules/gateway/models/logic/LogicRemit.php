@@ -774,6 +774,7 @@ class LogicRemit
         $remit->status = Remit::STATUS_CHECKED;
         if($opUsername) $bak=date('Ymd H:i:s')." {$opUsername}审核通过.{$bak}\n";
         $remit->bak .=$bak;
+        $remit->bank_ret .=$bak;
         $remit->save();
 
         self::updateToRedis($remit);
