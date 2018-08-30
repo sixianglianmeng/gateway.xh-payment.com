@@ -49,6 +49,10 @@
             if (in_array($order->status, [Order::STATUS_PAID,Order::STATUS_SETTLEMENT])) {
                 return ResponseHelper::formatOutput(Macro::ERR_UNKNOWN, '订单已付款');
             }
+            $validity = SiteConfig::cacheGetContent('recharge_order_validity');
+            if($validity && ($order->created_at+intval($validity))<time()){
+                return ResponseHelper::formatOutput(Macro::ERR_UNKNOWN, '订单已过期,请重新下单');
+            }
 
             //设置客户端唯一id
             PaymentRequest::setClientIdCookie();
