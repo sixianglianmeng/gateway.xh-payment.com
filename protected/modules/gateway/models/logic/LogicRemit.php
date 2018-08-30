@@ -724,7 +724,7 @@ class LogicRemit
         self::setFail($remit, $failMsg, $opUid, $opUsername);
         if(empty($failMsg)) $failMsg = "{$opUsername}手工退款";
         $remit = self::refund($remit, $failMsg);
-
+        self::updateToRedis($remit);
         return $remit;
     }
 
