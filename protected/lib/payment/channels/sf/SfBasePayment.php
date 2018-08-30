@@ -473,7 +473,7 @@ class SfBasePayment extends BasePayment
             $res = json_decode($resTxt, true);
             if (isset($res['is_success']) && strtoupper($res['is_success']) == 'TRUE') {
                 $ret['status']                   = Macro::SUCCESS;
-                $ret['data']['channel_order_no'] = $res['order_id'];
+                $ret['data']['channel_order_no'] = $res['trade_no'];
                 $ret['data']['amount']           = $res['order_amount'];
                 $ret['data']['trade_status']     = Order::STATUS_PAID;
             } else {
