@@ -269,7 +269,7 @@ class SfBasePayment extends BasePayment
 
         //下单结果写入缓存
         Yii::$app->redis->set($cacheKey,json_encode($ret,JSON_UNESCAPED_UNICODE));
-        Yii::$app->redis->expire($cacheKey,300);
+        Yii::$app->redis->expire($cacheKey,43200);
 
         return $ret;
     }
