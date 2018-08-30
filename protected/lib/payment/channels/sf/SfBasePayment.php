@@ -474,7 +474,7 @@ class SfBasePayment extends BasePayment
             if (isset($res['is_success']) && strtoupper($res['is_success']) == 'TRUE') {
                 $ret['status']         = Macro::SUCCESS;
                 $ret['data']['channel_order_no'] = $res['order_id'];
-                $ret['data']['trade_status'] = $res['trade_status'];
+                $ret['data']['trade_status'] = Order::STATUS_PAID;
             } else {
                 $ret['message'] = $res['errror_msg']??'收款订单查询失败';
             }
