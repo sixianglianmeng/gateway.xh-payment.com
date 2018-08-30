@@ -32,7 +32,7 @@ class PaymentRequest
         'order_no'       => [Macro::CONST_PARAM_TYPE_ALNUM_DASH_UNDERLINE, [1, 32]],
         'pay_type'       => [Macro::CONST_PARAM_TYPE_PAYTYPE, []],
         'bank_code'      => [Macro::CONST_PARAM_TYPE_ALNUM, [1, 32], true],//[Macro::CONST_PARAM_TYPE_BANKCODE, [], true],
-        'order_amount'   => [Macro::CONST_PARAM_TYPE_DECIMAL, [1, 32]],
+        'order_amount'   => [Macro::CONST_PARAM_TYPE_DECIMAL],
         'order_time'     => [Macro::CONST_PARAM_TYPE_INT],
         'query_time'     => [Macro::CONST_PARAM_TYPE_INT],
         'req_referer'    => [Macro::CONST_PARAM_TYPE_STRING, [0, 255], true],
@@ -85,7 +85,7 @@ class PaymentRequest
                 $valid = true;
             }
             if(!$valid){
-                Yii::info(json_encode(['request validate',$p,$allParams[$p],$rule]));
+                Yii::info(json_encode(['request validate',$p,$allParams[$p]??'',$rule]));
             }
             if (true !== $valid) {
                 $msg = "参数格式校验失败({$p})";
