@@ -460,7 +460,7 @@ class SfBasePayment extends BasePayment
     public function orderStatus(){
         $params = [
             'merchant_code'=>$this->order['channel_merchant_id'],
-            'trade_no'=>$this->order['order_no'],
+            'order_no'=>$this->order['order_no'],
         ];
         $params['sign'] = self::md5Sign($params,trim($this->paymentConfig['key']));
 
