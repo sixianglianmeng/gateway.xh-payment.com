@@ -133,7 +133,7 @@ class OrderController extends BaseInnerController
         $ret = $payment->orderStatus();
 
         $msg = '';
-        if($ret['status'] === 0){
+        if($ret['status'] === Macro::SUCCESS){
             switch ($ret['data']['trade_status']){
                 case Order::STATUS_PAID:
                 case Order::STATUS_SETTLEMENT:

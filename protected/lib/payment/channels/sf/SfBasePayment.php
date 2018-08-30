@@ -467,16 +467,17 @@ class SfBasePayment extends BasePayment
         $requestUrl = $this->paymentConfig['gateway_base_uri'].'/query.html';
         $resTxt = self::post($requestUrl, $params);
 
-        $ret = self::REMIT_QUERY_RESULT;
+        $ret = self::RECHARGE_QUERY_RESULT;
         $ret['data']['rawMessage'] = $resTxt;
         if (!empty($resTxt)) {
             $res = json_decode($resTxt, true);
             if (isset($res['is_success']) && strtoupper($res['is_success']) == 'TRUE') {
-                $ret['status']         = Macro::SUCCESS;
+                $ret['status']                   = Macro::SUCCESS;
                 $ret['data']['channel_order_no'] = $res['order_id'];
-                $ret['data']['trade_status'] = Order::STATUS_PAID;
+                $ret['data']['amount']           = $res['order_amount'];
+                $ret['data']['trade_status']     = Order::STATUS_PAID;
             } else {
-                $ret['message'] = $res['errror_msg']??'收款订单查询失败';
+                $ret['message'] = $res['errror_msg'] ?? '收款订单查询失败';
             }
         }
 
