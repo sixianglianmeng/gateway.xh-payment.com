@@ -271,7 +271,7 @@ class LogicOrder
         if(!$isProcessing){
             Yii::$app->cache->set('recharge_notify_process:'.$order->order_no,time(),10);
         }else{
-            Yii::error("充值订单并发回调:{$order->order_no}");
+//            Yii::error("充值订单并发回调:{$order->order_no}");
             throw new OperationFailureException("订单处理中:{$order->order_no}");
         }
 
