@@ -159,7 +159,7 @@ class SfBasePayment extends BasePayment
             'order_amount'=>$this->order['amount'],
             'req_referer'=>'127.0.0.1',//Yii::$app->request->referrer?Yii::$app->request->referrer:Yii::$app->request->getHostInfo().Yii::$app->request->url,
             'order_time'=>date("Y-m-d H:i:s"),
-            'customer_ip'=>Yii::$app->request->remoteIP,
+            'customer_ip'=>'127.0.0.1',//Yii::$app->request->remoteIP,
             'return_params'=>$this->order['order_no'],
         ];
 
@@ -236,7 +236,7 @@ class SfBasePayment extends BasePayment
             'order_amount'=>$this->order['amount'],
             'req_referer'=>'127.0.0.1',//Yii::$app->request->referrer?Yii::$app->request->referrer:Yii::$app->request->getHostInfo().Yii::$app->request->url,
             'order_time'=>date("Y-m-d H:i:s"),
-            'customer_ip'=>Yii::$app->request->remoteIP,
+            'customer_ip'=>'127.0.0.1',//Yii::$app->request->remoteIP,
             'return_params'=>$this->order['order_no'],
         ];
         $params['sign'] = self::md5Sign($params,trim($this->paymentConfig['key']));
