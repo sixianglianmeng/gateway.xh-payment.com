@@ -214,7 +214,7 @@
 
             $order = Order::findOne(['order_no'=>$no]);
             $ret = Macro::ERR_UNKNOWN;
-            if($order && $order->status == Order::STATUS_PAID){
+            if($order && in_array($order->status,[Order::STATUS_PAID,Order::STATUS_SETTLEMENT])){
                 $ret = Macro::SUCCESS;
             }
 
