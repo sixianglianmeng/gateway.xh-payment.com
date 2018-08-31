@@ -159,8 +159,13 @@ class LogicOrder
         try{
             self::beforeAddOrder($newOrder, $merchant, $rechargeMethod->channelAccount, $rechargeMethod, $channelAccountRechargeConfig);
         }catch (\Exception $e){
-            self::payFail($newOrder,$e->getMessage());
-            throw new OperationFailureException($e->getMessage(),$e->getCode());
+            $failMsg = $e->getMessage();
+//            self::payFail($newOrder,$failMsg);
+            $newOrder->status = Order::STATUS_NONE;
+            $newOrder->fail_msg .= $failMsg."\n";
+            $newOrder->bak .= $failMsg."\n";
+            $newOrder->save();
+            throw new OperationFailureException($failMsg,$e->getCode());
         }
 
         return $newOrder;
