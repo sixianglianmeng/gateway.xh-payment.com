@@ -980,22 +980,27 @@ class Util
      *
      * @param string|array $message 消息内容
      * @param string $chatId 会话id,默认为系统普通通知会话id
+     * @param bool $withTitle 是否携带当前站点信息
      * @return bool
      */
-    public static function sendTelegramMessage($message, $chatId=''){
+    public static function sendTelegramMessage($message, $chatId='',$withTitle=true){
         $telgramKey = SiteConfig::cacheGetContent('sys_notice_tegram_key');
         $telgramUrl = SiteConfig::cacheGetContent('sys_notice_tegram_url');
         if(!$chatId){
             $chatId = SiteConfig::cacheGetContent('sys_notice_tegram_business_chatid');
         }
         if(!is_string($message)) $message = json_encode($message,JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE);
-        $title = gethostname();
-        if(Yii::$app->request->getIsConsoleRequest()){
-            $title.=" ".pathinfo(WWW_DIR)['basename'];
-        }else{
-            $title.=" ".Yii::$app->request->hostName;
+
+        if($withTitle){
+            $title = gethostname();
+            if(Yii::$app->request->getIsConsoleRequest()){
+                $title.=" ".pathinfo(WWW_DIR)['basename'];
+            }else{
+                $title.=" ".Yii::$app->request->hostName;
+            }
+            $message = "{$message}\n{$title}";
         }
-        $message = "{$message}\n{$title}";
+
         if($telgramKey && $telgramUrl && $chatId){
             $data = [
                 'msg'=> $message,
