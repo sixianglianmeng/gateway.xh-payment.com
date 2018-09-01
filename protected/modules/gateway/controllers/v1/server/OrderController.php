@@ -92,7 +92,7 @@ class OrderController extends BaseServerSignedRequestController
             $status = 'paying';
             if(in_array($order->status,[Order::STATUS_PAID,Order::STATUS_SETTLEMENT])){
                 $status = 'success';
-            }elseif($order->status == Order::STATUS_FAIL){
+            }elseif(in_array($order->status,[Order::STATUS_FAIL,Order::STATUS_NONE])){
                 $status = 'failed';
             }
             $data = [
