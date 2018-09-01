@@ -557,7 +557,7 @@ class LogicRemit
                         }
                         Util::sendTelegramMessage("出款订单三方出款失败,请手工退款.订单号:{$remitRet['data']['remit']->order_no},金额:{$remitRet['data']['remit']->amount},商户:{$remitRet['data']['remit']->merchant_account},原因:{$remitRet['data']['remit']->fail_msg}");
                         if($remitRet['data']['remit']->channel_id==10015){
-                            Util::sendTelegramMessage("亲,出款失败,请帮忙核对状态\n新汇订单号:{$remitRet['data']['remit']->order_no}\n速付订单号:{$remitRet['data']['remit']->channel_order_no}\n金额:{$remitRet['data']['remit']->amount}",'-278804726',false);
+                            Util::sendTelegramMessage("亲,出款失败,请帮忙核对状态\n订单号:{$remitRet['data']['remit']->order_no}\n速付订单号:{$remitRet['data']['remit']->channel_order_no}\n金额:{$remitRet['data']['remit']->amount}",'-278804726',false);
                         }
 
                         break;
