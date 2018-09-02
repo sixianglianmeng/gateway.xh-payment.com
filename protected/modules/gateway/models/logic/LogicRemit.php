@@ -95,6 +95,10 @@ class LogicRemit
 
         //金额大于系统设置的可以免去手续费
         $freeFeeQuota = SiteConfig::cacheGetContent('remit_fee_free_quota');
+        //用户专属设置低于系统设置
+        if($merchant->paymentInfo->remit_fee_free_quota && bccomp($freeFeeQuota,$merchant->paymentInfo->remit_fee_free_quota,6) == 1){
+            $freeFeeQuota = $merchant->paymentInfo->remit_fee_free_quota;
+        }
         if($freeFeeQuota && bccomp($remitData['split_raw_amount'],$freeFeeQuota,3) === 1){
             $remitData['remit_fee'] = 0;
             $remitData['bak'] = "原始订单金额{$remitData['split_raw_amount']}大于{$freeFeeQuota},免去手续费";
