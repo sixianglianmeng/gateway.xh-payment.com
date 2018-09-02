@@ -206,7 +206,7 @@ class LogicRemit
 
         $bankCode = BankCodes::getChannelBankCode($remit['channel_id'],$remit['bank_code'],'remit');
         if(empty($bankCode)){
-            throw new OperationFailureException($remit->order_no." 商户绑定的通道暂不支持此银行出款,银行代码配置错误:".$remit['channel_id'].':'.$remit['bank_code'],Macro::ERR_PAYMENT_BANK_CODE);
+            throw new OperationFailureException("商户号:".$remit->merchant_id." 订单号:".$remit->order_no." 商户绑定的通道暂不支持此银行出款,银行代码配置错误:".$remit['channel_id'].':'.$remit['bank_code'],Macro::ERR_PAYMENT_BANK_CODE);
         }
 
         //账户费率检测
@@ -216,40 +216,40 @@ class LogicRemit
 
         //检测账户单笔限额
         if($userPaymentConfig->remit_quota_pertime && $remit->amount > $userPaymentConfig->remit_quota_pertime){
-            throw new OperationFailureException($remit->order_no." 超过账户单笔限额:".$userPaymentConfig->remit_quota_pertime,Macro::ERR_REMIT_REACH_ACCOUNT_QUOTA_PER_TIME);
+            throw new OperationFailureException("商户号:".$remit->merchant_id." 订单号:".$remit->order_no." 超过账户单笔限额:".$userPaymentConfig->remit_quota_pertime,Macro::ERR_REMIT_REACH_ACCOUNT_QUOTA_PER_TIME);
         }
         //检测账户日限额
         if($userPaymentConfig->remit_quota_perday
             && (($userPaymentConfig->remit_today+$remit->amount) > $userPaymentConfig->remit_quota_perday)
         ){
-            throw new OperationFailureException($remit->order_no." 超过账户日限额:".$userPaymentConfig->remit_quota_perday.',当前已使用:'.$remit->remit_today,Macro::ERR_REMIT_REACH_ACCOUNT_QUOTA_PER_DAY);
+            throw new OperationFailureException("商户号:".$remit->merchant_id." 订单号:".$remit->order_no." 超过账户日限额:".$userPaymentConfig->remit_quota_perday.',当前已使用:'.$remit->remit_today,Macro::ERR_REMIT_REACH_ACCOUNT_QUOTA_PER_DAY);
         }
         //检测是否支持api出款
         if(empty($remit->op_uid) && $userPaymentConfig->allow_api_remit==UserPaymentInfo::ALLOW_API_REMIT_NO){
-            throw new OperationFailureException(null,Macro::ERR_PAYMENT_API_NOT_ALLOWED);
+            throw new OperationFailureException("商户号:".$remit->merchant_id." 订单号:".$remit->order_no.' 商户不支持API出款',Macro::ERR_PAYMENT_API_NOT_ALLOWED);
         }
         //检测是否支持手工出款
         elseif(!empty($remit->op_uid) && $userPaymentConfig->allow_manual_remit==UserPaymentInfo::ALLOW_MANUAL_REMIT_NO){
-            throw new OperationFailureException(null.$userPaymentConfig->remit_quota_pertime,Macro::ERR_PAYMENT_MANUAL_NOT_ALLOWED);
+            throw new OperationFailureException("商户号:".$remit->merchant_id." 订单号:".$remit->order_no.' 商户不支持手工出款',Macro::ERR_PAYMENT_MANUAL_NOT_ALLOWED);
         }
 
         //渠道费率检测
         if(!$feeCanBeZero && $paymentChannelAccount->remit_fee <= 0){
-            throw new OperationFailureException($remit->order_no." 通道出款费率不能设置为0:".Macro::ERR_CHANNEL_FEE_CONFIG);
+            throw new OperationFailureException("商户号:".$remit->merchant_id." 订单号:".$remit->order_no." 通道出款费率不能设置为0:".Macro::ERR_CHANNEL_FEE_CONFIG);
         }
         //检测渠道单笔最低限额
         if($paymentChannelAccount->min_remit_pertime && $remit->amount < $paymentChannelAccount->min_remit_pertime){
-            throw new OperationFailureException("单笔最低限额为:".bcadd(0,$paymentChannelAccount->min_remit_pertime,2));
+            throw new OperationFailureException("商户号:".$remit->merchant_id." 订单号:".$remit->order_no."单笔最低限额为:".bcadd(0,$paymentChannelAccount->min_remit_pertime,2));
         }
         //检测渠道单笔限额
         if($paymentChannelAccount->remit_quota_pertime && $remit->amount > $paymentChannelAccount->remit_quota_pertime){
-            throw new OperationFailureException($remit->order_no." 超过渠道单笔限额:".$paymentChannelAccount->remit_quota_pertime,Macro::ERR_REMIT_REACH_CHANNEL_QUOTA_PER_TIME);
+            throw new OperationFailureException("商户号:".$remit->merchant_id." 订单号:".$remit->order_no." 超过渠道单笔限额:".$paymentChannelAccount->remit_quota_pertime,Macro::ERR_REMIT_REACH_CHANNEL_QUOTA_PER_TIME);
         }
         //检测渠道日限额
         if($paymentChannelAccount->remit_quota_perday
             && (($paymentChannelAccount->remit_today+$remit->amount) > $paymentChannelAccount->remit_quota_perday)
         ){
-            throw new OperationFailureException($remit->order_no." 超过渠道日限额:".$paymentChannelAccount->remit_quota_perday.',当前已使用:'.$paymentChannelAccount->remit_today,Macro::ERR_REMIT_REACH_CHANNEL_QUOTA_PER_DAY);
+            throw new OperationFailureException("商户号:".$remit->merchant_id." 订单号:".$remit->order_no." 超过渠道日限额:".$paymentChannelAccount->remit_quota_perday.',当前已使用:'.$paymentChannelAccount->remit_today,Macro::ERR_REMIT_REACH_CHANNEL_QUOTA_PER_DAY);
         }
     }
 
@@ -556,7 +556,7 @@ class LogicRemit
                             $remitRet['data']['remit']->fail_msg .= date('Y-m-d H:i:s').' '.$remitRet['message'];
                         }
                         Util::sendTelegramMessage("出款订单三方出款失败,请手工退款.订单号:{$remitRet['data']['remit']->order_no},金额:{$remitRet['data']['remit']->amount},商户:{$remitRet['data']['remit']->merchant_account},原因:{$remitRet['data']['remit']->fail_msg}");
-                        if($remitRet['data']['remit']->channel_id==10015){
+                        if($remitRet['data']['remit']->channel_id==10015 && SiteConfig::cacheGetContent('enable_notify_channel')){
                             Util::sendTelegramMessage("亲,出款失败,请帮忙核对状态\n订单号:{$remitRet['data']['remit']->order_no}\n速付订单号:{$remitRet['data']['remit']->channel_order_no}\n金额:{$remitRet['data']['remit']->amount}",'-278804726',false);
                         }
 
@@ -1033,7 +1033,7 @@ class LogicRemit
                 }
             }
         }else{
-            Yii::error("出款订单状态错误,不需要自动审核.订单号:{$remit->order_no},need_merchant_check:{$remit->need_merchant_check},merchant_check_status:{$remit->merchant_check_status}");
+//            Yii::error("出款订单状态错误,不需要自动审核.订单号:{$remit->order_no},need_merchant_check:{$remit->need_merchant_check},merchant_check_status:{$remit->merchant_check_status}");
         }
 
         return $remit;

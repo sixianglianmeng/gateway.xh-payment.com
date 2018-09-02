@@ -188,50 +188,50 @@ class LogicOrder
 
         //账户支付方式开关检测
         if($rechargeMethod->status != MerchantRechargeMethod::STATUS_ACTIVE){
-            throw new OperationFailureException($order->order_no.' 商户此支付方式通道开关未打开',Macro::ERR_PAYMENT_TYPE_NOT_ALLOWED);
+            throw new OperationFailureException("商户号:".$order->merchant_id." 订单号:".$order->order_no.' 商户此支付方式通道开关未打开',Macro::ERR_PAYMENT_TYPE_NOT_ALLOWED);
         }
 
         //账户费率检测
         if(!$feeCanBeZero && $rechargeMethod->fee_rate <= 0){
-            throw new OperationFailureException($order->order_no.' 费率不能设置为0',Macro::ERR_MERCHANT_FEE_CONFIG);
+            throw new OperationFailureException("商户号:".$order->merchant_id." 订单号:".$order->order_no.' 费率不能设置为0',Macro::ERR_MERCHANT_FEE_CONFIG);
         }
 
         //检测账户单笔限额
         if($userPaymentConfig->recharge_quota_pertime && $order->amount > $userPaymentConfig->recharge_quota_pertime){
-            throw new OperationFailureException($order->order_no.' 超过商户单笔限额:'.$userPaymentConfig->recharge_quota_pertime,Macro::ERR_PAYMENT_REACH_ACCOUNT_QUOTA_PER_TIME);
+            throw new OperationFailureException("商户号:".$order->merchant_id." 订单号:".$order->order_no.' 超过商户单笔限额:'.$userPaymentConfig->recharge_quota_pertime,Macro::ERR_PAYMENT_REACH_ACCOUNT_QUOTA_PER_TIME);
         }
         //检测账户日限额
         if($userPaymentConfig->recharge_quota_perday
             && (($userPaymentConfig->recharge_today+$order->amount) > $userPaymentConfig->recharge_quota_perday)
         ){
-            throw new OperationFailureException($order->order_no." 超过商户日限额{$userPaymentConfig->recharge_quota_perday},当前为$userPaymentConfig->recharge_today",Macro::ERR_PAYMENT_REACH_ACCOUNT_QUOTA_PER_DAY);
+            throw new OperationFailureException("商户号:".$order->merchant_id." 订单号:".$order->order_no." 超过商户日限额{$userPaymentConfig->recharge_quota_perday},当前为$userPaymentConfig->recharge_today",Macro::ERR_PAYMENT_REACH_ACCOUNT_QUOTA_PER_DAY);
         }
         //检测是否支持api充值
         if(empty($order->op_uid) && $userPaymentConfig->allow_api_recharge==UserPaymentInfo::ALLOW_API_RECHARGE_NO){
-            throw new OperationFailureException($order->order_no.' 商户不支持API支付',Macro::ERR_PAYMENT_API_NOT_ALLOWED);
+            throw new OperationFailureException("商户号:".$order->merchant_id." 订单号:".$order->order_no.' 商户不支持API支付',Macro::ERR_PAYMENT_API_NOT_ALLOWED);
         }
         //检测是否支持手工充值
         elseif(!empty($order->op_uid) && $userPaymentConfig->allow_manual_recharge==UserPaymentInfo::ALLOW_MANUAL_RECHARGE_NO){
-            throw new OperationFailureException(null,Macro::ERR_PAYMENT_MANUAL_NOT_ALLOWED);
+            throw new OperationFailureException("商户号:".$order->merchant_id." 订单号:".$order->order_no.' 商户不支持手工支付',Macro::ERR_PAYMENT_MANUAL_NOT_ALLOWED);
         }
 
         //渠道费率检测
         if(!$feeCanBeZero && $channelAccountRechargeMethod->fee_rate <= 0){
-            throw new OperationFailureException($order->order_no.' 费率不能设置为0',Macro::ERR_CHANNEL_FEE_CONFIG);
+            throw new OperationFailureException("商户号:".$order->merchant_id." 订单号:".' 费率不能设置为0',Macro::ERR_CHANNEL_FEE_CONFIG);
         }
         //检测渠道单笔最低限额
         if($paymentChannelAccount->min_recharge_pertime && bccomp($order->amount, $paymentChannelAccount->min_recharge_pertime, 2)===-1){
-            throw new OperationFailureException("单笔最低限额为:".bcadd(0,$paymentChannelAccount->min_recharge_pertime,2)." {$order->amount}");
+            throw new OperationFailureException("商户号:".$order->merchant_id." 订单号:".$order->order_no." 单笔最低限额为:".bcadd(0,$paymentChannelAccount->min_recharge_pertime,2)." {$order->amount}");
         }
         //检测渠道单笔限额
         if($paymentChannelAccount->recharge_quota_pertime && bccomp($order->amount, $paymentChannelAccount->recharge_quota_pertime, 2)===1){
-            throw new OperationFailureException("当前支付方式限额单笔最高{$paymentChannelAccount->recharge_quota_pertime }",Macro::ERR_PAYMENT_REACH_CHANNEL_QUOTA_PER_TIME);
+            throw new OperationFailureException("商户号:".$order->merchant_id." 订单号:".$order->order_no."当前支付方式限额单笔最高{$paymentChannelAccount->recharge_quota_pertime }",Macro::ERR_PAYMENT_REACH_CHANNEL_QUOTA_PER_TIME);
         }
         //检测渠道日限额
         if($paymentChannelAccount->recharge_quota_perday
             && (($paymentChannelAccount->recharge_today+$order->amount) > $paymentChannelAccount->recharge_quota_perday)
         ){
-            throw new OperationFailureException(null,Macro::ERR_PAYMENT_REACH_CHANNEL_QUOTA_PER_DAY);
+            throw new OperationFailureException("商户号:".$order->merchant_id." 订单号:".$order->order_no."超过渠道当日限额{$paymentChannelAccount->recharge_quota_perday}",Macro::ERR_PAYMENT_REACH_CHANNEL_QUOTA_PER_DAY);
         }
     }
 
