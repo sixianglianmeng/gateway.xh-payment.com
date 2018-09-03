@@ -362,7 +362,8 @@ class RemitController extends BaseInnerController
             Util::throwException(Macro::PARAMETER_VALIDATION_FAILED,json_encode($rawOrderList));
         }
 
-        $filter['status'] = [Remit::STATUS_DEDUCT];
+        //未扣款的也可以审核,用于处理扣款失败重新扣款的订单
+        $filter['status'] = [Remit::STATUS_DEDUCT,Remit::STATUS_NONE];
         $filter['order_no'] = array_keys($opOrderList);
 
         $orders = Remit::findAll($filter);
