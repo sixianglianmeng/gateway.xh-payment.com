@@ -54,6 +54,14 @@
                 return ResponseHelper::formatOutput(Macro::ERR_UNKNOWN, '订单已过期,请重新下单');
             }
 
+            //最低频率为2秒
+            $key = 'recharge_paying:'.$orderNo;
+            $lastTs = Yii::$app->cache->get($key);
+            if($lastTs){
+                return ResponseHelper::formatOutput(Macro::ERR_UNKNOWN,'请不要频繁刷新页面');
+            }
+            Yii::$app->cache->set($key,time(),20);
+
             //设置客户端唯一id
             PaymentRequest::setClientIdCookie();
 
