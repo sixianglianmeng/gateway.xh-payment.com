@@ -67,7 +67,7 @@
             $key = 'recharge_paying:'.$orderNo;
             $lastTs = Yii::$app->cache->get($key);
             if($lastTs && (time()-$lastTs)<30){
-                return ResponseHelper::formatOutput(Macro::ERR_UNKNOWN,'请不要频繁刷新付款页面');
+//                return ResponseHelper::formatOutput(Macro::ERR_UNKNOWN,'请不要频繁刷新付款页面');
             }
             Yii::$app->cache->set($key,time(),60);
 
