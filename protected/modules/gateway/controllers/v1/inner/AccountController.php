@@ -56,4 +56,28 @@ class AccountController extends BaseInnerController
 
         return ResponseHelper::formatOutput(Macro::SUCCESS,'余额修改成功');
     }
+
+    /**
+     * 转账
+     */
+    public function actionTransfer()
+    {
+        $transferIn = ControllerParameterValidator::getRequestParam($this->allParams, 'transferIn', null, Macro::CONST_PARAM_TYPE_USERNAME, '转入用户名错误');
+        $transferOut = ControllerParameterValidator::getRequestParam($this->allParams, 'transferOut', null, Macro::CONST_PARAM_TYPE_USERNAME, '转出用户名错误');
+        $amount = ControllerParameterValidator::getRequestParam($this->allParams, 'amount',null,Macro::CONST_PARAM_TYPE_DECIMAL,'金额错误');
+        $bak = ControllerParameterValidator::getRequestParam($this->allParams, 'bak','',Macro::CONST_PARAM_TYPE_STRING,'转账原因错误');
+
+        $userIn = User::findOne(['username'=>$transferIn]);
+        if(!$userIn){
+            return ResponseHelper::formatOutput(Macro::ERR_USER_NOT_FOUND,'转入账户不存在');
+        }
+        $userOut = User::findOne(['username'=>$transferOut]);
+        if(!$userOut){
+            return ResponseHelper::formatOutput(Macro::ERR_USER_NOT_FOUND,'转出账户不存在');
+        }
+        $ip = Yii::$app->request->userIP??'';
+        LogicUser::transfer($userIn,$userOut,$amount,$bak,$ip);
+
+        return ResponseHelper::formatOutput(Macro::SUCCESS,'转账成功');
+    }
 }

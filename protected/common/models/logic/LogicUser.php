@@ -235,4 +235,56 @@ class LogicUser
     public function changeUserUnsettleBalance($amount, $eventType='', $eventId=0, $eventAmount=0, $clientIp='', $bak='', $opUid=0, $opUsername=''){
         $this->user->updateCounters(['unsettle_balance' => $amount]);
     }
+
+    /**
+     * 账户间转账
+     *
+     * @param User $transferIn
+     * @param User $transferOut
+     * @param float $amount
+     * @param string $bak
+     * @param string $clientIp
+     */
+    public static function transfer(User $transferIn, User $transferOut, float $amount, string $bak='', string $clientIp=''){
+        $fee = $transferOut->paymentInfo->account_transfer_fee;
+        //使用全局转账费
+        if($fee<0){
+            $fee = SiteConfig::cacheGetContent('account_transfer_fee');
+        }
+        $needAmount = bcadd($fee,$amount,6);
+        if(bccomp($needAmount,$transferOut->balance) === 1){
+            throw new OperationFailureException("余额不足,需要{$needAmount},当前余额{$transferOut->balance}",Macro::ERR_BALANCE_NOT_ENOUGH);
+        }
+
+        $db = Yii::$app->db;
+        $transaction = $db->beginTransaction();
+        //构造订单号
+        $orderNo = $transferOut->id.'_'.$transferIn->id.'_'.time().mt_rand(1000,9999);
+        try {
+            //账户扣款
+            $logicUserOut = new LogicUser($transferOut);
+            $logicUserOut->changeUserBalance((0-$amount), Financial::EVENT_TYPE_TRANSFER_OUT, $orderNo, $amount, $clientIp, $bak);
+
+            //转账手续费
+            if($fee > 0){
+                $feeAmount =  0-bcmul($fee,$amount,6);
+                $logicUserOut->changeUserBalance($feeAmount, Financial::EVENT_TYPE_TRANSFER_FEE, $orderNo, $amount, $clientIp, $bak);
+            }
+
+            //账户加款
+            $logicUseIn = new LogicUser($transferIn);
+            $logicUseIn->changeUserBalance($amount, Financial::EVENT_TYPE_TRANSFER_IN, $orderNo, $amount, $clientIp, $bak);
+
+            $transaction->commit();
+            return true;
+        } catch(\Exception $e) {
+            $transaction->rollBack();
+            throw $e;
+            return false;
+        } catch(\Throwable $e) {
+            $transaction->rollBack();
+            throw $e;
+            return false;
+        }
+    }
 }
