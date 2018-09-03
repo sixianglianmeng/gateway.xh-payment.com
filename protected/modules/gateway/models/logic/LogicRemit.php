@@ -468,7 +468,7 @@ class LogicRemit
             return $remit;
 
         }else{
-            Yii::error(__CLASS__.':'.__FUNCTION__.' '.$remit->order_no." 订单状态错误，无法提交到银行:".$remit->status);
+            Yii::info(__CLASS__.':'.__FUNCTION__.' '.$remit->order_no." 订单状态错误，无法提交到银行:".$remit->status);
 //            throw new OperationFailureException('订单状态错误，无法提交到银行');
             return $remit;
         }
