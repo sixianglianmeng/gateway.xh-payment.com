@@ -263,17 +263,17 @@ class LogicUser
         try {
             //账户扣款
             $logicUserOut = new LogicUser($transferOut);
-            $logicUserOut->changeUserBalance((0-$amount), Financial::EVENT_TYPE_TRANSFER_OUT, $orderNo, $amount, $clientIp, $bak);
+            $logicUserOut->changeUserBalance((0-$amount), Financial::EVENT_TYPE_TRANSFER_OUT, $orderNo, $amount, $clientIp, "转到".$transferIn->username.($bak?": {$bak}":""));
 
             //转账手续费
             if($fee > 0){
                 $feeAmount =  0-bcmul($fee,$amount,6);
-                $logicUserOut->changeUserBalance($feeAmount, Financial::EVENT_TYPE_TRANSFER_FEE, $orderNo, $amount, $clientIp, $bak);
+                $logicUserOut->changeUserBalance($feeAmount, Financial::EVENT_TYPE_TRANSFER_FEE, $orderNo, $amount, $clientIp, "转到".$transferIn->username.($bak?": {$bak}":""));
             }
 
             //账户加款
             $logicUseIn = new LogicUser($transferIn);
-            $logicUseIn->changeUserBalance($amount, Financial::EVENT_TYPE_TRANSFER_IN, $orderNo, $amount, $clientIp, $bak);
+            $logicUseIn->changeUserBalance($amount, Financial::EVENT_TYPE_TRANSFER_IN, $orderNo, $amount, $clientIp, "来自".$logicUserOut->username.($bak?": {$bak}":""));
 
             $transaction->commit();
             return true;
