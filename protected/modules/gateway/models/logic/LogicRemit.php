@@ -452,7 +452,7 @@ class LogicRemit
                 $remit->status = Remit::STATUS_NOT_REFUND;
                 $remit->bank_status =  Remit::BANK_STATUS_PROCESSING;
                 $remit->bank_ret = $remit->bank_ret.date('Ymd H:i:s').' 银行提交失败，请手工处理('.($ret['message']??'上游无返回').")\n";
-                if($ret['message'] && strpos(strtolower($ret['message']),'curl')!=='false'){
+                if($ret['message'] && strpos(strtolower($ret['message']),'curl') !== false){
                     $ret['message'] = '网络超时错误:'.$ret['message'];
                 }
                 $remit->fail_msg = '银行提交失败:'.($ret['message']??'上游无返回');
