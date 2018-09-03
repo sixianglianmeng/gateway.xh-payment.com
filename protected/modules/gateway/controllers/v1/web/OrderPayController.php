@@ -54,32 +54,33 @@
                 return ResponseHelper::formatOutput(Macro::ERR_UNKNOWN, '订单已过期,请重新下单');
             }
 
+            $clientId = PaymentRequest::getClientId();
+            if(!$clientId){
+                //设置客户端唯一id
+                PaymentRequest::setClientIdCookie();
+                return $this->redirect(LogicOrder::getCashierUrl($orderNo)."&r=".time(), 302);
+            }
+            //更新客户端信息
+            LogicOrder::updateClientInfo($order);
+
             //防止并发刷新提交付款到上游
             $key = 'recharge_paying:'.$orderNo;
             $lastTs = Yii::$app->cache->get($key);
-            if($lastTs){
-//                return ResponseHelper::formatOutput(Macro::ERR_UNKNOWN,'请不要频繁刷新页面');
+            if($lastTs && (time()-$lastTs)<30){
+                return ResponseHelper::formatOutput(Macro::ERR_UNKNOWN,'请不要频繁刷新付款页面');
             }
-            Yii::$app->cache->set($key,time(),20);
-
-            //设置客户端唯一id
-            PaymentRequest::setClientIdCookie();
-
-            //更新客户端信息
-            LogicOrder::updateClientInfo($order);
+            Yii::$app->cache->set($key,time(),60);
 
             //检测用户或者IP是否在黑名单中
             if(!PaymentRequest::checkBlackListUser()){
                 $msg = '对不起，IP网络安全检测异常，暂时无法提供服务:'.Macro::ERR_USER_BAN;
                 return ResponseHelper::formatOutput(Macro::ERR_USER_BAN, $msg);
             }
-
             //检测referer
             if(!PaymentRequest::checkReferrer($order->userPaymentInfo)){
                 $msg = '对不起，来路域名错误，请联系您的商户:'.Macro::ERR_REFERRER;
                 return ResponseHelper::formatOutput(Macro::ERR_REFERRER, $msg);
             }
-
             //生成跳转连接
             $payment = new ChannelPayment($order, $order->channelAccount);
 
@@ -87,7 +88,6 @@
             if (!is_callable([$payment, $methodFnc])) {
                 return ResponseHelper::formatOutput(Macro::ERR_UNKNOWN, "对不起,系统中此通道暂未支持此支付方式.");
             }
-
             //检测网银对应银行代码是否正确,若不正确,显示选择页面
             if(in_array($order->pay_method_code,[Channel::METHOD_WEBBANK])) {
                 $bankCode = BankCodes::getChannelBankCode($order->channel_id, $order->bank_code);
@@ -228,6 +228,12 @@
             if($order && in_array($order->status,[Order::STATUS_PAID,Order::STATUS_SETTLEMENT])){
                 $ret = Macro::SUCCESS;
             }
+
+            //设置客户端唯一id
+            PaymentRequest::setClientIdCookie();
+
+            //更新客户端信息
+            LogicOrder::updateClientInfo($order);
 
             return ResponseHelper::formatOutput($ret,$lastTs.' '.time());
         }
