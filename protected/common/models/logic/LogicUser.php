@@ -3,6 +3,7 @@ namespace app\common\models\logic;
 
 use app\common\exceptions\OperationFailureException;
 use app\common\models\model\Financial;
+use app\common\models\model\SiteConfig;
 use app\common\models\model\User;
 use app\components\Macro;
 use Yii;
@@ -17,7 +18,7 @@ class LogicUser
         $this->user = $user;
     }
 
-    /*
+    /**
      * 更新账户余额
      *
      * decimal $amount 更新金额
@@ -27,12 +28,14 @@ class LogicUser
      * string $clientIp 客户端IP
      * string $bak 备注
      * int $opUid 操作者UID
-     * int $opUsername 操作者用户名
+     * string $opUsername 操作者用户名
+     * int $toUid 帐变关联方UID
+     * string $toUsername 帐变关联方用户名
      *
      */
-    public function changeUserBalance($amount, $eventType, $eventId, $eventAmount, $clientIp='', $bak='', $opUid=0, $opUsername=''){
+    public function changeUserBalance($amount, $eventType, $eventId, $eventAmount, $clientIp='', $bak='', $opUid=0, $opUsername='', $toUid=0, $toUsername=''){
         bcscale(6);
-        Yii::info(__FUNCTION__.' '.$this->user->id.','.$amount.','.$eventType.','.$eventId);
+        Yii::info(__FUNCTION__.' '.$this->user->id.','.$amount.','.$eventType.','.$eventId.','.$toUsername);
         if(empty($this->user) || $amount==0){
             Yii::info('user or amount empty'.$this->user->id.','.$amount.','.$eventType.','.$eventId);
             return false;
@@ -70,6 +73,9 @@ class LogicUser
                 $financial->op_uid                = $opUid;
                 $financial->status                = Financial::STATUS_UNFINISHED;
                 $financial->op_username           = $opUsername;
+                $financial->op_username           = $opUsername;
+                $financial->to_user_id            = $toUid;
+                $financial->to_username           = $toUsername;
                 $financial->all_parent_agent_id   = $this->user->all_parent_agent_id;
                 $financial->save();
 
@@ -123,7 +129,7 @@ class LogicUser
         }
     }
 
-    /*
+    /**
      * 更新账户冻结余额
      *
      * decimal $amount 更新的冻结金额
@@ -219,7 +225,7 @@ class LogicUser
         }
     }
 
-    /*
+    /**
      * 更新账户待结算余额
      *
      * decimal $amount 更新的冻结金额
@@ -263,17 +269,17 @@ class LogicUser
         try {
             //账户扣款
             $logicUserOut = new LogicUser($transferOut);
-            $logicUserOut->changeUserBalance((0-$amount), Financial::EVENT_TYPE_TRANSFER_OUT, $orderNo, $amount, $clientIp, "转到".$transferIn->username.($bak?": {$bak}":""));
+            $logicUserOut->changeUserBalance((0-$amount), Financial::EVENT_TYPE_TRANSFER_OUT, $orderNo, $amount, $clientIp, $bak, 0,'', $transferIn->id,$transferIn->username);
 
             //转账手续费
             if($fee > 0){
                 $feeAmount =  0-bcmul($fee,$amount,6);
-                $logicUserOut->changeUserBalance($feeAmount, Financial::EVENT_TYPE_TRANSFER_FEE, $orderNo, $amount, $clientIp, "转到".$transferIn->username.($bak?": {$bak}":""));
+                $logicUserOut->changeUserBalance($feeAmount, Financial::EVENT_TYPE_TRANSFER_FEE, $orderNo, $amount, $clientIp, $bak, 0,'', $transferIn->id,$transferIn->username);
             }
 
             //账户加款
             $logicUseIn = new LogicUser($transferIn);
-            $logicUseIn->changeUserBalance($amount, Financial::EVENT_TYPE_TRANSFER_IN, $orderNo, $amount, $clientIp, "来自".$logicUserOut->username.($bak?": {$bak}":""));
+            $logicUseIn->changeUserBalance($amount, Financial::EVENT_TYPE_TRANSFER_IN, $orderNo, $amount, $clientIp, $bak,0,'', $transferOut->id,$transferOut->username);
 
             $transaction->commit();
             return true;
