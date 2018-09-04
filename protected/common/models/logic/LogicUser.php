@@ -91,7 +91,7 @@ class LogicUser
                 //更新账户余额
 //                $balanceUpdateRet = $this->user->updateCounters(['balance' => $amount]);
                 $filter = "id={$this->user->id}";
-                if($amount<0) $filter .= " AND balance>=$amount";
+                if(!$force && $amount<0) $filter .= " AND balance>=$amount";
                 $balanceUpdateRet = Yii::$app->db->createCommand()
                     ->update(User::tableName(),['balance' => new Expression("balance+{$amount}")],$filter)
                     ->execute();

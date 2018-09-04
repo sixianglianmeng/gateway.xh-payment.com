@@ -465,9 +465,9 @@ class LogicOrder
             $user = $logicUser->changeUserBalance($order->paid_amount, Financial::EVENT_TYPE_RECHARGE, $order->order_no, $order->amount, Yii::$app->request->userIP);
             //重新设置以更新用户余额属性，防止第一次充值时手续费判断不成功
             $logicUser = new LogicUser($user);
-            //需扣除充值手续费
+            //需扣除充值手续费,此处进行强制扣除.防止某些账户余额已经为负的情况下扣除手续费失败
             $logicUser->changeUserBalance(0-$order->fee_amount, Financial::EVENT_TYPE_RECHARGE_FEE, $order->order_no, $order->amount,
-                Yii::$app->request->userIP);
+                Yii::$app->request->userIP,'',0,'',0,'',true);
 
             //更改订单状态
             $order->status = Order::STATUS_SETTLEMENT;
