@@ -114,7 +114,7 @@ class LogicUser
                     throw new OperationFailureException($msg);
                 }
             }else{
-                Yii::warning("changeUserFrozenBalance already done: uid:{$this->user->id},{$amount},{$eventType},{$eventId}");
+                Yii::warning("changeUserBalance already done: uid:{$this->user->id},{$amount},{$eventType},{$eventId}");
             }
 
             $transaction->commit();
@@ -210,7 +210,7 @@ class LogicUser
                     throw new OperationFailureException($msg,Macro::ERR_UNKNOWN);
                 }
             }else{
-                throw new OperationFailureException("已经有相同类型且事件ID相同的成功帐变记录,无法更新账户余额!",Macro::ERR_UNKNOWN);
+//                throw new OperationFailureException("已经有相同类型且事件ID相同的成功帐变记录,无法更新账户余额!",Macro::ERR_UNKNOWN);
                 Yii::warning("changeUserFrozenBalance already done: uid:{$this->user->id},{$amount},{$eventType},{$eventId}");
             }
 

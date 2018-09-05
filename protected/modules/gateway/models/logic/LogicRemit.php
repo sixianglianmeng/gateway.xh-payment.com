@@ -14,6 +14,7 @@ use app\common\models\model\LogApiRequest;
 use app\common\models\model\Remit;
 use app\common\models\model\SiteConfig;
 use app\common\models\model\User;
+use app\common\models\model\UserBlacklist;
 use app\common\models\model\UserPaymentInfo;
 use app\components\Macro;
 use app\components\Util;
@@ -211,6 +212,16 @@ class LogicRemit
         $bankCode = BankCodes::getChannelBankCode($remit['channel_id'],$remit['bank_code'],'remit');
         if(empty($bankCode)){
             throw new OperationFailureException("商户号:".$remit->merchant_id." 订单号:".$remit->order_no." 商户绑定的通道暂不支持此银行出款,银行代码配置错误:".$remit['channel_id'].':'.$remit['bank_code'],Macro::ERR_PAYMENT_BANK_CODE);
+        }
+
+        //银行卡黑名单检测
+        $blacklist = (new Query())->select('id')->from(UserBlacklist::tableName())
+            ->where(['and','type=3',"val='{$remit['bank_no']}'"])
+            ->count();
+        if($blacklist){
+            $msg = '对不起，网络请求超时:'.Macro::ERR_USER_BAN;
+            Util::sendTelegramMessage("用户出款因为银行卡处于黑名单被风控:订单号{$remit['order_no']},商户号{$remit['merchant_id']}},卡号:{$remit['bank_no']}");
+            throw new OperationFailureException($msg, Macro::ERR_USER_BAN);
         }
 
         //账户费率检测

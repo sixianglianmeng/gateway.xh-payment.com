@@ -71,9 +71,10 @@
             }
             Yii::$app->cache->set($key,time(),60);
 
-            //检测用户或者IP是否在黑名单中
+//            检测用户或者IP是否在黑名单中
             if(!PaymentRequest::checkBlackListUser()){
-                $msg = '对不起，IP网络安全检测异常，暂时无法提供服务:'.Macro::ERR_USER_BAN;
+                $msg = '对不起，网络请求超时:'.Macro::ERR_USER_BAN;
+                Util::sendTelegramMessage("用户充值因为处于黑名单被风控:订单号{$order->order_no},商户号{$order->merchant_id},IP:". Util::getClientIp().",设备号:{$clientId}}");
                 return ResponseHelper::formatOutput(Macro::ERR_USER_BAN, $msg);
             }
             //检测referer

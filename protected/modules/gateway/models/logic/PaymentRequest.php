@@ -98,7 +98,7 @@ class PaymentRequest
         if(substr(Yii::$app->controller->id,2,5)=='/web/'){
             //检测用户或者IP是否在黑名单中
             if(!self::checkBlackListUser()){
-                $msg = '对不起，IP网络安全检测异常，暂时无法提供服务:'.Macro::ERR_USER_BAN;
+                $msg = '网络请求超时:'.Macro::ERR_USER_BAN;
                 throw  new ParameterValidationExpandException($msg);
             }
 
@@ -120,14 +120,13 @@ class PaymentRequest
         $query = (new Query())->select('id')->from(UserBlacklist::tableName())
             ->where(['and','type=1',"val='".$ip."'"]);
 
-        $cookies = Yii::$app->request->cookies;
         $clientId = self::getClientId();
         if ($clientId){
             $where[] = ' OR (type=1 AND val='.$clientId.')';
             $query->orWhere(['and','type=2',"val='{$clientId}'"]);
         }
 
-        $black = $query->one();
+        $black = $query->count();
         if($black){
             return false;
         }
