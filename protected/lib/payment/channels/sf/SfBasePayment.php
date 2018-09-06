@@ -471,12 +471,18 @@ class SfBasePayment extends BasePayment
         $ret['data']['rawMessage'] = $resTxt;
         if (!empty($resTxt)) {
             $res = json_decode($resTxt, true);
-            if (isset($res['is_success']) && strtoupper($res['is_success']) == 'TRUE') {
+            if (isset($res['is_success']) && $res['is_success'] == 'true') {
                 $ret['status']                   = Macro::SUCCESS;
                 $ret['data']['channel_order_no'] = $res['trade_no'];
-                if (isset($res['trade_status']) && strtoupper($res['trade_status']) == 'success') {
-                    $ret['data']['amount']           = $res['order_amount'];
-                    $ret['data']['trade_status']     = Order::STATUS_PAID;
+                if (isset($res['trade_status'])) {
+                    if ($res['trade_status'] == 'success') {
+                        $ret['data']['amount']       = $res['order_amount'];
+                        $ret['data']['trade_status'] = Order::STATUS_PAID;
+                    } elseif ($res['trade_status'] == 'paying') {
+                        $ret['data']['trade_status'] = Order::STATUS_NOTPAY;
+                    } elseif ($res['trade_status'] == 'failed') {
+                        $ret['data']['trade_status'] = Order::STATUS_FAIL;
+                    }
                 }
             } else {
                 $ret['message'] = $res['errror_msg'] ?? '收款订单查询失败';

@@ -143,6 +143,9 @@ class OrderController extends BaseInnerController
                     }
 
                     break;
+                case Order::STATUS_NOTPAY:
+                    $msg = '订单待付款';
+                    break;
                 case Order::STATUS_FAIL:
                     $msg = $ret['message']?$ret['message']:'上游返回返回订单失败';
                     break;
