@@ -27,6 +27,7 @@ class RemitController extends BaseConsoleCommand
      */
     public function actionCheckStatusQueueProducer(){
         $doCheck = true;
+        $lastId = 0;
         while ($doCheck) {
             Yii::info('actionCheckStatusQueueProducer');
             //获取配置:出款多少分钟之后不再自动查询状态,默认半小时
@@ -34,20 +35,26 @@ class RemitController extends BaseConsoleCommand
             $startTs = time()-($expire?$expire*60:1800);
 
             $remits = Remit::find()
+            ->andWhere(['>', 'id', $lastId])
             ->andWhere(['status'=>Remit::STATUS_BANK_PROCESSING])
             ->andWhere(['>=', 'created_at', $startTs])
             ->limit(100)->all();
-
             Yii::info('find remit to check status: '.count($remits));
+            //没有可用订单了,重置上一个ID
+            if(count($remits) == 0){
+                Yii::info('actionCheckStatusQueueProducer reset lastId to 0');
+                $lastId = 0;
+            }
             foreach ($remits as $remit){
-                Yii::info('remit status check: '.$remit->order_no);
+                $lastId = $remit->id;
+                Yii::info('remit status check: '.$remit->order_no.' lastId: '.$lastId);
                 $job = new RemitQueryJob([
                     'orderNo'=>$remit->order_no,
                 ]);
                 Yii::$app->remitQueryQueue->push($job);//->delay(10)
             }
 
-            sleep(mt_rand(30,40));
+            sleep(mt_rand(10,20));
         }
     }
 
@@ -56,6 +63,7 @@ class RemitController extends BaseConsoleCommand
      */
     public function actionBankCommitQueueProducer(){
         $doCheck = true;
+        $lastId = 0;
         while ($doCheck) {
             $canCommit = LogicRemit::canCommitToBank();
             Yii::info(json_encode(['actionBankCommitQueueProducer',$canCommit]));
@@ -66,13 +74,20 @@ class RemitController extends BaseConsoleCommand
 
                 $remits = Remit::find()
                     ->andWhere(['status'=>[Remit::STATUS_CHECKED]])
+                    ->andWhere(['>', 'id', $lastId])
                     ->andWhere(['>=', 'updated_at', $startTs])
                     ->andWhere(['<', 'commit_to_bank_times', LogicRemit::MAX_TIME_COMMIT_TO_BANK])
-                    ->limit(200)->all();
-
+                    ->orderBy("id ASC")
+                    ->limit(100)->all();
                 Yii::info('BankCommitQueueProducer find remit to commit bank: '.count($remits));
+                //没有可用订单了,重置上一个ID
+                if(count($remits) == 0){
+                    Yii::info('BankCommitQueueProducer reset lastId to 0');
+                    $lastId = 0;
+                }
                 foreach ($remits as $remit){
-                    Yii::info('BankCommitQueueProducer: '.$remit->order_no);
+                    $lastId = $remit->id;
+                    Yii::info('BankCommitQueueProducer: '.$remit->order_no.' lastId: '.$lastId);
 
                     $job = new RemitCommitJob([
                         'orderNo'=>$remit->order_no,
@@ -104,7 +119,6 @@ class RemitController extends BaseConsoleCommand
                 ->andWhere(['>=', 'remit_at', $startTs])
                 ->limit(100)->all();
 
-
             foreach ($remits as $remit){
                 Yii::info('job remit ReCheckFail: '.$remit->order_no);
 
@@ -126,6 +140,7 @@ class RemitController extends BaseConsoleCommand
      */
     public function actionNotifyQueueProducer(){
         $doCheck = true;
+        $lastId = 0;
         while ($doCheck) {
             //获取配置:出款多少分钟之后不再自动查询状态,默认半小时
             $expire = SiteConfig::cacheGetContent('order_notify_expire');
@@ -135,6 +150,7 @@ class RemitController extends BaseConsoleCommand
 
             $query = Remit::find()
                 ->where(['status'=>[Remit::STATUS_SUCCESS, Remit::STATUS_REFUND], 'notify_status'=>[Remit::NOTICE_STATUS_NONE, Remit::NOTICE_STATUS_FAIL]])
+                ->andWhere(['>', 'id', $lastId])
                 ->andWhere(['!=', 'notify_url', ''])
                 ->andWhere(['>=', 'created_at', $startTs])
                 //最多通知10次
@@ -144,12 +160,17 @@ class RemitController extends BaseConsoleCommand
 
             $orders = $query->limit(100)->all();
             Yii::info('find remit to notify: '.count($orders));
+            //没有可用订单了,重置上一个ID
+            if(count($orders) == 0){
+                Yii::info('notifyQueueProducer reset lastId to 0');
+                $lastId = 0;
+            }
             foreach ($orders as $order){
                 Yii::info('remit notify: '.$order->order_no);
                 LogicRemit::notify($order);
             }
 
-            sleep(mt_rand(30,40));
+            sleep(mt_rand(10,20));
         }
     }
 }
