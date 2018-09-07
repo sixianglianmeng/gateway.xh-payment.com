@@ -124,7 +124,16 @@
 
             //由各方法自行处理响应
             //return redirect|QrCode view|h5 call native
-            $ret = $payment->$methodFnc();
+            //检测缓存中是否已经有此订单的下单结果,如果有直接使用,防止报重复下单错误
+            $cacheKey = "channel:cashier_url:{$order['order_no']}";
+            $hasRequest =  Yii::$app->redis->get($cacheKey);
+            if($hasRequest){
+                Yii::info("get cached url, will not request sf:{$order['order_no']}, {$hasRequest}");
+                $ret = json_decode($hasRequest,true);
+            }else{
+                $ret = $payment->$methodFnc();
+            }
+
             if ($ret['status']!==Macro::SUCCESS) {
                 Yii::error("订单生成失败. 订单号:{$order->order_no}, 支付方式:{$order->pay_method_code}, 通道:{$order->channelAccount->channel_name}, 上游返回:{$ret['message']}");
                 LogicOrder::payFail($order,"上游订单生成失败:{$ret['message']}");
@@ -133,6 +142,10 @@
                 }
                 return ResponseHelper::formatOutput(Macro::ERR_UNKNOWN, "{$order->order_no}上游订单生成失败");
             }
+            //下单结果写入缓存
+            Yii::$app->redis->set($cacheKey,json_encode($ret,JSON_UNESCAPED_UNICODE));
+            Yii::$app->redis->expire($cacheKey,43200);
+
             if (empty($ret['data']['type'])) {
                 return ResponseHelper::formatOutput(Macro::ERR_UNKNOWN, "无法找到支付表单渲染方式");
             }

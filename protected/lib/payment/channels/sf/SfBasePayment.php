@@ -139,6 +139,13 @@ class SfBasePayment extends BasePayment
      */
     public function webBank()
     {
+        //检测缓存中是否已经有此订单的下单结果,如果有直接使用,防止报重复下单错误
+        $cacheKey = "channel:cashier_url:{$this->order['order_no']}";
+        $hasRequest =  Yii::$app->redis->get($cacheKey);
+        if($hasRequest){
+            Yii::info("get cached url, will not request sf:{$this->order['order_no']}, {$hasRequest}");
+            return json_decode($hasRequest,true);
+        }
 
         $bankCode = BankCodes::getChannelBankCode($this->order['channel_id'],$this->order['bank_code']);
         if($this->order['pay_method_code']==Channel::METHOD_WEBBANK && empty($bankCode)){
@@ -188,15 +195,14 @@ class SfBasePayment extends BasePayment
                 $jumpParams[$field] = $input->getAttribute('value');
 
             }
-            Yii::info(['sf jump: '.$getUrl,$jumpParams]);
+            Yii::info(['sf jump: '.$jumpUrl,$jumpParams]);
             if($jumpUrl && $jumpParams){
                 //第二跳
-
                 $form = self::buildForm( $jumpParams, $jumpUrl);
             }
         }
         else{
-            Yii::info("can not skip ht payment redirect");
+            Yii::info("do not skip payment redirect");
             $form = self::buildForm($params, $requestUrl);
         }
 
@@ -205,6 +211,10 @@ class SfBasePayment extends BasePayment
         $ret['data']['type'] = self::RENDER_TYPE_REDIRECT;
         $ret['data']['url'] = $getUrl;
         $ret['data']['formHtml'] = $form;
+
+        //下单结果写入缓存
+        Yii::$app->redis->set($cacheKey,json_encode($ret,JSON_UNESCAPED_UNICODE));
+        Yii::$app->redis->expire($cacheKey,43200);
 
         return $ret;
     }

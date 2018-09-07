@@ -31,17 +31,17 @@ class LogicUser
      * string $opUsername 操作者用户名
      * int $toUid 帐变关联方UID
      * string $toUsername 帐变关联方用户名
-     * bool $force 是否强制修改,即可扣除成负数
+     * bool $balanceCanBeNegative 是否强制修改,即可扣除成负数
      *
      */
-    public function changeUserBalance($amount, $eventType, $eventId, $eventAmount, $clientIp='', $bak='', $opUid=0, $opUsername='', $toUid=0, $toUsername='', $force=false){
+    public function changeUserBalance($amount, $eventType, $eventId, $eventAmount, $clientIp='', $bak='', $opUid=0, $opUsername='', $toUid=0, $toUsername='', $balanceCanBeNegative=false){
         bcscale(6);
         Yii::info(__FUNCTION__.' '.$this->user->id.','.$amount.','.$eventType.','.$eventId.','.$toUsername);
         if(empty($this->user) || $amount==0){
             Yii::info('user or amount empty'.$this->user->id.','.$amount.','.$eventType.','.$eventId);
             return false;
         }
-        if(!$force && $amount<0 && $this->user->balance<abs($amount)){
+        if(!$balanceCanBeNegative && $amount<0 && $this->user->balance<abs($amount)){
             Yii::warning("changeUserBalance balance not enough: uid:{$this->user->id},{$amount},{$eventType},{$eventId}");
             throw new OperationFailureException("余额不足",Macro::ERR_BALANCE_NOT_ENOUGH);
         }
@@ -91,7 +91,7 @@ class LogicUser
                 //更新账户余额
 //                $balanceUpdateRet = $this->user->updateCounters(['balance' => $amount]);
                 $filter = "id={$this->user->id}";
-                if(!$force && $amount<0) $filter .= " AND balance>=$amount";
+                if(!$balanceCanBeNegative && $amount<0) $filter .= " AND balance>=$amount";
                 $balanceUpdateRet = Yii::$app->db->createCommand()
                     ->update(User::tableName(),['balance' => new Expression("balance+{$amount}")],$filter)
                     ->execute();
@@ -141,10 +141,10 @@ class LogicUser
      * string $bak 备注
      * int $opUid 操作者UID
      * int $opUsername 操作者用户名
-     * bool $force 是否强制修改,即可扣除成负数
+     * bool $balanceCanBeNegative 是否强制修改,即可扣除成负数
      *
      */
-    public function changeUserFrozenBalance($amount, $eventType, $eventId, $eventAmount, $clientIp='', $bak='', $opUid=0, $opUsername='', $force=true){
+    public function changeUserFrozenBalance($amount, $eventType, $eventId, $eventAmount, $clientIp='', $bak='', $opUid=0, $opUsername='', $balanceCanBeNegative=true){
         bcscale(6);
         Yii::info(__FUNCTION__.' '.$this->user->id.','.$amount.','.$eventType.','.$eventId);
         if(empty($this->user) || $amount==0){
@@ -152,12 +152,12 @@ class LogicUser
             return false;
         }
         //冻结金额，冻结字段+，余额字段-
-        if(!$force && $amount>0 && $this->user->balance<$amount){
+        if(!$balanceCanBeNegative && $amount>0 && $this->user->balance<$amount){
             Yii::warning("changeUserFrozenBalance balance not enough: uid:{$this->user->id},{$amount},{$eventType},{$eventId}");
             throw new OperationFailureException("余额不足",Macro::ERR_BALANCE_NOT_ENOUGH);
         }
         //解冻金额，冻结字段-，余额字段+
-        if(!$force && $amount<0 && $this->user->frozen_balance<abs($amount)){
+        if(!$balanceCanBeNegative && $amount<0 && $this->user->frozen_balance<abs($amount)){
             Yii::warning("changeUserFrozenBalance balance not enough: uid:{$this->user->id},{$amount},{$eventType},{$eventId}");
             throw new OperationFailureException("冻结余额小余要解冻的金额",Macro::ERR_BALANCE_NOT_ENOUGH);
         }
