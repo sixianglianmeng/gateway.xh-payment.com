@@ -683,7 +683,7 @@ class LogicOrder
             'order_amount'=>bcadd($order->amount,0,2),
             'paid_amount'=>bcadd($order->paid_amount,0,2),
             'order_time'=>$order->created_at,
-            'return_params'=>$order->return_params,
+            'return_params'=>!empty($order->return_params)?$order->return_params:'',
             'trade_no'=>$order->order_no,
             'trade_time'=>$order->paid_at,
             'trade_status'=>$tradeStatus,
