@@ -38,7 +38,7 @@ class ChannelController extends BaseConsoleCommand
             $lastUpdateKey = "last_chanell_account_update_ts";
             $lastUpdate = Yii::$app->cache->get($lastUpdateKey);
 
-            $accounts = ChannelAccount::findAll(['status'=>ChannelAccount::STATUS_ACTIVE]);
+            $accounts = ChannelAccount::findAll();//['status'=>ChannelAccount::STATUS_ACTIVE]
             Yii::info('find channel accounts to check balance: '.count($accounts));
             foreach ($accounts as $account){
                 LogicChannelAccount::syncBalance($account);
