@@ -86,7 +86,8 @@ class BasePayment
         'status'  => Macro::FAIL,
         'message' => '',
         'data'    => [
-            'channel_order_no' => '',//三方订单号',
+            'final_channel_order_no' => '',//最终的渠道订单号,例如支付宝支付为支付宝流水号,
+            'channel_order_no' => '',//三方订单号,
             'amount'           => '',//实际订单金额,可选,
             'trade_status'     => "",//业务状态，需转换为Order表状态,
         ],

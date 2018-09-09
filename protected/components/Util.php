@@ -497,7 +497,7 @@ class Util
      *
      * param url 抓取的URL
      */
-    public static function curlGet($url, $headers=[])
+    public static function curlGet($url, $headers=[], $timeoutMs=5000)
     {
         $ch        = curl_init();
         $headers[] = "Accept-Charset: utf-8";
@@ -511,6 +511,7 @@ class Util
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
         curl_setopt($ch, CURLOPT_AUTOREFERER, 1);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_TIMEOUT_MS, $timeoutMs);
         $result = curl_exec($ch);
 
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -899,17 +900,20 @@ class Util
     {
         //全部变成小写字母
         $agent = strtolower($_SERVER['HTTP_USER_AGENT']);
+        $ret = false;
         //分别进行判断
         if (strpos($agent, 'iphone')!==false
             || strpos($agent, 'ipad')!==false
             || strpos($agent, 'android')!==false
             || strpos($agent, 'micromessenger')!==false
             || strpos($agent, 'alipay')!==false
+            || strpos($agent, 'mobile')!==false
         ) {
-            return true;
+            $ret = true;
         }
+        //Yii::info("useragent check mobile: {$ret}, {$agent}");
 
-        return false;
+        return $ret;
 
     }
 
@@ -993,11 +997,12 @@ class Util
 
         if($withTitle){
             $title = gethostname();
-            if(Yii::$app->request->getIsConsoleRequest()){
-                $title.=" ".pathinfo(WWW_DIR)['basename'];
-            }else{
-                $title.=" ".Yii::$app->request->hostName;
-            }
+//        if(Yii::$app->request->getIsConsoleRequest()){
+//            $title.=" ".pathinfo(WWW_DIR)['basename'];
+//        }else{
+//            $title.=" ".Yii::$app->request->hostName;
+//        }
+            $title.=" ".SYSTEM_NAME;
             $message = "{$message}\n{$title}";
         }
 

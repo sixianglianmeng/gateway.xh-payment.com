@@ -137,7 +137,6 @@ class OrderController extends BaseInnerController
             switch ($ret['data']['trade_status']){
                 case Order::STATUS_PAID:
                 case Order::STATUS_SETTLEMENT:
-
                     if($ret['data']['amount']>0){
                         $msg = "付款成功,付款金额{$ret['data']['amount']},上游订单号{$ret['data']['channel_order_no']}";
                     }
@@ -157,7 +156,7 @@ class OrderController extends BaseInnerController
         }
         $msg = '本地状态:'.$order->getStatusStr()."\n上游状态:".$msg;
         if(!empty($ret['data']['rawMessage'])){
-            $msg.=" \n原始消息".$ret['data']['rawMessage'];
+            $msg.=" \n原始消息: ".$ret['data']['rawMessage'];
         }
 
         return ResponseHelper::formatOutput(Macro::SUCCESS,$msg);

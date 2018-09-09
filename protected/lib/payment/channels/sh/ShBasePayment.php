@@ -353,7 +353,7 @@ class ShBasePayment extends BasePayment
             if (isset($res['is_success']) && strtoupper($res['is_success'])== 'TRUE') {
                 $ret['status']         = Macro::SUCCESS;
                 $ret['data']['balance'] = $res['money'];
-                $ret['data']['frozen_balance'] = $res['freeze_money'];
+                $ret['data']['frozen_balance'] = $res['freeze_money']??0;
             } else {
                 $ret['message'] = $res['msg']??'余额查询失败';
             }
