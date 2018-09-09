@@ -1030,10 +1030,21 @@ class LogicRemit
             $remit->need_merchant_check != 1
             || $remit->need_merchant_check == 1 && $remit->merchant_check_status == Remit::MERCHANT_CHECK_STATUS_CHECKED
         ){
+            //额度以用户优先级最高,用户的为0则使用系统配置
+            $apiFastQuota = SiteConfig::cacheGetContent('api_fast_remit_quota');
+            if($remit->userPaymentInfo->allow_api_fast_remit){
+                $apiFastQuota = $remit->userPaymentInfo->allow_api_fast_remit;
+            }
+
+            $manualFastQuota = SiteConfig::cacheGetContent('manual_fast_remit_quota');
+            if($remit->userPaymentInfo->allow_manual_fast_remit){
+                $manualFastQuota = $remit->userPaymentInfo->allow_manual_fast_remit;
+            }
+
             //符合免审核条件的订单自动审核
             if (
-                $remit->type == Remit::TYPE_API && $remit->amount <= $remit->userPaymentInfo->allow_api_fast_remit
-                || $remit->type == Remit::TYPE_BACKEND && $remit->amount <= $remit->userPaymentInfo->allow_manual_fast_remit
+                $remit->type == Remit::TYPE_API && $remit->amount <= $apiFastQuota
+                || $remit->type == Remit::TYPE_BACKEND && $remit->amount <= $manualFastQuota
             ) {
                 $remit = LogicRemit::setChecked($remit,0,'系统自动');
             }
