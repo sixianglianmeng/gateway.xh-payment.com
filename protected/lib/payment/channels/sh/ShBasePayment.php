@@ -7,6 +7,7 @@ use app\common\models\logic\LogicApiRequestLog;
 use app\common\models\model\BankCodes;
 use app\common\models\model\Channel;
 use app\common\models\model\LogApiRequest;
+use app\common\models\model\Remit;
 use app\components\Macro;
 use app\components\Util;
 use app\lib\helpers\ControllerParameterValidator;
@@ -269,9 +270,9 @@ class ShBasePayment extends BasePayment
 
         $params = [
             'merchant_code'=>$this->remit['channel_merchant_id'],
-            'trade_no'=>$this->remit['order_no'],
+            'order_no'=>$this->remit['order_no'],
             'order_amount'=>$this->remit['amount'],
-            'order_time'=>date("Y-m-d H:i:s"),
+            'order_time'=>time(),
             'account_name'=>$this->remit['bank_account'],
             'account_number'=>$this->remit['bank_no'],
             'bank_code'=>$bankCode,//$this->remit['bank_code'],
@@ -288,16 +289,70 @@ class ShBasePayment extends BasePayment
         if (!empty($resTxt)) {
             $res = json_decode($resTxt, true);
             //仅代表请求成功,不代表业务成功
-            if (isset($res['is_success'])) $ret['status'] = Macro::SUCCESS;
             if (isset($res['is_success']) && strtoupper($res['is_success']) == 'TRUE') {
-                $ret['data']['channel_order_no'] = $res['order_id'];
-                //0 未处理，1 银行处理中 2 已打款 3 失败
-                $ret['data']['bank_status'] = $res['bank_status'];
+                $ret['status'] = Macro::SUCCESS;
+                $ret['data']['channel_order_no'] = $res['trade_no'];
+
+                if($res['bank_status']=='processing'){
+                    $ret['data']['bank_status'] = Remit::BANK_STATUS_PROCESSING;
+                }elseif($res['bank_status']=='success'){
+                    $ret['data']['bank_status'] = Remit::BANK_STATUS_SUCCESS;
+                }elseif($res['bank_status']=='failed'){
+                    $ret['data']['bank_status'] = Remit::BANK_STATUS_FAIL;
+                    $ret['message'] = $res['msg']??"出款提交失败({$resTxt})";
+                }
             } else {
                 $ret['message'] = $res['msg']??"出款提交失败({$resTxt})";
             }
         }
 
+        return  $ret;
+    }
+
+    /**
+     * 提交出款状态查询
+     *
+     * @return array REMIT_QUERY_RESULT
+     */
+    public function remitStatus(){
+        if(empty($this->remit)){
+            throw new OperationFailureException('未传入出款订单对象',Macro::ERR_UNKNOWN);
+        }
+        $params = [
+            'merchant_code'=>$this->remit['channel_merchant_id'],
+            'order_no'=>$this->remit['order_no'],
+            'query_time'=>time(),
+        ];
+        $params['sign'] = self::md5Sign($params,trim($this->paymentConfig['key']));
+        $requestUrl = $this->paymentConfig['gateway_base_uri'].'/remit_query.html';
+        $resTxt = self::post($requestUrl, $params);
+        //记录请求日志
+        LogicApiRequestLog::outLog($requestUrl, 'POST', $resTxt, 200,0, $params);
+
+        Yii::info('remit query result: '.$this->remit['order_no'].' '.$resTxt);
+        $ret = self::REMIT_QUERY_RESULT;
+        $ret['data']['remit'] = $this->remit;
+        $ret['data']['order_no'] = $this->remit->order_no;
+        $ret['data']['rawMessage'] = $resTxt;
+        if (!empty($resTxt)) {
+            $res = json_decode($resTxt, true);
+            //仅代表请求成功,不代表业务成功
+            if (isset($res['is_success']) && strtoupper($res['is_success']) == 'TRUE') {
+                $ret['status'] = Macro::SUCCESS;
+                $ret['data']['channel_order_no'] = $res['trade_no'];
+
+                if($res['bank_status']=='processing'){
+                    $ret['data']['bank_status'] = Remit::BANK_STATUS_PROCESSING;
+                }elseif($res['bank_status']=='success'){
+                    $ret['data']['bank_status'] = Remit::BANK_STATUS_SUCCESS;
+                }elseif($res['bank_status']=='failed'){
+                    $ret['data']['bank_status'] = Remit::BANK_STATUS_FAIL;
+                    $ret['message'] = $res['msg']??"出款提交失败({$resTxt})";
+                }
+            } else {
+                $ret['message'] = $res['msg']??"出款提交失败({$resTxt})";
+            }
+        }
         return  $ret;
     }
 
