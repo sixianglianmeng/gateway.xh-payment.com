@@ -150,6 +150,7 @@ class RemitController extends BaseConsoleCommand
     public function actionNotifyQueueProducer(){
         $doCheck = true;
         $lastId = 0;
+        $maxRecordInOneLoop = 100;
         while ($doCheck) {
             $_SERVER['LOG_ID'] = strval(uniqid());
             //获取配置:出款多少分钟之后不再自动查询状态,默认半小时
@@ -168,14 +169,15 @@ class RemitController extends BaseConsoleCommand
                 //已经到达通知时间
                 ->andWhere(['or',['next_notify_time'=>0],['>=', 'next_notify_time', time()]]);
 
-            $orders = $query->limit(100)->all();
+            $orders = $query->limit($maxRecordInOneLoop)->all();
             Yii::info('find remit to notify: '.count($orders));
             //没有可用订单了,重置上一个ID
-            if(count($orders) == 0){
+            if(count($orders)<($maxRecordInOneLoop/2)){
                 Yii::info('notifyQueueProducer reset lastId to 0');
                 $lastId = 0;
             }
             foreach ($orders as $order){
+                $lastId = $order->id;
                 Yii::info('remit notify: '.$order->order_no);
                 LogicRemit::notify($order);
             }
