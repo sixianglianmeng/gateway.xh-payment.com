@@ -299,7 +299,7 @@ class ShBasePayment extends BasePayment
                     $ret['data']['bank_status'] = Remit::BANK_STATUS_SUCCESS;
                 }elseif($res['bank_status']=='failed'){
                     $ret['data']['bank_status'] = Remit::BANK_STATUS_FAIL;
-                    $ret['message'] = $res['msg']??"出款提交失败({$resTxt})";
+                    $ret['message'] = $res['msg']??"({$resTxt})";
                 }
             } else {
                 $ret['message'] = $res['msg']??"出款提交失败({$resTxt})";
@@ -347,9 +347,10 @@ class ShBasePayment extends BasePayment
                     $ret['data']['bank_status'] = Remit::BANK_STATUS_SUCCESS;
                 }elseif($res['bank_status']=='failed'){
                     $ret['data']['bank_status'] = Remit::BANK_STATUS_FAIL;
+                    $ret['message'] = $res['msg']??"({$resTxt})";
                 }
             } else {
-                $ret['message'] = $res['msg']??"出款提交失败({$resTxt})";
+                $ret['message'] = $res['msg']??"出款查询失败({$resTxt})";
             }
         }
         return  $ret;
