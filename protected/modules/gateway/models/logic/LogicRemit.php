@@ -446,7 +446,10 @@ class LogicRemit
                         $remit->fail_msg = date('Ymd H:i:s').'银行提交失败:'.($ret['message']??'上游无返回');
                         break;
                     default:
-                        throw new OperationFailureException('错误的银行返回值:'.$remit->order_no.' '.$ret['data']['bank_status']);
+                        $remit->status = Remit::STATUS_NOT_REFUND;
+                        $remit->bank_status =  Remit::BANK_STATUS_FAIL;
+                        $remit->bank_ret.date('Ymd H:i:s').'错误的银行返回值:'.($ret['message']??'错误的银行返回值');
+                        $remit->fail_msg = date('Ymd H:i:s').'错误的银行返回值:'.($ret['message']??'错误的银行返回值');
                         break;
                 }
 
