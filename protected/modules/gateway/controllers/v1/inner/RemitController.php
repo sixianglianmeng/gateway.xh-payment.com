@@ -57,18 +57,20 @@ class RemitController extends BaseInnerController
                 'okRemits'=>$okRemits]);
         }
 
+        //拆单后单笔最大金额,取渠道配置,用户配置,系统配置中的较小值
         $maxAmount = $channelAccount->remit_quota_pertime ? $channelAccount->remit_quota_pertime : Remit::MAX_REMIT_PER_TIME; //渠道单次限额,默认49999
         if ($merchant->paymentInfo->remit_quota_pertime && $maxAmount > $merchant->paymentInfo->remit_quota_pertime) $maxAmount = $merchant->paymentInfo->remit_quota_pertime; //用户单次限额
         $maxSplitConfigAmount = SiteConfig::cacheGetContent('remit_order_split_max_amount');//系统配置的拆单最高金额
-        if($maxSplitConfigAmount || $maxSplitConfigAmount<$maxAmount) $maxSplitConfigAmount = $maxSplitConfigAmount;
+        if($maxSplitConfigAmount || $maxSplitConfigAmount<$maxAmount) $maxAmount = $maxSplitConfigAmount;
 
+        //系统配置的拆单后单笔最小金额
         $minAmount = SiteConfig::cacheGetContent('remit_order_split_min_amount');//35000;
         if(!$minAmount || $minAmount>=$maxAmount) $minAmount = intval($maxAmount * 0.8);
 
         Yii::info(json_encode(['remit add split to minAmount maxAmount',$merchantUsername,$minAmount, $maxAmount,$channelAccount->remit_quota_pertime,$merchant->paymentInfo->remit_quota_pertime]));
         foreach ($rawRemits as $i => $remitArr) {
-            //单笔大于5w的自动拆分
-            if ($maxAmount>0 && $remitArr['amount'] >= $maxAmount) {
+            //拆单后最大最小金额都不为0的才拆单.($maxAmount>10000)防止配置的拆单金额过小,引起大批量小额订单
+            if ($minAmount>0 && $maxAmount>10000 && $remitArr['amount'] >= $maxAmount) {
                 $leftAmount   = $remitArr['amount'];
                 $splitAmounts = [];
                 while ($leftAmount > 0) {
