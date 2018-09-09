@@ -78,7 +78,15 @@ class SystemNoticeLogger extends Target
         $messages = wordwrap(implode("\n", $messages), 70);
 
         //404错误不发送警报
-        if(strpos($messages,'NotFoundHttpException')){
+        if(strpos($messages,'NotFoundHttpException')!==false){
+            return true;
+        }
+        //重启进程不发送警报
+        if(strpos($messages,'been signaled with signal "2"')!==false){
+            return true;
+        }
+        //telegram失败不发送警报
+        if(strpos($messages,'chatId')!==false){
             return true;
         }
 
