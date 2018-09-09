@@ -341,7 +341,9 @@ class ShBasePayment extends BasePayment
                 $ret['status'] = Macro::SUCCESS;
                 $ret['data']['channel_order_no'] = $res['trade_no'];
 
-                if($res['bank_status']=='processing'){
+                if($res['bank_status']=='pending'){
+                    $ret['data']['bank_status'] = Remit::BANK_STATUS_PROCESSING;
+                }elseif($res['bank_status']=='processing'){
                     $ret['data']['bank_status'] = Remit::BANK_STATUS_PROCESSING;
                 }elseif($res['bank_status']=='success'){
                     $ret['data']['bank_status'] = Remit::BANK_STATUS_SUCCESS;
