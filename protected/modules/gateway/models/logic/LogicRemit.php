@@ -1060,7 +1060,7 @@ class LogicRemit
             //发送审核提醒
             else{
                 try{
-                    Util::sendTelegramMessage("有出款需要审核,订单号:{$remit->order_no},金额:{$remit->amount},商户:{$remit->merchant_account}");
+                    Util::sendTelegramMessage("有出款需要审核,订单号:{$remit->order_no},金额:{$remit->amount},商户:{$remit->merchant_account}.\n\nremit autoCheck type:{$remit->type},manualFastQuota:{$manualFastQuota},allow_manual_fast_remit:{$remit->userPaymentInfo->allow_manual_fast_remit},apiFastQuota:{$apiFastQuota},allow_api_fast_remit:{$remit->userPaymentInfo->allow_api_fast_remit}");
                 }catch (\Exception $e){
 
                 }
