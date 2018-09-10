@@ -55,13 +55,23 @@
     token: "<?php echo $data['token']; ?>",
     no: "<?php echo $data['order']['order_no']; ?>",
   }
+  let paid = false;
   $(document).ready(function(){
+    $(window).on('beforeunload', function(){
+      if(!paid){
+        alert("正在提交付款,请不要刷新页面!");
+      }
+      return false;
+    });
+
+
     let expireInterval = null;
     $('#qrcode').qrcode({width: 300,height: 300,text:qrString});
 
     setInterval(function () {
       $.post("/order/check_status.html",data,function(result){
         if(result.code == 0){
+            paid = true
             $('.pay-ok').show();
             if(expireInterval) clearInterval(expireInterval)
             $('.pay-btn').removeClass('btn-primary').addClass('btn-success').text('付款已成功');
