@@ -193,10 +193,11 @@ class RemitController extends BaseInnerController
         foreach ($remits as $remit){
             Yii::info('remit status check: '.$remit->order_no);
 
-            $job = new RemitQueryJob([
-                'orderNo'=>$remit->order_no,
-            ]);
-            Yii::$app->remitQueryQueue->push($job);
+//            $job = new RemitQueryJob([
+//                'orderNo'=>$remit->order_no,
+//            ]);
+//            Yii::$app->remitQueryQueue->push($job);
+            LogicRemit::queryChannelRemitStatus($remit);
         }
 
         return ResponseHelper::formatOutput(Macro::SUCCESS,'');
