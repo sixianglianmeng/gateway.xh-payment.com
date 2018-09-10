@@ -50,20 +50,45 @@
 </div>
 <script>
   let qrString = "<?php echo $data['data']['qr']; ?>";
+  let expire = "<?php echo $data['order']['expire_time']?$data['order']['expire_time']-time():0; ?>";
   let data = {
     token: "<?php echo $data['token']; ?>",
     no: "<?php echo $data['order']['order_no']; ?>",
   }
   $(document).ready(function(){
+    let expireInterval = null;
     $('#qrcode').qrcode({width: 300,height: 300,text:qrString});
 
     setInterval(function () {
       $.post("/order/check_status.html",data,function(result){
         if(result.code == 0){
             $('.pay-ok').show();
+            if(expireInterval) clearInterval(expireInterval)
             $('.pay-btn').removeClass('btn-primary').addClass('btn-success').text('付款已成功');
+            $("#qrcode canvas").css("opacity","0.02")
         }
       });
     },15000)
+
+    if(expire>0){
+      expireInterval = setInterval(function () {
+        if(expire>=0){
+          let min = Math.floor(expire/60)
+          let sec = expire%60
+          let msg = "请在"+min+"分"+sec+"秒内付款"
+          $('.pay-btn').text(msg)
+          expire--;
+        }else{
+          if(expire<0) expire =0
+          $('.pay-btn').text("订单已过期,请重新下单!").removeClass('btn-primary').addClass('btn-danger')
+          $("#qrcode canvas").css("opacity","0.02")
+          clearInterval(expireInterval)
+        }
+
+      },1000);
+    }else if(expire<0){
+      $('.pay-btn').text("订单已过期,请重新下单!").removeClass('btn-primary').addClass('btn-danger')
+      $("#qrcode canvas").css("opacity","0.02")
+    }
   });
 </script>

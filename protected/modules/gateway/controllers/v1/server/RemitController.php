@@ -109,6 +109,7 @@ class RemitController extends BaseServerSignedRequestController
                 'trade_no'=>$remit['order_no'],
                 'bank_status'=>self::getRespBankStatus($remit['bank_status']),
             ];
+            $msg = $data['bank_status'];
 //            if(!empty($remit['fail_msg'])) $msg = $remit['fail_msg'];
             $ret = Macro::SUCCESS;
         }else{

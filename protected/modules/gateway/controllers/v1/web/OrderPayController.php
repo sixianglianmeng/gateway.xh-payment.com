@@ -63,14 +63,6 @@
             //更新客户端信息
             LogicOrder::updateClientInfo($order);
 
-            //防止并发刷新提交付款到上游
-            $key = 'recharge_paying:'.$orderNo;
-            $lastTs = Yii::$app->cache->get($key);
-            if($lastTs && (time()-$lastTs)<30){
-//                return ResponseHelper::formatOutput(Macro::ERR_UNKNOWN,'请不要频繁刷新付款页面');
-            }
-            Yii::$app->cache->set($key,time(),60);
-
 //            检测用户或者IP是否在黑名单中
             if(!PaymentRequest::checkBlackListUser()){
                 $msg = '对不起，网络请求超时:'.Macro::ERR_USER_BAN;
@@ -125,13 +117,25 @@
             //由各方法自行处理响应
             //return redirect|QrCode view|h5 call native
             //检测缓存中是否已经有此订单的下单结果,如果有直接使用,防止报重复下单错误
-            $cacheKey = "channel:cashier_url:{$order['order_no']}";
+            $cacheKey = "channel:cashier_url:{$order->order_no}}";
             $hasRequest =  Yii::$app->redis->get($cacheKey);
             if($hasRequest){
-                Yii::info("get cached url, will not request sf:{$order['order_no']}, {$hasRequest}");
+                Yii::info("get cached url, will not request sf:{$order->order_no}, {$hasRequest}");
                 $ret = json_decode($hasRequest,true);
             }else{
+                //锁定正在付款中,防止重复提交
+                $payingCacheKey = "channel:cashier_paying:{$order->order_no}";
+                $payingRet =  Yii::$app->redis->get($payingCacheKey);
+                if($payingRet){
+                    Util::throwException(Macro::ERR_UNKNOWN,"订单正在提交,请稍候再刷新页面进行支付!订单号:{$order->order_no},金额{$order->amount}");
+                }
+                Yii::$app->redis->set($payingCacheKey,time());
+
+                //根据渠道对应处理方法获取下单结果
                 $ret = $payment->$methodFnc();
+
+                //获取到下单结果,删除锁
+                Yii::$app->redis->del($payingCacheKey);
             }
 
             if ($ret['status']!==Macro::SUCCESS) {
