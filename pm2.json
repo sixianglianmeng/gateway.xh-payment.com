@@ -65,7 +65,7 @@
       "exec_interpreter": "php",
       "exec_mode": "fork",
       "max_memory_restart": "256M",
-      "instances": 10
+      "instances": 20
     },
     {
       "name": "remit-bank-commit-queue",

@@ -52,14 +52,14 @@ class RemitController extends BaseConsoleCommand
             }
             foreach ($remits as $remit){
                 $lastId = $remit['id'];
-                Yii::info('remit status check: '.$remit['order_no'].' lastId: '.$lastId);
+                Yii::info('remit to check status: '.$remit['order_no'].' lastId: '.$lastId);
                 $job = new RemitQueryJob([
                     'orderNo'=>$remit['order_no'],
                 ]);
                 Yii::$app->remitQueryQueue->push($job);//->delay(10)
             }
 
-            sleep(mt_rand(10,20));
+            sleep(5);
         }
     }
 
