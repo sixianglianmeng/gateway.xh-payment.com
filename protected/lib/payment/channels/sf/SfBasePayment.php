@@ -445,14 +445,15 @@ class SfBasePayment extends BasePayment
         $ret['data']['rawMessage'] = $resTxt;
         if (!empty($resTxt)) {
             $res = json_decode($resTxt, true);
-            //仅代表请求成功,不代表业务成功
-            if (isset($res['is_success'])) $ret['status'] = Macro::SUCCESS;
 
             if (isset($res['is_success']) && strtoupper($res['is_success']) == 'TRUE') {
-                $ret['data']['channel_order_no'] = $res['order_id'];
+                //仅代表请求成功,不代表业务成功
+                $ret['status'] = Macro::SUCCESS;
+
+                if(!empty($res['order_id'])) $ret['data']['channel_order_no'] = $res['order_id'];
                 //0 未处理，1 银行处理中 2 已打款 3 失败
-                $ret['data']['bank_status'] = $res['bank_status'];
-                if($res['bank_status']==3){
+                $ret['data']['bank_status'] = $res['bank_status']??'';
+                if($ret['data']['bank_status']==3){
                     $ret['message'] = $res['errror_msg']??"银行处理失败({$resTxt})";
                 }
             } else {

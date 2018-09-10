@@ -174,7 +174,7 @@ class RemitController extends BaseInnerController
             Util::throwException(Macro::PARAMETER_VALIDATION_FAILED);
         }
 
-        $filter = ['status',[Remit::STATUS_CHECKED,Remit::STATUS_BANK_PROCESSING]];
+        $filter['status'] = [Remit::STATUS_CHECKED,Remit::STATUS_BANK_PROCESSING,Remit::STATUS_BANK_PROCESS_FAIL,Remit::STATUS_BANK_NET_FAIL];
         //最长一天
         if($inSeconds>14400) $inSeconds = 14400;
         if($inSeconds){
@@ -187,7 +187,7 @@ class RemitController extends BaseInnerController
                 }
             }
 
-            $filter[] = ['order_no',$orderNoList];
+            $filter['order_no'] = $orderNoList;
         }
         $remits = Remit::findAll($filter);
         foreach ($remits as $remit){
@@ -256,7 +256,7 @@ class RemitController extends BaseInnerController
                         $msg = date('Y-m-d H:i:s').' 出款失败:'.$remitRet['message']."\n";
                         break;
                     default:
-                        $msg = date('Y-m-d H:i:s').' :'.$remitRet['rawMessage']."\n";
+                        $msg = date('Y-m-d H:i:s').' :'.$remitRet['message'].($remitRet['data']['rawMessage']??'')."\n";
                         break;
 
                 }

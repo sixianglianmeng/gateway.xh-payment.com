@@ -471,6 +471,12 @@ class LogicRemit
                 }
                 $remit->fail_msg = '银行提交失败:'.($ret['message']??'上游无返回');
                 Util::sendTelegramMessage("出款提交银行失败,请手工退款.订单号:{$remit->order_no},金额:{$remit->amount},商户:{$remit->merchant_account},原因:{$remit->fail_msg}");
+
+                //速付发送失败信息到群确认
+                if($remit->channel_id == 10015){
+                    Util::sendTelegramMessage("你好,出款提交失败,麻烦帮忙核对信息.订单号:{订单号:{$remit->order_no},金额:{$remit->amount}\n原因:{$remit->fail_msg}",'-278804726', false);
+                }
+
             }
 
             $remit->save();
