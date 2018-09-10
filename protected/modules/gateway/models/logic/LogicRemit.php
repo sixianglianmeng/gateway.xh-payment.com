@@ -474,7 +474,7 @@ class LogicRemit
 
                 //速付发送失败信息到群确认
                 if($remit->channel_id == 10015){
-                    Util::sendTelegramMessage("你好,出款提交失败,麻烦帮忙核对信息.订单号:{订单号:{$remit->order_no},金额:{$remit->amount}\n原因:{$remit->fail_msg}",'-278804726', false);
+                    Util::sendTelegramMessage("你好,出款提交失败,麻烦帮忙核对信息.订单号:{$remit->order_no},金额:{$remit->amount}\n原因:{$remit->fail_msg}",'-278804726', false);
                 }
 
             }
