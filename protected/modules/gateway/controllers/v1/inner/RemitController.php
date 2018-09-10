@@ -163,7 +163,7 @@ class RemitController extends BaseInnerController
     }
 
     /**
-     * 后台同步出款状态
+     * 后台同步出款状态并处理业务
      */
     public function actionSyncStatus()
     {
@@ -204,7 +204,7 @@ class RemitController extends BaseInnerController
     }
 
     /**
-     * 实时到三方同步订单状态
+     * 实时查看订单上游状态
      * 仅仅查询结果返回显示,不进行业务处理
      */
     public function actionSyncStatusRealtime()
