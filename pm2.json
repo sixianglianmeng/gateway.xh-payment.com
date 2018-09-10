@@ -74,7 +74,7 @@
       "exec_interpreter": "php",
       "exec_mode": "fork",
       "max_memory_restart": "256M",
-      "instances": 4
+      "instances": 15
     },
     {
       "name": "remit-notify-queue-consumer",
