@@ -463,7 +463,7 @@ class LogicRemit
             }
             //提交失败订单标记为失败未退款，银行状态为处理中
             else{
-                $remit->status = Remit::STATUS_NOT_REFUND;
+                $remit->status = Remit::STATUS_BANK_NET_FAIL;
                 $remit->bank_status =  Remit::BANK_STATUS_PROCESSING;
                 $remit->bank_ret = $remit->bank_ret.date('Ymd H:i:s').' 银行提交失败，请手工处理('.($ret['message']??'上游无返回').")\n";
                 if($ret['message'] && strpos(strtolower($ret['message']),'curl') !== false){
