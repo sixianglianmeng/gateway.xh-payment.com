@@ -43,7 +43,6 @@ class ChannelPayment
     public function setPaymentHandle($order,$channelAccount){
 
         $channel = $channelAccount->channel;
-
         $payMethods = $channel->getPayMethods();
         if(empty($payMethods[$order->pay_method_code])){
             throw new OperationFailureException("渠道配置错误:未配置".Channel::getPayMethodsStr($order->pay_method_code)."对应Handle",Macro::ERR_PAYMENT_CHANNEL_ID);

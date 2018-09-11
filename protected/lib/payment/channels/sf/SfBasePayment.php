@@ -31,6 +31,7 @@ class SfBasePayment extends BasePayment
 
     const PAY_TYPE_MAP = [
         Channel::METHOD_WEBBANK=>1,
+        Channel::METHOD_WEBBANK_NC=>1,
         Channel::METHOD_WECHAT_QR=>2,
         Channel::METHOD_ALIPAY_QR=>3,
         Channel::METHOD_QQ_QR=>5,
@@ -219,6 +220,9 @@ class SfBasePayment extends BasePayment
         return $ret;
     }
 
+    public function webBankNc(){
+        return $this->webBank();
+    }
     /*
      * 微信扫码支付
      */

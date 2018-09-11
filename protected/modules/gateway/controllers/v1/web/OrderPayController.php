@@ -82,7 +82,7 @@
                 return ResponseHelper::formatOutput(Macro::ERR_UNKNOWN, "对不起,系统中此通道暂未支持此支付方式.");
             }
             //检测网银对应银行代码是否正确,若不正确,显示选择页面
-            if(in_array($order->pay_method_code,[Channel::METHOD_WEBBANK])) {
+            if(in_array($order->pay_method_code,[Channel::METHOD_WEBBANK,Channel::METHOD_WEBBANK_NC])) {
                 $bankCode = BankCodes::getChannelBankCode($order->channel_id, $order->bank_code);
 
                 if ($selectBankCode && empty($bankCode)) {
