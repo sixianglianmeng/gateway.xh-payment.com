@@ -68,6 +68,7 @@ class LogicOrder
         $orderData['financial_status']     = Order::FINANCIAL_STATUS_NONE;
         $orderData['notify_status']        = Order::NOTICE_STATUS_NONE;
         $orderData['created_at']           = time();
+        $orderData['expire_time']          = 0;
         $orderData['merchant_id']          = $merchant->id;
         $orderData['merchant_account']     = $merchant->username;
         $orderData['all_parent_agent_id']  = $merchant->all_parent_agent_id;
@@ -77,6 +78,7 @@ class LogicOrder
         $orderData['settlement_type']      = $rechargeMethod->settlement_type?$rechargeMethod->settlement_type:SiteConfig::cacheGetContent('default_settlement_type');
         $orderData['expect_settlement_at'] = MerchantRechargeMethod::getExpectSettlementTime($orderData['settlement_type']);
         $orderData['settlement_at']        = 0;
+        $orderData['final_channel_order_no']           = '';
         $channelAccount                    = $rechargeMethod->channelAccount;
         if(empty($channelAccount)){
             throw new OperationFailureException("商户支付方式({$rechargeMethod->method_name})未配置渠道:{$rechargeMethod->channel_account_id}");
@@ -304,7 +306,8 @@ class LogicOrder
             && $noticeResult['data']['trade_status'] == Order::STATUS_PAID
             && bccomp($order->amount, $noticeResult['data']['amount'], 2)!==1
         ){
-            self::paySuccess($order,$noticeResult['data']['amount'],$noticeResult['data']['channel_order_no']);
+            self::paySuccess($order,$noticeResult['data']['amount'],$noticeResult['data']['channel_order_no']
+                ,0,'','', $noticeResult['data']['final_channel_order_no']??'');
               //不立即通知
 //            if($order->notify_status != Order::NOTICE_STATUS_SUCCESS){
 //                self::notify($order);
@@ -354,9 +357,10 @@ class LogicOrder
      * @param Order $order 订单对象
      * @param Decimal $paidAmount 实际支付金额
      * @param String $channelOrderNo 第三方流水号
+     * @param String $finalChannelOrderNo 最终的渠道流水号
      */
-    static public function paySuccess(Order &$order,$paidAmount,$channelOrderNo, $opUid=0, $opUsername='',$bak=''){
-        Yii::info([__FUNCTION__.' '.$order->order_no.','.$paidAmount.','.$channelOrderNo.' '.$order->status]);
+    static public function paySuccess(Order &$order,$paidAmount,$channelOrderNo, $opUid=0, $opUsername='',$bak='',$finalChannelOrderNo = ''){
+        Yii::info([__FUNCTION__.' '.$order->order_no.','.$paidAmount.','.$channelOrderNo]);
         if(
             $order->status != Order::STATUS_PAID
             && $order->status !== Order::STATUS_SETTLEMENT
@@ -378,6 +382,7 @@ class LogicOrder
                 }
                 Yii::info([$order->amount,$order->paid_amount,bccomp($order->amount, $order->paid_amount, 2)]);
                 if($channelOrderNo && !$order->channel_order_no) $order->channel_order_no = $channelOrderNo;
+                if($finalChannelOrderNo && !$order->final_channel_order_no) $order->final_channel_order_no = $finalChannelOrderNo;
                 $order->status = Order::STATUS_PAID;
                 $order->paid_at = time();
                 $bak.=date('Ymd H:i:s');

@@ -418,6 +418,11 @@ class LogicRemit
             //提交到银行
             //银行状态说明：00处理中，04成功，05失败或拒绝
             $payment = new ChannelPayment($remit, $remit->channelAccount);
+            $commitProcessCacheKey = 'remit_commit_process:'.$remit->order_no;
+            if(Yii::$app->redis->get($commitProcessCacheKey)){
+                throw new OperationFailureException("出款订单{$remit->order_no}正在提交中,不能重复提交!");
+            }
+            Yii::$app->redis->set($commitProcessCacheKey,time());
             try{
                 $ret = $payment->remit();
             }catch (\Exception $e){
@@ -425,6 +430,7 @@ class LogicRemit
                 $ret['status'] = Macro::INTERNAL_SERVER_ERROR;
                 $ret['message'] = $e->getMessage();
             }
+            Yii::$app->redis->del($commitProcessCacheKey);
 
             Yii::info('remit commitToBank ret: '.$remit->order_no.' '.json_encode($ret,JSON_UNESCAPED_UNICODE));
             $remit->last_commit_to_bank_at = time();
