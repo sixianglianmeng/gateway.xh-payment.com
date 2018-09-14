@@ -487,6 +487,11 @@ class LogicRemit
 
             $remit->save();
 
+            //保持之后再处理失败事件
+            if($remit->status == Remit::STATUS_BANK_NET_FAIL){
+                //self::onBankCommitFail($remit);
+            }
+
             if($ret['status'] === Macro::ERR_THIRD_CHANNEL_BALANCE_NOT_ENOUGH){
                 Yii::error("上游渠道:{$remit->channelAccount->channel_name},商户ID:{$remit->channelAccount->merchant_id}余额不足！");
             }
@@ -498,6 +503,63 @@ class LogicRemit
 //            throw new OperationFailureException('订单状态错误，无法提交到银行');
             return $remit;
         }
+    }
+
+    /**
+     * 出款提交失败处理
+     *
+     * @param Remit $remit
+     */
+    static public function onBankCommitFail(Remit $remit){
+        $interval = 30;//计数周期,秒
+        $alertCount = 5;//报警阀值
+        $failCountKey = "remit:commit_fail:{$remit->channel_id}";
+        $ts = time();
+
+        //获取上次错误时间戳
+        $failTs = Yii::$app->redis->hget($failCountKey,'ts');
+        if($failTs){
+            //在时间周期内,更新计数器
+            if($ts - $failTs <$interval){
+                $failCount = Yii::$app->redis->hget($failCountKey,'c');
+                //超过阀值,停用自动提交并报警
+                if($failCount && $failCount>=$alertCount){
+                    self::stopBankCommit();
+                    Util::sendTelegramMessage("出款提交银行失败{$interval}秒内累计超过{$alertCount}次,已经停用自动提交,请手工恢复.订单号:{$remit->order_no},原因:{$remit->fail_msg}");
+                }
+                //更新计数器+1
+                Yii::$app->redis->hincrby($failCountKey,'c',1);
+
+            }
+            //已经超期,更新时间戳,并将计数器写成1
+            else{
+                Yii::$app->redis->hset($failCountKey,'ts',$ts);
+                Yii::$app->redis->hset($failCountKey,'c',1);
+            }
+        }
+        //没有过记录,写入时间戳,并将计数器写成1
+        else{
+            Yii::$app->redis->hset($failCountKey,'ts',$ts);
+            Yii::$app->redis->hset($failCountKey,'c',1);
+        }
+
+        //失败提醒
+        Util::sendTelegramMessage("出款提交银行失败,请手工退款.订单号:{$remit->order_no},金额:{$remit->amount},商户:{$remit->merchant_account},原因:{$remit->fail_msg}");
+
+        //速付发送失败信息到群确认
+        if($remit->channel_id == 10015){
+            Util::sendTelegramMessage("你好,出款提交失败,麻烦帮忙核对信息.订单号:{$remit->order_no},金额:{$remit->amount}\n原因:{$remit->fail_msg}",'-278804726', false);
+        }
+    }
+
+    /**
+     * 停止向上游提交出款订单请求
+     */
+    static public function stopBankCommit(){
+        $key = 'enable_remit_commit';
+        $config = self::findOne(['title'=>$key]);
+        $config->setContent('1');
+        $config->save();
     }
 
     static public function queryChannelRemitStatus(Remit &$remit){
@@ -986,8 +1048,9 @@ class LogicRemit
     static public function notify(Remit $order){
         Yii::debug(__CLASS__.'-'.__FUNCTION__.' '.$order->order_no);
         if(!$order->notify_url
-            || $order->status != Remit::STATUS_SUCCESS
+            || !in_array($order->status,[ Remit::STATUS_SUCCESS,  Remit::STATUS_REFUND])
         ){
+            Yii::info("remit notify, status error: {$order->order_no} {$order->status}");
             return true;
         }
 
