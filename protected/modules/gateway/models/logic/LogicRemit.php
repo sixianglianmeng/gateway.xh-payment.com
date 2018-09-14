@@ -224,6 +224,9 @@ class LogicRemit
             throw new OperationFailureException($msg, Macro::ERR_USER_BAN);
         }
 
+        //检查单卡当天金额及数量
+
+
         //账户费率检测
         if(!$feeCanBeZero && $userPaymentConfig->remit_fee <= 0){
             throw new OperationFailureException("用户出款费率不能设置为0:".Macro::ERR_MERCHANT_FEE_CONFIG);
@@ -557,7 +560,7 @@ class LogicRemit
      */
     static public function stopBankCommit(){
         $key = 'enable_remit_commit';
-        $config = self::findOne(['title'=>$key]);
+        $config = SiteConfig::findOne(['title'=>$key]);
         $config->setContent('1');
         $config->save();
     }
@@ -1129,7 +1132,8 @@ class LogicRemit
             //发送审核提醒
             else{
                 try{
-                    Util::sendTelegramMessage("有出款需要审核,订单号:{$remit->order_no},金额:{$remit->amount},商户:{$remit->merchant_account}.\n\nremit autoCheck type:{$remit->type},manualFastQuota:{$manualFastQuota},allow_manual_fast_remit:{$remit->userPaymentInfo->allow_manual_fast_remit},apiFastQuota:{$apiFastQuota},allow_api_fast_remit:{$remit->userPaymentInfo->allow_api_fast_remit}");
+                    Util::sendTelegramMessage("有出款需要审核,订单号:{$remit->order_no},金额:{$remit->amount},商户:{$remit->merchant_account}");
+                    //.\n\nremit autoCheck type:{$remit->type},manualFastQuota:{$manualFastQuota},allow_manual_fast_remit:{$remit->userPaymentInfo->allow_manual_fast_remit},apiFastQuota:{$apiFastQuota},allow_api_fast_remit:{$remit->userPaymentInfo->allow_api_fast_remit}"
                 }catch (\Exception $e){
 
                 }
@@ -1141,4 +1145,46 @@ class LogicRemit
         return $remit;
     }
 
+    /**
+     * 检查出款订单银行卡24小时内的提交次数和金额是否超限
+     *
+     * @param $remit
+     * @return int 0 正常,1超过报警阀值,2超过禁用阀值
+     * @author bootmall@gmail.com
+     */
+    public static function checkBankCardQuota($remit)
+    {
+        $interval = 86400;
+        $alertTime = SiteConfig::cacheGetContent('remit_bankcard_alert_times');
+        $alertQuota = SiteConfig::cacheGetContent('remit_bankcard_alert_quota');
+
+        $banTime = SiteConfig::cacheGetContent('remit_bankcard_ban_times');
+        $banQuota = SiteConfig::cacheGetContent('remit_bankcard_ban_quota');
+
+        $query = (new Query())->select(["SUM(amount) AS amount","COUNT(amount) AS times"])->from(Remit::tableName())->where("bank_no='{$remit->bank_no}' AND created_at>".(time()-$interval));
+        $statistic = $query->one();
+
+        $alertBankcardCacheKey = "remit:bankcard:alert:{$remit->bank_no}";
+        $banBankcardCacheKey = "remit:bankcard:ban:{$remit->bank_no}";
+        if(!empty($statistic)){
+            if($statistic['amount']>=$alertQuota && $statistic['amount']<$banQuota
+            || $statistic['times']>=$alertTime && $statistic['times']<$banTime
+            ){
+                Util::sendTelegramMessage("出款银行卡超过报警阀值,订单号:{$remit->order_no},金额:{$remit->amount},卡号:{$remit->bank_no}");
+                Yii::$app->redis->set($alertBankcardCacheKey,time());
+                Yii::$app->redis->expire($alertBankcardCacheKey,$interval);
+                return 1;
+            }
+            elseif($banQuota && $statistic['amount']>=$banQuota
+                || $banTime && $statistic['times']>=$banTime
+            ){
+                Util::sendTelegramMessage("出款银行卡超过禁用阀值,订单号:{$remit->order_no},金额:{$remit->amount},卡号:{$remit->bank_no}");
+                Yii::$app->redis->set($banBankcardCacheKey,time());
+                Yii::$app->redis->expire($banBankcardCacheKey,$interval);
+                return 1;
+            }
+        }
+
+        return 0;
+    }
 }
