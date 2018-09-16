@@ -840,7 +840,7 @@ class LogicRemit
         }
 
         if($failMsg) $remit->fail_msg = $remit->fail_msg."; ".date('Ymd H:i:s').' '.$failMsg;
-        $remit->status = Remit::STATUS_BANK_PROCESS_FAIL;
+        $remit->status = Remit::STATUS_NOT_REFUND;
         $remit->bank_status =  Remit::BANK_STATUS_FAIL;
         if($setToRefundStatus){
             $remit->status = Remit::STATUS_REFUND;
