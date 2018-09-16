@@ -124,7 +124,7 @@ class RemitController extends BaseConsoleCommand
             $startTs = time()-($expire?$expire*60:1800);
 
             $remits = Remit::find()
-                ->where(['status'=>Remit::STATUS_BANK_PROCESS_FAIL])
+                ->where(['status'=>Remit::STATUS_NOT_REFUND])
                 ->andWhere(['>=', 'remit_at', $startTs])
                 ->limit(100)->all();
 
