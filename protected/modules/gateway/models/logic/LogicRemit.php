@@ -679,7 +679,7 @@ class LogicRemit
     static public function refund(&$remit, $reason = ''){
         Yii::info(__CLASS__ . ':' . __FUNCTION__ . ' ' . $remit->order_no);
         if(
-            in_array($remit->status,[ Remit::STATUS_BANK_PROCESS_FAIL, Remit::STATUS_BANK_NET_FAIL, Remit::STATUS_NOT_REFUND, Remit::STATUS_CHECKED, Remit::STATUS_DEDUCT])
+            in_array($remit->status,[ Remit::STATUS_BANK_PROCESS_FAIL, Remit::STATUS_BANK_NET_FAIL, Remit::STATUS_NOT_REFUND, Remit::STATUS_CHECKED, Remit::STATUS_DEDUCT, Remit::STATUS_SUCCESS])
         ){
             $logicUser = new LogicUser($remit->merchant);
             $ip = Yii::$app->request->userIP??'';
