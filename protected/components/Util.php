@@ -383,13 +383,15 @@ class Util
             return $ip[$type];
         }
 
-        foreach (['HTTP_TRUE_CLIENT_IP','HTTP_CF_CONNECTING_IP','HTTP_X_FORWARDED_FOR', 'HTTP_X_FORWARDED', 'HTTP_X_CLUSTER_CLIENT_IP', 'HTTP_FORWARDED_FOR', 'HTTP_FORWARDED',  'REMOTE_ADDR', 'HTTP_CLIENT_IP'] as $key) {
+        $ipHeader = ['HTTP_TRUE_CLIENT_IP','HTTP_CF_CONNECTING_IP','HTTP_X_FORWARDED_FOR', 'HTTP_X_FORWARDED', 'HTTP_X_CLUSTER_CLIENT_IP', 'HTTP_FORWARDED_FOR', 'HTTP_FORWARDED',  'REMOTE_ADDR', 'HTTP_CLIENT_IP'];
+        foreach ($ipHeader as $key) {
             if (array_key_exists($key, $_SERVER) === true) {
                 foreach (explode(',', $_SERVER[$key]) as $ip) {
                     $ip = trim($ip);
 
-                    if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE) === false) {// |FILTER_FLAG_NO_RES_RANGE
-                        $ip = '';
+                    if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6|FILTER_FLAG_IPV4) === false) {// FILTER_FLAG_NO_PRIV_RANGE|FILTER_FLAG_NO_RES_RANGE
+//                        $ip = '';
+                        Yii::info("get error ip: ".$ip." ".Util::json_encode($_SERVER));
                     }
                 }
             }
@@ -401,7 +403,7 @@ class Util
 
         // IP地址合法验证
         $long = sprintf("%u", ip2long($ip));
-        $ip   = $long ? [$ip, $long] : ['0.0.0.0', 0];
+        $ip   = $long ? [$ip, $long] : [$ip, 0];
 
         return $ip[$type];
     }
@@ -1085,5 +1087,15 @@ class Util
 
             return $result;
 
+    }
+
+    /**
+     * json序列化数据
+     *
+     * @param $data
+     * @return string
+     */
+    public static function json_encode($data){
+        return json_encode($data,JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE);
     }
 }
