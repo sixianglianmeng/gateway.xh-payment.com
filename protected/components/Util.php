@@ -393,6 +393,9 @@ class Util
 //                        $ip = '';
                         Yii::info("get error ip: ".$ip." ".Util::json_encode($_SERVER));
                     }
+                    if(strlen($ip)>30){
+                        Yii::info("get ipv6: ".$ip." ".Util::json_encode($_SERVER));
+                    }
                 }
             }
 
