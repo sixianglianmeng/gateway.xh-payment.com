@@ -7,7 +7,15 @@
       "exec_interpreter": "php",
       "exec_mode": "fork",
       "max_memory_restart": "256M"
-    },    
+    },
+    {
+      "name": "channel-account-balance-check",
+      "args": "channel/account-balance-check",
+      "script": "./protected/yii",
+      "exec_interpreter": "php",
+      "exec_mode": "fork",
+      "max_memory_restart": "256M"
+    },
     {
       "name": "bank-commit-queue-producer",
       "args": "remit/bank-commit-queue-producer",
