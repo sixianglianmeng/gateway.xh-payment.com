@@ -64,9 +64,7 @@ class ChannelController extends BaseConsoleCommand
         $doCheck = true;
 
         while ($doCheck) {
-//            $threshold = SiteConfig::cacheGetContent('channel_balance_alert_threshold');
-
-            $accounts = ChannelAccount::findAll(['status'=>ChannelAccount::STATUS_ACTIVE]);
+            $accounts = ChannelAccount::findAll(['status'=>[ChannelAccount::STATUS_ACTIVE,ChannelAccount::STATUS_RECHARGE_BANED]]);
             $alertArr = [];
             foreach ($accounts as $account){
                 if($account->balance>0 && $account->balance_alert_threshold>0 && $account->balance<=$account->balance_alert_threshold){
