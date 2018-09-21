@@ -68,7 +68,6 @@ class ChannelController extends BaseConsoleCommand
             $alertArr = [];
 
             foreach ($accounts as $account){
-                Yii::info("actionAccountBalanceCheck 通道号: {$account->channel_name},当前余额:{$account->balance},报警阀值:{$account->balance_alert_threshold}");
                 if($account->balance>0 && $account->balance_alert_threshold>0
                     && bccomp($account->balance, $account->balance_alert_threshold)===-1)
                 {
