@@ -82,6 +82,7 @@ class FfbBasePayment extends BasePayment
             $ret['data']['amount'] = $data['amount'];
             $ret['status'] = Macro::SUCCESS;
             $ret['data']['trade_status'] = Order::STATUS_PAID;
+            $ret['data']['channel_order_no'] = $data['transaction_id'];
         }
         return $ret;
         //check sign
