@@ -155,6 +155,7 @@ class FfbBasePayment extends BasePayment
 //                    $ret['data']['channel_order_no'] = $res['transId'];
 
                     if(!empty($res['qrCodeUrl'])){
+                        Yii::info($this->order['order_no'].' ismobile:'.Util::isMobileDevice().'   qrcodeurl:'.substr($res['qrCodeUrl'],0,4));
                         if(Util::isMobileDevice() && substr($res['qrCodeUrl'],0,4)=='http'){
                             $ret['data']['type'] = self::RENDER_TYPE_REDIRECT;
                             $ret['data']['url'] = $res['qrCodeUrl'];
@@ -162,7 +163,6 @@ class FfbBasePayment extends BasePayment
                             $ret['data']['type'] = self::RENDER_TYPE_QR;
                             $ret['data']['qr'] = $res['qrCodeUrl'];
                         }
-
                     }
                 } else {
                     $ret['message'] = $res['msg']??'付款提交失败';
