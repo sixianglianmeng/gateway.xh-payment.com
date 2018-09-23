@@ -170,7 +170,7 @@ class FfbBasePayment extends BasePayment
             }
         }
         //接口日志记录
-        LogicApiRequestLog::rechargeAddLog($this->order, $requestUrl, $ret, $params);
+        LogicApiRequestLog::rechargeAddLog($this->order, $requestUrl, json_encode($ret), $params);
 
 
 //        $form = self::buildForm($params, $requestUrl);
