@@ -155,7 +155,7 @@ class FfbBasePayment extends BasePayment
 //                    $ret['data']['channel_order_no'] = $res['transId'];
 
                     if(!empty($res['qrCodeUrl'])){
-                        Yii::info($this->order['order_no'].' ismobile:'.Util::isMobileDevice().'   qrcodeurl:'.substr($res['qrCodeUrl'],0,4));
+                        Yii::info($this->order['order_no'].' ismobile:'.Util::isMobileDevice().'   qrcodeurl:'.$res['qrCodeUrl']);
                         if(Util::isMobileDevice() && strtolower(substr($res['qrCodeUrl'],0,4)) == 'http'){
                             $ret['data']['type'] = self::RENDER_TYPE_REDIRECT;
                             $ret['data']['url'] = $res['qrCodeUrl'];
