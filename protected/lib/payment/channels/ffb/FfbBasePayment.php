@@ -144,18 +144,18 @@ class FfbBasePayment extends BasePayment
                 if(!$field) continue;
                 $jumpParams[$field] = $input->getAttribute('value');
             }
-            Yii::info(['FFB jump: '.$jumpUrl,$jumpParams]);
+//            Yii::info(['FFB jump: '.$jumpUrl,$jumpParams]);
             if($jumpUrl && $jumpParams){
                 //第二跳
                 $lastHtml = self::post( $jumpUrl,$jumpParams);
                 $res['qrCodeUrl'] = self::parseQr($lastHtml);
-                Yii::info('FFB last jump:'.$lastHtml);
+//                Yii::info('FFB last jump:'.$lastHtml);
                 if ($res['qrCodeUrl']) {
                     $ret['status'] = Macro::SUCCESS;
 //                    $ret['data']['channel_order_no'] = $res['transId'];
 
                     if(!empty($res['qrCodeUrl'])){
-                        Yii::info($this->order['order_no'].' ismobile:'.Util::isMobileDevice().'   qrcodeurl:'.substr($res['qrCodeUrl'],0,4));
+//                        Yii::info($this->order['order_no'].' ismobile:'.Util::isMobileDevice().'   qrcodeurl:'.substr($res['qrCodeUrl'],0,4));
                         if(Util::isMobileDevice() && strtolower(substr($res['qrCodeUrl'],0,4)) == 'http'){
                             $ret['data']['type'] = self::RENDER_TYPE_REDIRECT;
                             $ret['data']['url'] = $res['qrCodeUrl'];
@@ -302,7 +302,7 @@ class FfbBasePayment extends BasePayment
      */
     public function parseQr($html){
         preg_match('/var strcode = \'(.+)\';/',$html, $matchs);
-        Yii::info('QR:'.json_encode($matchs));
+//        Yii::info('QR:'.json_encode($matchs));
         return $matchs[1];
 
     }
