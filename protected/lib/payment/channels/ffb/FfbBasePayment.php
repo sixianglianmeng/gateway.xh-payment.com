@@ -225,6 +225,100 @@ class FfbBasePayment extends BasePayment
     }
 
     /**
+     * 提交出款请求
+     *
+     * @return array ['code'=>'Macro::FAIL|Macro::SUCCESS','data'=>['channel_order_no'=>'三方订单号',bank_status=>'三方银行状态,需转换为Remit表状态']]
+     */
+    public function remit(){
+        if(empty($this->remit)){
+            throw new OperationFailureException('未传入出款订单对象',Macro::ERR_UNKNOWN);
+        }
+
+        $bankCode = BankCodes::getChannelBankCode($this->remit['channel_id'],$this->remit['bank_code'],'remit');
+        if(empty($bankCode)){
+            throw new OperationFailureException("银行代码配置错误:".$this->remit['channel_id'].':'.$this->remit['bank_code'],Macro::ERR_PAYMENT_BANK_CODE);
+        }
+        $params = [
+            'mchid'=>$this->remit['channel_merchant_id'],
+            'out_trade_no'=>$this->remit['order_no'],
+            'money'=>$this->remit['amount'],
+            'bankname' => $this->remit['bank_name'],
+            'subbranch' => $this->remit['bank_branch'],
+            'accountname'=>$this->remit['bank_account'],
+            'cardnumber'=>$this->remit['bank_no'],
+//            'order_time'=>date("Y-m-d H:i:s"),
+            'province'=>$this->remit['province'],
+            'city'=>$this->remit['city'],
+            'bank_code'=>$bankCode,//$this->remit['bank_code'],
+        ];
+        $params['pay_md5sign'] = strtoupper(self::md5Sign($params, trim($this->paymentConfig['key'])));
+
+        $requestUrl = $this->paymentConfig['gateway_base_uri'] . '/Payment_Dfpay_add.html';
+        $resTxt = self::post($requestUrl, $params);
+        Yii::info('remit to bank result: '.$this->remit['order_no'].' '.$resTxt);
+        LogicApiRequestLog::outLog($requestUrl, 'POST', $resTxt, Yii::$app->params['apiRequestLog']['http_code']??200,0, $params);
+
+        $ret = self::REMIT_RESULT;
+        $ret['data']['rawMessage'] = $resTxt;
+        if (!empty($resTxt)) {
+            $res = json_decode($resTxt, true);
+            //仅代表请求成功,不代表业务成功
+            if (isset($res['status'])) $ret['status'] = Macro::SUCCESS;
+            if (isset($res['status']) && strtoupper($res['status']) == 'SUCCESS') {
+                $ret['data']['channel_order_no'] = $res['transaction_id'];
+                //0 未处理，1 银行处理中 2 已打款 3 失败
+                $ret['data']['bank_status'] = 1;
+            } else {
+                $ret['message'] = $res['msg']??"出款提交失败({$resTxt})";
+            }
+        }
+
+        return  $ret;
+    }
+
+    /**
+     * 提交出款状态查询
+     *
+     * @return array ['code'=>'Macro::FAIL|Macro::SUCCESS','data'=>['channel_order_no'=>'三方订单号',bank_status=>'三方银行状态,需转换为Remit表状态']]
+     */
+    public function remitStatus(){
+        if(empty($this->remit)){
+            throw new \app\common\exceptions\OperationFailureException('未传入出款订单对象',Macro::ERR_UNKNOWN);
+        }
+        $params = [
+            'mchid'=>$this->remit['channel_merchant_id'],
+            'out_trade_no'=>$this->remit['order_no'],
+//            'now_date'=>date("Y-m-d H:i:s"),
+        ];
+        $params['pay_md5sign'] = strtoupper(self::md5Sign($params,trim($this->paymentConfig['key'])));
+        $requestUrl = $this->paymentConfig['gateway_base_uri'].'/Payment_Dfpay_query.html';
+        $resTxt = self::post($requestUrl, $params);
+        //记录请求日志
+        LogicApiRequestLog::outLog($requestUrl, 'POST', $resTxt, 200,0, $params);
+
+        Yii::info('remit query result: '.$this->remit['order_no'].' '.$resTxt);
+        $ret = self::REMIT_QUERY_RESULT;
+        $ret['data']['remit'] = $this->remit;
+        $ret['data']['order_no'] = $this->remit->order_no;
+        $ret['data']['rawMessage'] = $resTxt;
+        if (!empty($resTxt)) {
+            $res = json_decode($resTxt, true);
+            if (isset($res['status']) && strtoupper($res['status']) == 'SUCCESS') {
+                //仅代表请求成功,不代表业务成功
+                $ret['status'] = Macro::SUCCESS;
+                if(!empty($res['transaction_id'])) $ret['data']['channel_order_no'] = $res['transaction_id'];
+                // 1 成功  2 失败 3 处理中 4 待处理 5 审核驳回  6 待审核 7 交易不存在  8 未知状态
+                $ret['data']['bank_status'] = $res['refCode']??'';
+                if($ret['data']['bank_status']==2){
+                    $ret['message'] = $res['refMsg']??"银行处理失败({$resTxt})";
+                }
+            } else {
+                $ret['message'] = $res['errror_msg']??"出款查询失败({$resTxt})";;
+            }
+        }
+        return  $ret;
+    }
+    /**
      * 余额查询,此通道没有余额查询接口.但是需要做伪方法,防止批量实时查询失败.
      *
      * return  array BasePayment::BALANCE_QUERY_RESULT
