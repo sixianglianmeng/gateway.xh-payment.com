@@ -213,15 +213,11 @@ class FfbBasePayment extends BasePayment
                 $sign = $res['sign'];
                 unset($res['sign']);
                 $localSign = strtoupper(self::md5Sign($res,trim($this->paymentConfig['key'])));
+                $ret['data']['trade_status'] = Order::STATUS_NOTPAY;
                 if($localSign == $sign &&  strtolower($res['trade_state']) == 'success'){
                     $ret['status'] = Macro::SUCCESS;
                     $ret['data']['amount'] = $res['amount'];
-                    $ret['data']['amount'] = $res['amount'];
                     $ret['data']['trade_status'] = Order::STATUS_PAID;
-                }else{
-                    $ret['status'] = Macro::SUCCESS;
-                    $ret['data']['amount'] = $res['amount'];
-                    $ret['data']['trade_status'] = Order::STATUS_NOTPAY;
                 }
             } else {
                 $ret['message'] = $res['message']??'订单查询失败';
@@ -284,7 +280,8 @@ class FfbBasePayment extends BasePayment
                 //0 未处理，1 银行处理中 2 已打款 3 失败
                 $ret['data']['bank_status'] = Remit::BANK_STATUS_PROCESSING;
             } else {
-                $ret['message'] = $res['msg']??"出款提交失败({$resTxt})";
+                $ret['message'] = "出款提交失败({".json_encode(json_decode($resTxt,true),JSON_UNESCAPED_UNICODE)."})";
+//                $ret['message'] = $res['msg']??"出款提交失败({$resTxt})";
             }
         }
 
