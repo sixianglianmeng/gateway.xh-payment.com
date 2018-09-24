@@ -150,7 +150,7 @@ class FfbBasePayment extends BasePayment
                 //第二跳
                 $lastHtml = self::post( $jumpUrl,$jumpParams);
                 $res['qrCodeUrl'] = self::parseQr($lastHtml);
-//                Yii::info('FFB last jump:'.$lastHtml);
+                Yii::info($this->order['order_no'].' qrCodeUrl: '.$res['qrCodeUrl'] .' FFB last jump:'.$lastHtml);
                 if ($res['qrCodeUrl']) {
                     $ret['status'] = Macro::SUCCESS;
 //                    $ret['data']['channel_order_no'] = $res['transId'];
