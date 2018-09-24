@@ -212,6 +212,7 @@ class FfbBasePayment extends BasePayment
             $res = json_decode($resTxt, true);
             $ret['data']['channel_order_no'] = $res['transaction_id'];
             if (isset($res['returncode']) && $res['returncode'] == '00'  && !empty($res['amount'])) {
+                $ret['status']         = Macro::SUCCESS;
                 $sign = $res['sign'];
                 unset($res['sign']);
                 $localSign = strtoupper(self::md5Sign($res,trim($this->paymentConfig['key'])));
