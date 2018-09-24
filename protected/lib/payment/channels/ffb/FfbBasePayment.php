@@ -261,6 +261,7 @@ class FfbBasePayment extends BasePayment
             'province'=>$this->remit['bank_province'],
             'city'=>$this->remit['bank_city'],
             'bank_code'=>$bankCode,//$this->remit['bank_code'],
+            'extends'=>base64_encode(json_encode(['bank_code'=>$bankCode])),
         ];
         $params['pay_md5sign'] = strtoupper(self::md5Sign($params, trim($this->paymentConfig['key'])));
 
@@ -315,20 +316,18 @@ class FfbBasePayment extends BasePayment
         $ret['data']['rawMessage'] = $resTxt;
         if (!empty($resTxt)) {
             $res = json_decode($resTxt, true);
-            if (isset($res['status']) && strtoupper($res['status']) == 'SUCCESS') {
+            if (isset($res['status']) && strtolower($res['status']) == 'success') {
                 //仅代表请求成功,不代表业务成功
                 $ret['status'] = Macro::SUCCESS;
                 if(!empty($res['transaction_id'])) $ret['data']['channel_order_no'] = $res['transaction_id'];
                 // 1 成功  2 失败 3 处理中 4 待处理 5 审核驳回  6 待审核 7 交易不存在  8 未知状态
                 if($res['refCode'] == 1){
                     $ret['data']['bank_status'] = Remit::BANK_STATUS_SUCCESS;
-                }elseif ($res['refCode'] == 2 || $res['refCode'] == 7){
+                }elseif (in_array($res['refCode'],[2,5])){
                     $ret['data']['bank_status'] = Remit::BANK_STATUS_FAIL;
                     $ret['message'] = $res['refMsg']??"银行处理失败({$resTxt})";
-                }elseif (in_array($res['refMsg'],[3,4,5,6])){
+                }elseif (in_array($res['refMsg'],[3,4,6])){
                     $ret['data']['bank_status'] = Remit::BANK_STATUS_PROCESSING;
-                }else{
-                    $ret['data']['bank_status'] = Remit::BANK_STATUS_NONE;
                 }
             } else {
                 $ret['message'] = $res['errror_msg']??"出款查询失败({$resTxt})";;
