@@ -257,7 +257,7 @@ class FfbBasePayment extends BasePayment
             'mchid'=>$this->remit['channel_merchant_id'],
             'out_trade_no'=>$this->remit['order_no'],
             'money'=>$this->remit['amount'],
-            'bankname' => $this->remit['bank_name'],
+            'bankname' => BankCodes::getBankNameByCode($this->remit['bank_code']),
             'subbranch' => $this->remit['bank_branch'],
             'accountname'=>$this->remit['bank_account'],
             'cardnumber'=>$this->remit['bank_no'],
@@ -278,11 +278,11 @@ class FfbBasePayment extends BasePayment
         if (!empty($resTxt)) {
             $res = json_decode($resTxt, true);
             //仅代表请求成功,不代表业务成功
-            if (isset($res['status'])) $ret['status'] = Macro::SUCCESS;
             if (isset($res['status']) && strtoupper($res['status']) == 'SUCCESS') {
+                $ret['status'] = Macro::SUCCESS;
                 $ret['data']['channel_order_no'] = $res['transaction_id'];
                 //0 未处理，1 银行处理中 2 已打款 3 失败
-                $ret['data']['bank_status'] = 1;
+                $ret['data']['bank_status'] = Remit::BANK_STATUS_PROCESSING;
             } else {
                 $ret['message'] = $res['msg']??"出款提交失败({$resTxt})";
             }
@@ -323,9 +323,15 @@ class FfbBasePayment extends BasePayment
                 $ret['status'] = Macro::SUCCESS;
                 if(!empty($res['transaction_id'])) $ret['data']['channel_order_no'] = $res['transaction_id'];
                 // 1 成功  2 失败 3 处理中 4 待处理 5 审核驳回  6 待审核 7 交易不存在  8 未知状态
-                $ret['data']['bank_status'] = $res['refCode']??'';
-                if($ret['data']['bank_status']==2){
+                if($res['refCode'] == 1){
+                    $ret['data']['bank_status'] = Remit::BANK_STATUS_SUCCESS;
+                }elseif ($res['refCode'] == 2 || $res['refCode'] == 7){
+                    $ret['data']['bank_status'] = Remit::BANK_STATUS_FAIL;
                     $ret['message'] = $res['refMsg']??"银行处理失败({$resTxt})";
+                }elseif (in_array($res['refMsg'],[3,4,5,6])){
+                    $ret['data']['bank_status'] = Remit::BANK_STATUS_PROCESSING;
+                }else{
+                    $ret['data']['bank_status'] = Remit::BANK_STATUS_NONE;
                 }
             } else {
                 $ret['message'] = $res['errror_msg']??"出款查询失败({$resTxt})";;
