@@ -456,7 +456,7 @@ class LogicRemit
                         break;
                     default:
                         $remit->status = Remit::STATUS_NOT_REFUND;
-                        $remit->bank_status =  Remit::BANK_STATUS_FAIL;
+                        $remit->bank_status =  Remit::BANK_STATUS_PROCESSING;
                         $remit->bank_ret.date('Ymd H:i:s').'错误的银行返回值:'.($ret['message']??'错误的银行返回值');
                         $remit->fail_msg = date('Ymd H:i:s').'错误的银行返回值:'.($ret['message']??'错误的银行返回值');
                         break;
