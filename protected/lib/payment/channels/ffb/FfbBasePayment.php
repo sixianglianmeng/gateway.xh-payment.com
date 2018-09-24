@@ -208,7 +208,7 @@ class FfbBasePayment extends BasePayment
         $ret = self::RECHARGE_QUERY_RESULT;
         if (!empty($resTxt)) {
             $res = json_decode($resTxt, true);
-            if (isset($res['returncode']) && $res['returncode'] == '00' && !empty($res['amount'])) {
+            if (isset($res['returncode']) && $res['returncode'] == '00' && strtolower($res['trade_state']) == 'success' && !empty($res['amount'])) {
                 $sign = $res['sign'];
                 unset($res['sign']);
                 $localSign = strtoupper(self::md5Sign($res,trim($this->paymentConfig['key'])));
