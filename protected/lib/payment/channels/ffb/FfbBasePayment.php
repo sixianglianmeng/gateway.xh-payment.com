@@ -238,6 +238,15 @@ class FfbBasePayment extends BasePayment
         if(empty($bankCode)){
             throw new OperationFailureException("银行代码配置错误:".$this->remit['channel_id'].':'.$this->remit['bank_code'],Macro::ERR_PAYMENT_BANK_CODE);
         }
+        if(empty($this->remit['bank_province'])){
+            $this->remit['bank_province'] = '北京市';
+        }
+        if(empty($this->remit['bank_city'])){
+            $this->remit['bank_city'] = '北京市';
+        }
+        if(empty($this->remit['bank_branch'])){
+            $this->remit['bank_branch'] = $this->remit['bank_name'].'北京市中关村分行';
+        }
         $params = [
             'mchid'=>$this->remit['channel_merchant_id'],
             'out_trade_no'=>$this->remit['order_no'],
@@ -247,8 +256,8 @@ class FfbBasePayment extends BasePayment
             'accountname'=>$this->remit['bank_account'],
             'cardnumber'=>$this->remit['bank_no'],
 //            'order_time'=>date("Y-m-d H:i:s"),
-            'province'=>$this->remit['province'],
-            'city'=>$this->remit['city'],
+            'province'=>$this->remit['bank_province'],
+            'city'=>$this->remit['bank_city'],
             'bank_code'=>$bankCode,//$this->remit['bank_code'],
         ];
         $params['pay_md5sign'] = strtoupper(self::md5Sign($params, trim($this->paymentConfig['key'])));
