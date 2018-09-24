@@ -218,7 +218,6 @@ class FfbBasePayment extends BasePayment
                 $localSign = strtoupper(self::md5Sign($res,trim($this->paymentConfig['key'])));
                 $ret['data']['trade_status'] = Order::STATUS_NOTPAY;
                 if($localSign == $sign &&  strtolower($res['trade_state']) == 'success'){
-                    $ret['status'] = Macro::SUCCESS;
                     $ret['data']['amount'] = $res['amount'];
                     $ret['data']['trade_status'] = Order::STATUS_PAID;
                 }
