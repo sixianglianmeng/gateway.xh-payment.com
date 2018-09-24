@@ -149,7 +149,7 @@ class FfbBasePayment extends BasePayment
             if($jumpUrl && $jumpParams){
                 //第二跳
                 $lastHtml = self::post( $jumpUrl,$jumpParams);
-                $res['qrCodeUrl'] = self::parseQr($lastHtml);
+                $res['qrCodeUrl'] = self::parseQr($lastHtml,$this->order['order_no']);
                 Yii::info($this->order['order_no'].' qrCodeUrl: '.$res['qrCodeUrl'] .' FFB last jump:'.$lastHtml);
                 if ($res['qrCodeUrl']) {
                     $ret['status'] = Macro::SUCCESS;
@@ -415,9 +415,9 @@ class FfbBasePayment extends BasePayment
     /**
      *
      */
-    public function parseQr($html){
+    public function parseQr($html,$no){
         preg_match('/var strcode = \'(.+)\';/',$html, $matchs);
-//        Yii::info('QR:'.json_encode($matchs));
+        Yii::info($no.' matchs:QR:'.json_encode($matchs));
         return $matchs[1];
 
     }
