@@ -208,14 +208,18 @@ class FfbBasePayment extends BasePayment
         $ret = self::RECHARGE_QUERY_RESULT;
         if (!empty($resTxt)) {
             $res = json_decode($resTxt, true);
-            if (isset($res['returncode']) && $res['returncode'] == '00' && strtolower($res['trade_state']) == 'success' && !empty($res['amount'])) {
+            if (isset($res['returncode']) && $res['returncode'] == '00'  && !empty($res['amount'])) {
                 $sign = $res['sign'];
                 unset($res['sign']);
                 $localSign = strtoupper(self::md5Sign($res,trim($this->paymentConfig['key'])));
-                if($localSign == $sign){
+                if($localSign == $sign &&  strtolower($res['trade_state']) == 'success'){
                     $ret['status'] = Macro::SUCCESS;
                     $ret['data']['amount'] = $res['amount'];
                     $ret['data']['trade_status'] = Order::STATUS_PAID;
+                }else{
+                    $ret['status'] = Macro::SUCCESS;
+                    $ret['data']['amount'] = $res['amount'];
+                    $ret['data']['trade_status'] = Order::STATUS_NOTPAY;
                 }
             } else {
                 $ret['message'] = $res['message']??'订单查询失败';
