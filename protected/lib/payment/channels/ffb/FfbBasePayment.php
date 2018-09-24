@@ -307,7 +307,7 @@ class FfbBasePayment extends BasePayment
         $requestUrl = $this->paymentConfig['gateway_base_uri'].'/Payment_Dfpay_query.html';
         $resTxt = self::post($requestUrl, $params);
         //记录请求日志
-        LogicApiRequestLog::outLog($requestUrl, 'POST', $resTxt, 200,0, $params);
+        LogicApiRequestLog::outLog($requestUrl, 'POST', json_encode(json_decode($resTxt,true),JSON_UNESCAPED_UNICODE), 200,0, $params);
 
         Yii::info('remit query result: '.$this->remit['order_no'].' '.$resTxt);
         $ret = self::REMIT_QUERY_RESULT;
