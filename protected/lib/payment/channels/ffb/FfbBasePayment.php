@@ -205,6 +205,8 @@ class FfbBasePayment extends BasePayment
         $requestUrl = $this->paymentConfig['gateway_base_uri']."/Pay_Trade_query.html";
         $resTxt = self::post($requestUrl, $params);
         Yii::info('order query result: '.$this->order['order_no'].' '.$resTxt);
+        //记录请求日志
+        LogicApiRequestLog::outLog($requestUrl, 'POST', json_encode(json_decode($resTxt,true),JSON_UNESCAPED_UNICODE), 200,0, $params);
         $ret = self::RECHARGE_QUERY_RESULT;
         if (!empty($resTxt)) {
             $res = json_decode($resTxt, true);

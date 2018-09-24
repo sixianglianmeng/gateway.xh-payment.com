@@ -481,6 +481,8 @@ class SfBasePayment extends BasePayment
 
         $requestUrl = $this->paymentConfig['gateway_base_uri'].'/query.html';
         $resTxt = self::post($requestUrl, $params);
+        //记录请求日志
+        LogicApiRequestLog::outLog($requestUrl, 'POST', $resTxt, 200,0, $params);
 
         $ret = self::RECHARGE_QUERY_RESULT;
         $ret['data']['rawMessage'] = $resTxt;
