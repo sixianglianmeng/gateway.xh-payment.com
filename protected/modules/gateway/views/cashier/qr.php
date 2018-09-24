@@ -37,7 +37,9 @@
             <form class="needs-validation" novalidate>
                 <div class="row" style="text-align: center">
 <!--                  <img style="width:300px;height:300px;" src="http://qr.liantu.com/api.php?text=--><?php //echo urlencode($data['data']['qr']); ?><!--"/>-->
-                    <div id="qrcode"></div>
+                    <div id="qrcode">
+                      <img id="qrcode-img" style="width:300px;height:300px;display: none" src=""/>
+                    </div>
                 </div>
             </form>
         </div>
@@ -48,6 +50,7 @@
         <p class="mb-1">&copy; <?php echo date('Y') ?> 版权所有</p>
     </footer>
 </div>
+<script src="/assets/js/jr-qrcode.js"></script>
 <script>
   let qrString = "<?php echo $data['data']['qr']; ?>";
   let expire = "<?php echo $data['order']['expire_time']?$data['order']['expire_time']-time():0; ?>";
@@ -66,7 +69,9 @@
 
 
     let expireInterval = null;
-    $('#qrcode').qrcode({width: 300,height: 300,text:qrString});
+    // $('#qrcode').qrcode({width: 300,height: 300,text:qrString});
+      let imgBase64 = jrQrcode.getQrBase64(qrString, {width: 300,height: 300});
+      $('#qrcode-img').attr('src',imgBase64).show()
 
     setInterval(function () {
       $.post("/order/check_status.html",data,function(result){

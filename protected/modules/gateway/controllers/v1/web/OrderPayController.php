@@ -117,7 +117,7 @@
             //由各方法自行处理响应
             //return redirect|QrCode view|h5 call native
             //检测缓存中是否已经有此订单的下单结果,如果有直接使用,防止报重复下单错误
-            $cacheKey = "channel:cashier_url:{$order->order_no}}";
+            $cacheKey = "channel:cashier_url:{$order->order_no}";
             $hasRequest =  Yii::$app->redis->get($cacheKey);
             if($hasRequest){
                 Yii::info("get cached url, will not request sf:{$order->order_no}, {$hasRequest}");
