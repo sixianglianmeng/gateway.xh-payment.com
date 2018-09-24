@@ -323,14 +323,15 @@ class FfbBasePayment extends BasePayment
                 // 1 成功  2 失败 3 处理中 4 待处理 5 审核驳回  6 待审核 7 交易不存在  8 未知状态
                 if($res['refCode'] == 1){
                     $ret['data']['bank_status'] = Remit::BANK_STATUS_SUCCESS;
+                    $ret['message'] = $res['message']??json_encode(json_decode($resTxt,true),JSON_UNESCAPED_UNICODE);
                 }elseif (in_array($res['refCode'],[2,5])){
                     $ret['data']['bank_status'] = Remit::BANK_STATUS_FAIL;
-                    $ret['message'] = $res['refMsg']??"银行处理失败({$resTxt})";
+                    $ret['message'] = $res['refMsg']??"银行处理失败({".json_encode(json_decode($resTxt,true),JSON_UNESCAPED_UNICODE)."})";
                 }elseif (in_array($res['refMsg'],[3,4,6])){
                     $ret['data']['bank_status'] = Remit::BANK_STATUS_PROCESSING;
                 }
             } else {
-                $ret['message'] = $res['errror_msg']??"出款查询失败({$resTxt})";;
+                $ret['message'] = $res['errror_msg']??"出款查询失败({".json_encode(json_decode($resTxt,true),JSON_UNESCAPED_UNICODE)."})";
             }
         }
         return  $ret;
