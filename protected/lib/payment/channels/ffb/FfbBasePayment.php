@@ -132,7 +132,7 @@ class FfbBasePayment extends BasePayment
         $requestUrl = $this->paymentConfig['gateway_base_uri']."/Pay_Index.html";
 
         //jump模式
-        $res['qrCodeUrl'] = self::parseHtml($requestUrl,$params);
+        $res['qrCodeUrl'] = $this->parseHtml($requestUrl,$params);
         $ret = self::RECHARGE_WEBBANK_RESULT;
         if ($res['qrCodeUrl']){
             if(Util::isMobileDevice() && strtolower(substr($res['qrCodeUrl'],0,4)) == 'http'){
