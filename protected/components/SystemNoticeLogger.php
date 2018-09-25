@@ -91,11 +91,12 @@ class SystemNoticeLogger extends Target
         }
 
         $title = gethostname();
-        if(Yii::$app->request->getIsConsoleRequest()){
-            $title.=" ".pathinfo(WWW_DIR)['basename'];
-        }else{
-            $title.=" ".Yii::$app->request->hostName;
-        }
+//        if(Yii::$app->request->getIsConsoleRequest()){
+//            $title.=" ".pathinfo(WWW_DIR)['basename'];
+//        }else{
+//            $title.=" ".Yii::$app->request->hostName;
+//        }
+        $title.=" ".SYSTEM_NAME;
 
         $telgramKey = SiteConfig::cacheGetContent('sys_notice_tegram_key');
         $telgramUrl = SiteConfig::cacheGetContent('sys_notice_tegram_url');

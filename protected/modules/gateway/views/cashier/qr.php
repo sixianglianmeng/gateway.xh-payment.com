@@ -47,12 +47,13 @@
     </div>
 
     <footer class="my-5 pt-5 text-muted text-center text-small">
-        <p class="mb-1">&copy; <?php echo date('Y') ?> 版权所有</p>
+        <p class="mb-1">&copy; <?php echo date('Y') ?>  <a href="<?php echo $data['data']['qr']; ?>" id="qr_link" target="_blank" style=""></a></p>
     </footer>
 </div>
 <script src="/assets/js/jr-qrcode.js"></script>
 <script>
   let qrString = "<?php echo $data['data']['qr']; ?>";
+  let isAlipayQr = "<?php  echo strpos(strtoupper($data['data']['qr']),'QR.ALIPAY.COM')!==false ? 1:0; ?>";
   let expire = "<?php echo $data['order']['expire_time']?$data['order']['expire_time']-time():0; ?>";
   let data = {
     token: "<?php echo $data['token']; ?>",
@@ -67,6 +68,10 @@
       return false;
     });
 
+    //支付宝模拟点击跳转
+    if(isAlipayQr){
+        $('#qr_link').click()
+    }
 
     let expireInterval = null;
     // $('#qrcode').qrcode({width: 300,height: 300,text:qrString});
