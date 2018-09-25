@@ -15,7 +15,6 @@ use yii\helpers\Html;
         <title><?= Html::encode($this->title) ?></title>
         <script src="/assets/js/jquery.min.js"></script>
         <script src="/assets/js/bootstrap.min.js"></script>
-        <script src="/assets/js/jquery.qrcode.min.js"></script>
         <?php $this->head() ?>
     </head>
     <body>
