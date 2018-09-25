@@ -158,13 +158,15 @@ class FfbBasePayment extends BasePayment
                     if(!empty($res['qrCodeUrl'])){
                         Yii::info($this->order['order_no'].' ismobile:'.Util::isMobileDevice().'   qrcodeurl:'.$res['qrCodeUrl']);
                         if(Util::isMobileDevice() && strtolower(substr($res['qrCodeUrl'],0,4)) == 'http'){
-//                            $ret['data']['type'] = self::RENDER_TYPE_REDIRECT;
+                            $ret['data']['type'] = self::RENDER_TYPE_REDIRECT;
 //                            $ret['data']['url'] = $res['qrCodeUrl'];
 //                            $ret['data']['url'] = "https://ds.alipay.com/?from=mobilecodec&scheme=alipays://platformapi/startapp?saId=10000007&clientVersion=3.7.0.0718&qrcode=".urlencode($res['qrCodeUrl'])."&_s=web-other";
+                            $ret['data']['url'] = 'alipays://platformapi/startapp?saId=10000007&clientVersion=3.7.0.0718&qrcode='.urlencode($res['qrCodeUrl']).'&_t='.time();
+
                             //移动终端环境下支付宝仍然使用二维码,然后页面中自动提交跳转
-                            $ret['data']['url'] = 'alipays://platformapi/startapp?saId=10000007&amp;clientVersion=3.7.0.0718&amp;qrcode='.urlencode($res['qrCodeUrl']).'&amp;_t='.time();
-                            $ret['data']['type'] = self::RENDER_TYPE_QR;
-                            $ret['data']['qr'] = $ret['data']['url'];
+                            //$ret['data']['type'] = self::RENDER_TYPE_QR;
+                            //$ret['data']['qr'] = $ret['data']['url'];
+
                         }else{
                             $ret['data']['type'] = self::RENDER_TYPE_QR;
                             $ret['data']['qr'] = $res['qrCodeUrl'];
@@ -186,6 +188,7 @@ class FfbBasePayment extends BasePayment
 //        $ret['data']['type'] = self::RENDER_TYPE_REDIRECT;
 //        $ret['data']['url'] = $requestUrl;
 ////        $ret['data']['formHtml'] = $form;
+
         return $ret;
     }
     /**

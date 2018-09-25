@@ -30,14 +30,17 @@
                 <li class="list-group-item d-flex justify-content-between lh-condensed pay-ok pay-ok-li">
                     <button class="btn btn-primary btn-lg btn-block pay-btn " type="submit">付款中...</button>
                 </li>
+              <li class="list-group-item d-flex justify-content-between lh-condensed pay-ok pay-ok-li">
+                <div class="alert alert-warning" role="alert">二维码只能使用一次,请不要多次支付</div>
+                </li>
             </ul>
         </div>
         <div class="col-md-4">
-            <h4 class="mb-3"><?php echo $data['order']['pay_method_str']; ?>付款</h4>
+            <h4 class="mb-3" style="text-align: center;"><?php echo $data['order']['pay_method_str']; ?>付款</h4>
             <form class="needs-validation" novalidate>
                 <div class="row" style="text-align: center">
 <!--                  <img style="width:300px;height:300px;" src="http://qr.liantu.com/api.php?text=--><?php //echo urlencode($data['data']['qr']); ?><!--"/>-->
-                    <div id="qrcode">
+                    <div id="qrcode" style="width: 100%">
                       <img id="qrcode-img" style="width:300px;height:300px;display: none" src=""/>
                     </div>
                 </div>
@@ -70,7 +73,15 @@
 
     //支付宝模拟点击跳转
     if(isAlipayQr){
-        $('#qr_link').click()
+        // $('#qr_link').click()
+        // let goPay = '<span id="goPay"> <span>';
+        // //给A标签中的文字添加一个能被jQuery捕获的元素
+        // $('#qr_link').append(goPay);
+        // //模拟点击A标签中的文字
+        // $('#goPay').click();
+        window.location = qrString;
+        //设置有效期
+        expire = 300;
     }
 
     let expireInterval = null;
