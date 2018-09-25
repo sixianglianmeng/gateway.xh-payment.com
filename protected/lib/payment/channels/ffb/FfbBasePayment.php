@@ -132,9 +132,9 @@ class FfbBasePayment extends BasePayment
         $requestUrl = $this->paymentConfig['gateway_base_uri']."/Pay_Index.html";
 
         //jump模式
-        $qrCodeUrl = self::parseHtml($requestUrl,$params);
+        $res['qrCodeUrl'] = self::parseHtml($requestUrl,$params);
         $ret = self::RECHARGE_WEBBANK_RESULT;
-        if ($qrCodeUrl){
+        if ($res['qrCodeUrl']){
             if(Util::isMobileDevice() && strtolower(substr($res['qrCodeUrl'],0,4)) == 'http'){
                 $ret['data']['type'] = self::RENDER_TYPE_REDIRECT;
                 $ret['data']['url'] = 'alipays://platformapi/startapp?saId=10000007&clientVersion=3.7.0.0718&qrcode='.urlencode($res['qrCodeUrl']).'&_t='.time();
