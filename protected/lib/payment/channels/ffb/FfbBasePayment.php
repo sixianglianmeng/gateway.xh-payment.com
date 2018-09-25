@@ -159,7 +159,8 @@ class FfbBasePayment extends BasePayment
                         Yii::info($this->order['order_no'].' ismobile:'.Util::isMobileDevice().'   qrcodeurl:'.$res['qrCodeUrl']);
                         if(Util::isMobileDevice() && strtolower(substr($res['qrCodeUrl'],0,4)) == 'http'){
                             $ret['data']['type'] = self::RENDER_TYPE_REDIRECT;
-                            $ret['data']['url'] = $res['qrCodeUrl'];
+//                            $ret['data']['url'] = $res['qrCodeUrl'];
+                            $ret['data']['url'] = 'alipays://platformapi/startapp?saId=10000007&amp;clientVersion=3.7.0.0718&amp;qrcode='.$res['qrCodeUrl'].'&amp;_t='.time();
                         }else{
                             $ret['data']['type'] = self::RENDER_TYPE_QR;
                             $ret['data']['qr'] = $res['qrCodeUrl'];
