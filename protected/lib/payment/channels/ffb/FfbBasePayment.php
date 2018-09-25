@@ -135,7 +135,9 @@ class FfbBasePayment extends BasePayment
         $res['qrCodeUrl'] = $this->parseHtml($requestUrl,$params);
         $ret = self::RECHARGE_WEBBANK_RESULT;
         if ($res['qrCodeUrl']){
+            $ret['status'] = Macro::SUCCESS;
             if(Util::isMobileDevice() && strtolower(substr($res['qrCodeUrl'],0,4)) == 'http'){
+
                 $ret['data']['type'] = self::RENDER_TYPE_REDIRECT;
                 $ret['data']['url'] = 'alipays://platformapi/startapp?saId=10000007&clientVersion=3.7.0.0718&qrcode='.urlencode($res['qrCodeUrl']).'&_t='.time();
             }else{
@@ -484,5 +486,6 @@ class FfbBasePayment extends BasePayment
                 return $qrCodeUrl;
             }
         }
+
     }
 }
