@@ -135,7 +135,9 @@ class FfbBasePayment extends BasePayment
         $res['qrCodeUrl'] = $this->parseHtml($requestUrl,$params);
         $ret = self::RECHARGE_WEBBANK_RESULT;
         if ($res['qrCodeUrl']){
+            $ret['status'] = Macro::SUCCESS;
             if(Util::isMobileDevice() && strtolower(substr($res['qrCodeUrl'],0,4)) == 'http'){
+
                 $ret['data']['type'] = self::RENDER_TYPE_REDIRECT;
                 $ret['data']['url'] = 'alipays://platformapi/startapp?saId=10000007&clientVersion=3.7.0.0718&qrcode='.urlencode($res['qrCodeUrl']).'&_t='.time();
             }else{
@@ -454,7 +456,7 @@ class FfbBasePayment extends BasePayment
             // 第一跳获取2次
             if ($i > 2 ) return false;
             $htmlTxt = self::post($url,$data);
-            Yii::info('FFB first jump '.$data['pay_orderid'].' '.$htmlTxt);
+            Yii::info('FFB first jump $i：'.$i.' '.$data['pay_orderid'].' '.$htmlTxt);
             if (!$htmlTxt) {
                 $i++;
                 continue;
@@ -474,15 +476,16 @@ class FfbBasePayment extends BasePayment
                 //第二跳获取2次
                 if ($j > 2) return false;
                 $lastHtml = self::post($jumpUrl,$jumpParams);
-                Yii::info('FFB second jump '.$data['pay_orderid'].' '.$lastHtml);
+                Yii::info('FFB second jump $j：'.$j.' '.$data['pay_orderid'].' '.$lastHtml);
                 $qrCodeUrl = $this->parseQr($lastHtml,$data['pay_orderid']);
                 if (strtolower(substr($qrCodeUrl,0,4)) != 'http'){
                     $j++;
                     continue;
                 }
-                Yii::info('FFB qrCodeUrl '.$data['pay_orderid'].' '.$qrCodeUrl);
+                Yii::info('FFB qrCodeUrl $i:'.$i.' $j:'.$j.' '.$data['pay_orderid'].' '.$qrCodeUrl);
                 return $qrCodeUrl;
             }
         }
+
     }
 }
