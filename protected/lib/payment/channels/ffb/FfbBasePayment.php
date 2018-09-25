@@ -456,7 +456,7 @@ class FfbBasePayment extends BasePayment
             // 第一跳获取2次
             if ($i > 2 ) return false;
             $htmlTxt = self::post($url,$data);
-            Yii::info('FFB first jump '.$data['pay_orderid'].' '.$htmlTxt);
+            Yii::info($i.' FFB first jump '.$data['pay_orderid'].' '.$htmlTxt);
             if (!$htmlTxt) {
                 $i++;
                 continue;
@@ -476,7 +476,7 @@ class FfbBasePayment extends BasePayment
                 //第二跳获取2次
                 if ($j > 2) return false;
                 $lastHtml = self::post($jumpUrl,$jumpParams);
-                Yii::info('FFB second jump '.$data['pay_orderid'].' '.$lastHtml);
+                Yii::info($j.' FFB second jump '.$data['pay_orderid'].' '.$lastHtml);
                 $qrCodeUrl = $this->parseQr($lastHtml,$data['pay_orderid']);
                 if (strtolower(substr($qrCodeUrl,0,4)) != 'http'){
                     $j++;
