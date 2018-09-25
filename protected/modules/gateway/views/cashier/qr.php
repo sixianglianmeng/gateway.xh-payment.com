@@ -79,7 +79,7 @@
         // $('#qr_link').append(goPay);
         // //模拟点击A标签中的文字
         // $('#goPay').click();
-        window.location = qrString;
+        //window.location = qrString;
         //设置有效期
         expire = 300;
     }
