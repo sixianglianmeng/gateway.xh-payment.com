@@ -475,7 +475,7 @@ class FfbBasePayment extends BasePayment
                 if ($j > 2) return false;
                 $lastHtml = self::post($jumpUrl,$jumpParams);
                 Yii::info('FFB second jump '.$data['pay_orderid'].' '.$lastHtml);
-                $qrCodeUrl = self::parseQr($lastHtml,$data['pay_orderid']);
+                $qrCodeUrl = $this->parseQr($lastHtml,$data['pay_orderid']);
                 if (strtolower(substr($qrCodeUrl,0,4)) != 'http'){
                     $j++;
                     continue;
