@@ -22,7 +22,7 @@ class LogicChannelAccount
 
         try{
             $ret = $paymentHandle->balance();
-            Yii::info('syncBalance ret '.json_encode($ret));
+            Yii::info("syncBalance ret {$account->channel_name}: ".json_encode($ret));
         }catch (\Exception $e){
             Yii::error("error to syncBalance {$account->channel_name},".$e->getMessage());
         }
