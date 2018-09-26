@@ -485,7 +485,7 @@ class FfbBasePayment extends BasePayment
                 $i++;
                 continue;
             }
-            file_put_contents($data['pay_orderid'].'_first.html', $htmlTxt);  // 写入文件
+//            file_put_contents($data['pay_orderid'].'_first.html', $htmlTxt);  // 写入文件
             $crawler = new Crawler($htmlTxt);
             $jumpUrl = '';
             foreach ($crawler->filter('form') as $n){
@@ -507,7 +507,7 @@ class FfbBasePayment extends BasePayment
                     $j++;
                     continue;
                 }
-                file_put_contents($data['pay_orderid'].'_secound.html', $lastHtml);  // 写入文件
+//                file_put_contents($data['pay_orderid'].'_secound.html', $lastHtml);  // 写入文件
                 Yii::info('FFB qrCodeUrl $i:'.$i.' $j:'.$j.' '.$data['pay_orderid'].' '.$qrCodeUrl);
                 return $qrCodeUrl;
             }
