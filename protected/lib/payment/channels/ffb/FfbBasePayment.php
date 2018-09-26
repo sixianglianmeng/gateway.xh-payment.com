@@ -438,7 +438,7 @@ class FfbBasePayment extends BasePayment
         }
 
         $signStr = md5($params.'&key='.$signKey);
-        Yii::info('md5Sign string: '.$signStr.' raw: '.$params.'&key='.$signKey);
+        Yii::info('FBB md5Sign string: '.$signStr.' raw: '.$params.'&key='.$signKey);
         return $signStr;
     }
     /**
