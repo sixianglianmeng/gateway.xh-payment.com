@@ -457,7 +457,7 @@ class FfbBasePayment extends BasePayment
             if ($i > 2 ) return false;
             $htmlTxt = self::post($url,$data);
             Yii::info('FFB first jump $i：'.$i.' '.$data['pay_orderid'].' '.$htmlTxt);
-            if (!$htmlTxt) {
+            if (!$htmlTxt || strpos($htmlTxt,'cURL error')) {
                 $i++;
                 continue;
             }
