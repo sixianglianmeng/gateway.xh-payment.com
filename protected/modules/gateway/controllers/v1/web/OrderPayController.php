@@ -342,6 +342,7 @@
             //ios支付充值,使用app协议跳转
             if(substr(strtoupper($url),0,21)=='HTTPS://QR.ALIPAY.COM' && Util::isMobileDevice() && Util::isIosDevice()){
                 $url = 'alipays://platformapi/startapp?saId=10000007&clientVersion=3.7.0.0718&qrcode='.urlencode($url).'&_t='.time();
+                Yii::info("ios alipay: {$url}");
             }
             LogicApiRequestLog::inLog("redirect:".$url);
 
