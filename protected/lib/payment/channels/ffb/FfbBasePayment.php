@@ -380,6 +380,7 @@ class FfbBasePayment extends BasePayment
         $params['pay_md5sign'] = self::md5Sign($params,trim($this->paymentConfig['key']));
 
         $requestUrl = $this->paymentConfig['gateway_base_uri'].'/Payment_Dfpay_balance.html';
+        Yii::info('FBB balance post'.json_encode($params).' '.$requestUrl);
         $resTxt = self::post($requestUrl, $params);
 
         $ret = self::BALANCE_QUERY_RESULT;
