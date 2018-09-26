@@ -64,7 +64,7 @@ class LogicOrder
         $orderData['notify_ret']           = '';
         $orderData['client_ip']            = $request['client_ip'] ?? Yii::$app->request->userIP;
         $orderData['return_params']        = $request['return_params'] ?? '';
-        $orderData['status']               = Order::STATUS_NOTPAY;
+        $orderData['status']               = Order::STATUS_ACCEPTED;
         $orderData['financial_status']     = Order::FINANCIAL_STATUS_NONE;
         $orderData['notify_status']        = Order::NOTICE_STATUS_NONE;
         $orderData['created_at']           = time();
@@ -666,6 +666,8 @@ class LogicOrder
             case Order::STATUS_SETTLEMENT:
                 $tradeStatus = 'success';
                 break;
+            case Order::STATUS_ACCEPTED:
+            case Order::STATUS_CASHIER:
             case Order::STATUS_NOTPAY:
                 $tradeStatus = 'paying';
                 break;
@@ -851,7 +853,7 @@ class LogicOrder
         return $order;
     }
 
-    /*
+    /**
      * 更新订单的客户端信息,如Ip
      */
     public static function updateClientInfo(&$order)
@@ -861,6 +863,31 @@ class LogicOrder
         $clientId = PaymentRequest::getClientId();
         if ($clientId){
             $order->client_id = $clientId;
+        }
+
+        //访问到了收银台,更新订单步骤
+        if($order->status == Order::STATUS_ACCEPTED){
+            $order->status = Order::STATUS_CASHIER;
+            $bak = date("Ymd H:i:s")." {$order->client_ip}, {$clientId} 打开收银台\n";
+            $order->bak.=$bak;
+        }
+
+        $order->save();
+    }
+
+
+    /**
+     * 更新订单为已跳转到上游
+     */
+    public static function updateJumpUpstream(&$order)
+    {
+        $ip = Util::getClientIp();
+        $clientId = PaymentRequest::getClientId();
+        //即将跳转到上游,更新订单步骤
+        if($order->status == Order::STATUS_CASHIER){
+            $order->status = Order::STATUS_NOTPAY;
+            $bak = date("Ymd H:i:s")." {$ip}, {$clientId} 已跳转\n";
+            $order->bak.=$bak;
         }
 
         $order->save();
@@ -898,5 +925,18 @@ class LogicOrder
         $baseUri = SiteConfig::cacheGetContent('payment_web_base_uri');
         $baseUri = $baseUri?$baseUri:Yii::$app->request->hostInfo;
         return $baseUri . '/order/pay.html?orderNo=' . $orderNo;
+    }
+
+    /**
+     * 获取往上游跳转中间统计页面
+     *
+     * @param $orderNo
+     * @return string
+     */
+    public static function getJumpUpstreamUrl($orderNo)
+    {
+        $baseUri = SiteConfig::cacheGetContent('payment_web_base_uri');
+        $baseUri = $baseUri?$baseUri:Yii::$app->request->hostInfo;
+        return $baseUri . '/order/r?orderNo=' . $orderNo;
     }
 }

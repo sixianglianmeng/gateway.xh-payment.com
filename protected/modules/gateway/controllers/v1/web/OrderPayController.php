@@ -2,8 +2,10 @@
 
     namespace app\modules\gateway\controllers\v1\web;
 
+    use app\common\models\logic\LogicApiRequestLog;
     use app\common\models\model\BankCodes;
     use app\common\models\model\Channel;
+    use app\common\models\model\LogApiRequest;
     use app\common\models\model\Order;
     use app\common\models\model\SiteConfig;
     use app\components\Macro;
@@ -46,12 +48,30 @@
             if (!$order) {
                 return ResponseHelper::formatOutput(Macro::ERR_UNKNOWN, '订单不存在:'.$orderNo);
             }
+
+            //接口日志埋点
+            Yii::$app->params['apiRequestLog'] = [
+                'event_id'=>$orderNo,
+                'event_type'=> LogApiRequest::EVENT_TYPE_IN_RECHARGE_CASHIER,
+                'merchant_id'=>$order->merchant->id,
+                'merchant_order_no'=>$order->merchant_order_no,
+                'merchant_name'=>$order->merchant->username,
+                'channel_account_id'=>$order->channelAccount->id,
+                'channel_name'=>$order->channelAccount->channel_name,
+            ];
+            //设置了请求日志，写入日志表
+            LogicApiRequestLog::inLog("");
+
             if (in_array($order->status, [Order::STATUS_PAID,Order::STATUS_SETTLEMENT])) {
                 return ResponseHelper::formatOutput(Macro::ERR_UNKNOWN, '订单已付款');
             }
-            $validity = SiteConfig::cacheGetContent('recharge_order_validity');
-            if($validity && ($order->created_at+intval($validity))<time()){
-                return ResponseHelper::formatOutput(Macro::ERR_UNKNOWN, '订单已过期,请重新下单');
+//            $validity = SiteConfig::cacheGetContent('recharge_order_validity');
+//            if($validity && ($order->created_at+intval($validity))<time()){
+//                return ResponseHelper::formatOutput(Macro::ERR_UNKNOWN, '订单已过期,请重新下单');
+//            }
+            $ts = time();
+            if($order->expire_time>0 && $order->expire_time<=$ts){
+                return ResponseHelper::formatOutput(Macro::ERR_UNKNOWN, "订单已过期,请重新下单.");
             }
 
             $clientId = PaymentRequest::getClientId();
@@ -117,7 +137,7 @@
             //由各方法自行处理响应
             //return redirect|QrCode view|h5 call native
             //检测缓存中是否已经有此订单的下单结果,如果有直接使用,防止报重复下单错误
-            $cacheKey = "channel:cashier_url:{$order->order_no}";
+            $cacheKey = "channel:cashier_ret:{$order->order_no}";
             $hasRequest =  Yii::$app->redis->get($cacheKey);
             if($hasRequest){
                 Yii::info("get cached url, will not request sf:{$order->order_no}, {$hasRequest}");
@@ -154,6 +174,14 @@
                 return ResponseHelper::formatOutput(Macro::ERR_UNKNOWN, "无法找到支付表单渲染方式");
             }
 
+            //上游下单成功后,更新过期时间
+            if(!$order->expire_time){
+                $validity = SiteConfig::cacheGetContent('recharge_order_validity');
+                if(!$validity) $validity = 300;
+                $order->expire_time = $ts+$validity;
+                $order->save();
+            }
+
             //更新渠道订单号
             if (empty($order->channel_order_no) && !empty($ret['data']['channel_order_no'])) {
                 $order->channel_order_no = $ret['data']['channel_order_no'];
@@ -162,6 +190,7 @@
 
             switch ($ret['data']['type']) {
                 case BasePayment::RENDER_TYPE_REDIRECT:
+                    LogicOrder::updateJumpUpstream($order);
                     if (!empty($ret['data']['formHtml'])) {
                         $response = $ret['data']['formHtml'];
                     } elseif (!empty($ret['data']['url'])) {
@@ -176,7 +205,16 @@
                     $ret['order']                   = $order->toArray();
                     $ret['order']['pay_method_str'] = Channel::getPayMethodsStr($order['pay_method_code']);
 
-                    $response                       = $this->render('@app/modules/gateway/views/cashier/qr', [
+                    $view = '@app/modules/gateway/views/cashier/qr';
+                    //支付宝h5扫码拦截,二维码显示的是跳转统计地址
+                    if(in_array($order->pay_method_code,[Channel::METHOD_ALIPAY_QR,Channel::METHOD_ALIPAY_H5])
+                        && Util::isMobileDevice()
+                    ){
+                        $ret['data']['qr'] = LogicOrder::getJumpUpstreamUrl($order->order_no);
+                        $view = '@app/modules/gateway/views/cashier/alipay_h5';
+                    }
+
+                    $response                       = $this->render($view, [
                         'data' => $ret,
                     ]);
                     break;
@@ -255,6 +293,53 @@
 
             return ResponseHelper::formatOutput($ret,$lastTs.' '.time());
         }
+
+        /**
+         * 代理跳转上游支付地址
+         *
+         * 用于统计二维码扫描等,需要先将三方下单结果存入缓存
+         *
+         */
+        public function actionQrRedirect()
+        {
+            $orderNo = ControllerParameterValidator::getRequestParam($this->allParams, 'orderNo', null, Macro::CONST_PARAM_TYPE_ORDER_NO, '订单号错误');
+
+            $order = Order::findOne(['order_no' => $orderNo]);
+            if (!$order) {
+                return ResponseHelper::formatOutput(Macro::ERR_UNKNOWN, '订单不存在:'.$orderNo);
+            }
+
+            if (in_array($order->status,[Order::STATUS_PAID,Order::STATUS_SETTLEMENT])) {
+                return ResponseHelper::formatOutput(Macro::ERR_UNKNOWN, '订单已付款:'.$orderNo);
+            }
+
+            $cacheKey = "channel:cashier_ret:{$order->order_no}";
+            $ret =  Yii::$app->redis->get($cacheKey);
+            if(!$ret){
+                return ResponseHelper::formatOutput(Macro::ERR_UNKNOWN, '订单下单数据不存在');
+            }
+            $ret = json_decode($ret,true);
+
+            LogicOrder::updateJumpUpstream($order);
+
+            //接口日志埋点
+            Yii::$app->params['apiRequestLog'] = [
+                'event_id'=>$orderNo,
+                'event_type'=> LogApiRequest::EVENT_TYPE_IN_RECHARGE_REDIRECT,
+                'merchant_id'=>$order->merchant->id,
+                'merchant_order_no'=>$order->merchant_order_no,
+                'merchant_name'=>$order->merchant->username,
+                'channel_account_id'=>$order->channelAccount->id,
+                'channel_name'=>$order->channelAccount->channel_name,
+            ];
+
+            //设置了请求日志，写入日志表
+            $url = !empty($ret['data']['qr'])?$ret['data']['qr']:$ret['data']['url'];
+            LogicApiRequestLog::inLog("redirect:".$url);
+
+            return $this->redirect($url, 302);
+        }
+
 
         /**
          * 生成csrf token

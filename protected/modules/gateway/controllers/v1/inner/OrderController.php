@@ -142,6 +142,8 @@ class OrderController extends BaseInnerController
                     }
 
                     break;
+                case Order::STATUS_ACCEPTED:
+                case Order::STATUS_CASHIER:
                 case Order::STATUS_NOTPAY:
                     $msg = '订单待付款';
                     break;

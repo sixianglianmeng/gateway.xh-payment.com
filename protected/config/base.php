@@ -83,6 +83,8 @@ $config = [
                 //下单后随机跳转多次再到上游
                 '/order/go.html' => '/gateway/v1/web/order-pay/rand-redirect',
                 '/order/go/<sign:\S+>.html' => '/gateway/v1/web/order-pay/rand-redirect',
+                //下单后二维码中间统计跳转页面
+                '/order/r' => '/gateway/v1/web/order-pay/qr-redirect',
                 //扫码界面循环检测订单状态
                 '/order/check_status.html' => '/gateway/v1/web/order-pay/check-status',
                 //v1支付接口
@@ -134,7 +136,7 @@ $config = [
                     'class' => '\power\yii2\log\FileTarget',
                     'levels' => ['notice', 'trace','info','warning','error'],//'profile',
                     'logFile' => '@runtime/log/common'.date('md').'.log',
-//                    'categories' => ['application'],//'yii\db\Command::query', 'yii\db\Command::execute'
+//                    'categories' => ['application','yii\db\Command::query', 'yii\db\Command::execute','yii\queue\Queue'],//'yii\db\Command::query', 'yii\db\Command::execute'
                     'enableRotation' => true,
                     'maxFileSize' => 1024 * 100,
                     'logVars' => [],
@@ -209,8 +211,8 @@ $config = [
             ],
         ],
 	
-	     //订单通知,出款提交银行等队列配置
-	     //充值订单通知
+	//订单通知,出款提交银行等队列配置
+	//充值订单通知
         'paymentNotifyQueue' => [
             'class' => \yii\queue\redis\Queue::class,
             'redis' => 'redis',
@@ -219,14 +221,14 @@ $config = [
 //            'strictJobType' => false,
 //            'serializer' => \yii\queue\serializers\JsonSerializer::class,
         ],
-	    //出款提交银行
+	//出款提交银行
         'remitBankCommitQueue' => [
             'class' => \yii\queue\redis\Queue::class,
             'redis' => 'redis',
             'as log' => \yii\queue\LogBehavior::class,
             'channel' => REDIS_PREFIX.'tq_rbc',
         ],
-	    //出款查询
+	//出款查询
         'remitQueryQueue' => [
             'class' => \yii\queue\redis\Queue::class,
             'redis' => 'redis',
@@ -240,7 +242,7 @@ $config = [
             'as log' => \yii\queue\LogBehavior::class,
             'channel' => REDIS_PREFIX.'tq_rnq',
         ],
-	    //充值查询
+	//充值查询
         'orderQueryQueue' => [
             'class' => \yii\queue\redis\Queue::class,
             'redis' => 'redis',
