@@ -374,6 +374,27 @@ class FfbBasePayment extends BasePayment
      */
     public function balance()
     {
+        $params = [
+            'mchid'=>$this->paymentConfig['merchantId'],
+        ];
+        $params['sign'] = self::md5Sign($params,trim($this->paymentConfig['key']));
+
+        $requestUrl = $this->paymentConfig['gateway_base_uri'].'/balance.html';
+        $resTxt = self::post($requestUrl, $params);
+
+        $ret = self::BALANCE_QUERY_RESULT;
+        if (!empty($resTxt)) {
+            $res = json_decode($resTxt, true);
+            if (isset($res['status']) && strtolower($res['status'])== 'success') {
+                $ret['status']         = Macro::SUCCESS;
+                $ret['data']['balance'] = $res['balance'];
+                $ret['data']['frozen_balance'] = $res['blockedbalance'];
+            } else {
+                $ret['message'] = $res['errror_msg']??'余额查询失败';
+            }
+        }
+
+        return  $ret;
     }
 
     /**
