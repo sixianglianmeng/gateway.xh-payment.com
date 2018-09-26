@@ -189,7 +189,7 @@
             }
 
             //更新为已打开收银台
-            LogicApiRequestLog::updateCashierOpen($order);
+            LogicOrder::updateCashierOpen($order);
 
             switch ($ret['data']['type']) {
                 case BasePayment::RENDER_TYPE_REDIRECT:
