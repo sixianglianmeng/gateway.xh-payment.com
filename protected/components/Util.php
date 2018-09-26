@@ -898,6 +898,27 @@ class Util
     }
 
     /**
+     * 检测是否是苹果类型终端访问
+     * @return string
+     */
+    public static function isIosDevice()
+    {
+        // 判断手机发送的客户端标志,兼容性有待提高
+        if (isset ($_SERVER['HTTP_USER_AGENT'])) {
+            $clientkeywords = array(
+                'ios',
+                'iphone',
+                'ipod',
+                'ipad',
+            );
+            // 从HTTP_USER_AGENT中查找手机浏览器的关键字
+            if (preg_match("/(" . implode('|', $clientkeywords) . ")/i", strtolower($_SERVER['HTTP_USER_AGENT']))) {
+                return TRUE;
+            }
+        }
+    }
+
+    /**
      * 检测是否是移动类型终端访问
      * @return string
      */

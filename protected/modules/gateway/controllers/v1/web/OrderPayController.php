@@ -188,6 +188,9 @@
                 $order->save();
             }
 
+            //更新为已打开收银台
+            LogicApiRequestLog::updateCashierOpen($order);
+
             switch ($ret['data']['type']) {
                 case BasePayment::RENDER_TYPE_REDIRECT:
                     LogicOrder::updateJumpUpstream($order);
@@ -204,13 +207,14 @@
                     $ret['token'] = $this->setOrderStatusQueryCsrfToken($orderNo);
                     $ret['order']                   = $order->toArray();
                     $ret['order']['pay_method_str'] = Channel::getPayMethodsStr($order['pay_method_code']);
+                    //更新二维码为中转地址,进行统计
+                    $ret['data']['qr'] = LogicOrder::getJumpUpstreamUrl($order->order_no);
 
                     $view = '@app/modules/gateway/views/cashier/qr';
                     //支付宝h5扫码拦截,二维码显示的是跳转统计地址
                     if(in_array($order->pay_method_code,[Channel::METHOD_ALIPAY_QR,Channel::METHOD_ALIPAY_H5])
                         && Util::isMobileDevice()
                     ){
-                        $ret['data']['qr'] = LogicOrder::getJumpUpstreamUrl($order->order_no);
                         $view = '@app/modules/gateway/views/cashier/alipay_h5';
                     }
 
@@ -334,7 +338,11 @@
             ];
 
             //设置了请求日志，写入日志表
-            $url = !empty($ret['data']['qr'])?$ret['data']['qr']:$ret['data']['url'];
+            $url = !empty($ret['data']['url'])?$ret['data']['url']:$ret['data']['qr'];
+            //ios支付充值,使用app协议跳转
+            if(substr(strtoupper($url),0,21)=='HTTPS://QR.ALIPAY.COM' && Util::isMobileDevice() && Util::isIosDevice()){
+                $url = 'alipays://platformapi/startapp?saId=10000007&clientVersion=3.7.0.0718&qrcode='.urlencode($url).'&_t='.time();
+            }
             LogicApiRequestLog::inLog("redirect:".$url);
 
             return $this->redirect($url, 302);

@@ -40,6 +40,7 @@
         <li class="list-group-item d-flex justify-content-between lh-condensed">
           <?php
             $qrLinkUrl = $data['data']['qr'];
+            //二维码地址为中转地址,不需要进行ios优化
 //            if(substr(strtoupper($qrLinkUrl),0,22)=='HTTPS://QR.ALIPAY.COM'){
 //                $qrLinkUrl = 'alipays://platformapi/startapp?saId=10000007&clientVersion=3.7.0.0718&qrcode='.urlencode($qrLinkUrl).'&_t='.time();
 //            }

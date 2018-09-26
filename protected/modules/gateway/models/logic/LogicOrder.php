@@ -865,10 +865,21 @@ class LogicOrder
             $order->client_id = $clientId;
         }
 
+        $order->save();
+    }
+
+
+    /**
+     * 更新订单为已打开收银台
+     */
+    public static function updateCashierOpen(&$order)
+    {
+        $ip = Util::getClientIp();
+        $clientId = PaymentRequest::getClientId();
         //访问到了收银台,更新订单步骤
         if($order->status == Order::STATUS_ACCEPTED){
             $order->status = Order::STATUS_CASHIER;
-            $bak = date("Ymd H:i:s")." {$order->client_ip}, {$clientId} 打开收银台\n";
+            $bak = date("Ymd H:i:s")." {$ip}, {$clientId} 打开收银台\n";
             $order->bak.=$bak;
         }
 
