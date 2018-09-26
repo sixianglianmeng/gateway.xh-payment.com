@@ -518,6 +518,7 @@ class LogicRemit
         $alertCount = 5;//报警阀值
         $failCountKey = "remit:commit_fail:{$remit->channel_id}";
         $ts = time();
+        $failCount = 0;
 
         //获取上次错误时间戳
         $failTs = Yii::$app->redis->hget($failCountKey,'ts');
@@ -532,19 +533,22 @@ class LogicRemit
                 }
                 //更新计数器+1
                 Yii::$app->redis->hincrby($failCountKey,'c',1);
-
+                $failCount++;
             }
             //已经超期,更新时间戳,并将计数器写成1
             else{
                 Yii::$app->redis->hset($failCountKey,'ts',$ts);
                 Yii::$app->redis->hset($failCountKey,'c',1);
+                $failCount++;
             }
         }
         //没有过记录,写入时间戳,并将计数器写成1
         else{
             Yii::$app->redis->hset($failCountKey,'ts',$ts);
             Yii::$app->redis->hset($failCountKey,'c',1);
+            $failCount++;
         }
+        Yii::info("onBankCommitFail {$failCount}. 订单号:{$remit->order_no},原因:{$remit->fail_msg}");
 
         //失败提醒
         Util::sendTelegramMessage("出款提交银行失败,请手工退款.订单号:{$remit->order_no},金额:{$remit->amount},商户:{$remit->merchant_account},原因:{$remit->fail_msg}");
