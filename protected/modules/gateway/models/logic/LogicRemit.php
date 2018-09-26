@@ -399,6 +399,11 @@ class LogicRemit
             'channel_account_id'=>$remit->channel_account_id,
             'channel_name'=>$remit->channelAccount->channel_name,
         ];
+
+        if(!$force && !self::canCommitToBank()){
+            throw new OperationFailureException("系统目前关闭了自动提交,{$remit->order_no}");
+        }
+
         //账户未扣款的先扣款
         if($remit->status == Remit::STATUS_NONE){
             $remit = self::deduct($remit);
@@ -523,9 +528,11 @@ class LogicRemit
         //获取上次错误时间戳
         $failTs = Yii::$app->redis->hget($failCountKey,'ts');
         if($failTs){
+            Yii::info("onBankCommitFail {$failCount},{$remit->order_no},failTs:{$failTs},ts:{$ts}");
             //在时间周期内,更新计数器
             if($ts - $failTs <$interval){
                 $failCount = Yii::$app->redis->hget($failCountKey,'c');
+                Yii::info("onBankCommitFail {$failCount},{$remit->order_no},failTs:{$failTs},ts:{$ts},failCount:{$failCount}");
                 //超过阀值,停用自动提交并报警
                 if($failCount && $failCount>=$alertCount){
                     self::stopBankCommit();
