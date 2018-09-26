@@ -378,7 +378,7 @@ class FfbBasePayment extends BasePayment
             'mchid'=>$this->paymentConfig['merchantId'],
         ];
 
-        $params['pay_md5sign'] = md5('mchid='.$this->paymentConfig['merchantId']);
+        $params['sign'] = md5('mchid='.$this->paymentConfig['merchantId']);
 
         $requestUrl = $this->paymentConfig['gateway_base_uri'].'/Payment_Dfpay_balance.html';
         Yii::info('FBB balance post'.json_encode($params).' '.$requestUrl);
