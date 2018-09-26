@@ -379,7 +379,7 @@ class FfbBasePayment extends BasePayment
         ];
         $params['sign'] = self::md5Sign($params,trim($this->paymentConfig['key']));
 
-        $requestUrl = $this->paymentConfig['gateway_base_uri'].'/balance.html';
+        $requestUrl = $this->paymentConfig['gateway_base_uri'].'/Payment_Dfpay_balance.html';
         $resTxt = self::post($requestUrl, $params);
 
         $ret = self::BALANCE_QUERY_RESULT;
