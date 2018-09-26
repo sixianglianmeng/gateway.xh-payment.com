@@ -390,7 +390,7 @@ class FfbBasePayment extends BasePayment
                 $ret['data']['balance'] = $res['balance'];
                 $ret['data']['frozen_balance'] = $res['blockedbalance'];
             } else {
-                $ret['message'] = $res['errror_msg']??'余额查询失败';
+                $ret['message'] = $res['errror_msg']??'余额查询失败('.json_encode(json_decode($resTxt,true),JSON_UNESCAPED_UNICODE).')';
             }
         }
 
