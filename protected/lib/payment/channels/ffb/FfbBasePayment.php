@@ -377,16 +377,8 @@ class FfbBasePayment extends BasePayment
         $params = [
             'mchid'=>$this->paymentConfig['merchantId'],
         ];
-        if (is_array($params)) {
-            $a      = $params;
-            $singString= array();
-            foreach ($a as $key => $value) {
-                $singString[] = "$key=$value";
-            }
-            sort($singString,SORT_STRING);
-            $singString = implode('&', $singString);
-        }
-        $params['pay_md5sign'] = md5($singString);
+
+        $params['pay_md5sign'] = md5('mchid='.$this->paymentConfig['merchantId']);
 
         $requestUrl = $this->paymentConfig['gateway_base_uri'].'/Payment_Dfpay_balance.html';
         Yii::info('FBB balance post'.json_encode($params).' '.$requestUrl);
