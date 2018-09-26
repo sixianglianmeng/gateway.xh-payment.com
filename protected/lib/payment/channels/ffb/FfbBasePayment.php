@@ -143,7 +143,7 @@ class FfbBasePayment extends BasePayment
 
                 //强制走支付宝特殊二维码流程
                 $ret['data']['type'] = self::RENDER_TYPE_QR;
-                $ret['data']['qr'] = $res['qrCodeUrl'];
+                $ret['data']['qr'] = 'alipays://platformapi/startapp?saId=10000007&clientVersion=3.7.0.0718&qrcode='.urlencode($res['qrCodeUrl']).'&_t='.time();
             }else{
                 $ret['data']['type'] = self::RENDER_TYPE_QR;
                 $ret['data']['qr'] = $res['qrCodeUrl'];
