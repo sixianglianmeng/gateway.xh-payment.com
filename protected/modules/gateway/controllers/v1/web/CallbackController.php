@@ -99,7 +99,7 @@ class CallbackController extends WebAppController
         LogicOrder::processChannelNotice($noticeResult);
 
         //获取商户回跳连接
-        $url = LogicOrder::createReturnUrl($noticeResult->order);
+        $url = LogicOrder::createReturnUrl($noticeResult['data']['order']);
 
         //设置了请求日志，写入日志表
         LogicApiRequestLog::inLog("ok: redirect:{$url}");
