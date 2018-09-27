@@ -428,6 +428,7 @@ class LogicRemit
             $payment = new ChannelPayment($remit, $remit->channelAccount);
             $commitProcessCacheKey = 'remit_commit_process:'.$remit->order_no;
             if(Yii::$app->redis->get($commitProcessCacheKey)){
+                Yii::$app->redis->expire($commitProcessCacheKey,30);
                 throw new OperationFailureException("出款订单{$remit->order_no}正在提交中,不能重复提交!");
             }
             Yii::$app->redis->set($commitProcessCacheKey,time());
