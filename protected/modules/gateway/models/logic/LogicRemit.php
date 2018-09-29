@@ -486,7 +486,7 @@ class LogicRemit
                     $ret['message'] = '网络超时错误:'.$ret['message'];
                 }
                 $remit->fail_msg = '银行提交失败:'.($ret['message']??'上游无返回');
-//                Util::sendTelegramMessage("出款提交银行失败,请手工退款.订单号:{$remit->order_no},金额:{$remit->amount},商户:{$remit->merchant_account},原因:{$remit->fail_msg}");
+                Util::sendTelegramMessage("出款提交银行失败,请手工退款.订单号:{$remit->order_no},金额:{$remit->amount},商户:{$remit->merchant_account},原因:{$remit->fail_msg}");
 //
 //                //速付发送失败信息到群确认
 //                if($remit->channel_id == 10015){
@@ -1141,8 +1141,8 @@ class LogicRemit
             //发送审核提醒
             else{
                 try{
-                    Util::sendTelegramMessage("有出款需要审核,订单号:{$remit->order_no},金额:{$remit->amount},商户:{$remit->merchant_account}");
-                    //.\n\nremit autoCheck type:{$remit->type},manualFastQuota:{$manualFastQuota},allow_manual_fast_remit:{$remit->userPaymentInfo->allow_manual_fast_remit},apiFastQuota:{$apiFastQuota},allow_api_fast_remit:{$remit->userPaymentInfo->allow_api_fast_remit}"
+                    $chatId = SiteConfig::cacheGetContent('sys_financial_notice_telegram_chatid');
+                    Util::sendTelegramMessage("有出款需要审核,订单号:{$remit->order_no},金额:{$remit->amount},商户:{$remit->merchant_account}",$chatId,false);
                 }catch (\Exception $e){
 
                 }

@@ -18,7 +18,7 @@ class LogicApiRequestLog
      *
      * @param array $logResponse 响应数据
      */
-    public static function inLog($logResponse)
+    public static function inLog($logResponse, $force=false)
     {
         //设置了请求日志，写入日志表
         if(!empty(Yii::$app->params['apiRequestLog'])){
@@ -26,16 +26,18 @@ class LogicApiRequestLog
             $logData['event_type'] = $logData['event_type']??'event_type';
             $logData['event_id'] = $logData['event_id']??'event_id';
             $logCheckKey = 'apiRequestLogWrited'.$logData['event_type'].$logData['event_id'];
-            if(!empty(Yii::$app->params[$logCheckKey])){
+            if(!$force && !empty(Yii::$app->params[$logCheckKey])){
                 return true;
             }
 
             Yii::$app->params[$logCheckKey] = 1;
-
+            if(isset($logData['post_data']) && !is_string($logData['post_data'])){
+                $logData['post_data'] = Util::json_encode($logData['post_data']);
+            }
             $logData['request_url'] = Yii::$app->request->hostInfo.Yii::$app->request->getUrl();
             $logData['request_method'] = Yii::$app->request->method=='GET'?1:2;
-            $logData['post_data'] = json_encode(Yii::$app->getRequest()->getBodyParams(),JSON_UNESCAPED_UNICODE);
-            $logData['response_data'] = json_encode($logResponse,JSON_UNESCAPED_UNICODE);
+            $logData['post_data'] = $logData['post_data']??Util::json_encode(Yii::$app->getRequest()->getBodyParams());
+            $logData['response_data'] = Util::json_encode($logResponse);
             $logData['http_status'] = Yii::$app->response->statusCode;
             $logData['remote_ip'] = Util::getClientIp();
             $logData['referer'] = Yii::$app->request->referrer??'';

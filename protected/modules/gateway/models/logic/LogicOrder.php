@@ -307,7 +307,7 @@ class LogicOrder
             && bccomp($order->amount, $noticeResult['data']['amount'], 2)!==1
         ){
             self::paySuccess($order,$noticeResult['data']['amount'],$noticeResult['data']['channel_order_no']
-                ,0,'','', $noticeResult['data']['final_channel_order_no']??'');
+                ,'','',$noticeResult['data']['final_channel_order_no']??'');
               //不立即通知
 //            if($order->notify_status != Order::NOTICE_STATUS_SUCCESS){
 //                self::notify($order);
@@ -359,7 +359,7 @@ class LogicOrder
      * @param String $channelOrderNo 第三方流水号
      * @param String $finalChannelOrderNo 最终的渠道流水号
      */
-    static public function paySuccess(Order &$order,$paidAmount,$channelOrderNo, $opUid=0, $opUsername='',$bak='',$finalChannelOrderNo = ''){
+    static public function paySuccess(Order &$order,$paidAmount,$channelOrderNo, $opUsername='',$bak='',$finalChannelOrderNo = ''){
         Yii::info([__FUNCTION__.' '.$order->order_no.','.$paidAmount.','.$channelOrderNo]);
         if(
             $order->status != Order::STATUS_PAID
@@ -368,7 +368,7 @@ class LogicOrder
             $db = Yii::$app->db;
             $transaction = $db->beginTransaction();
             try {
-
+                $rawBak = $bak;
                 //更改订单状态
                 $order->paid_amount = $paidAmount;
                 //实际付款金额小于于订单金额
@@ -378,21 +378,23 @@ class LogicOrder
                 }
                 //实际金额大于订单金额
                 elseif(bccomp($order->amount, $order->paid_amount, 2)===-1){
-                    $bak.=date('Ymd H:i:s')." 更新订单金额：付款金额{$order->paid_amount}大于订单金额{$order->amount}\n";
+                    $rawBak.=date('Ymd H:i:s')." 更新订单金额：付款金额{$order->paid_amount}大于订单金额{$order->amount}\n";
                 }
                 Yii::info([$order->amount,$order->paid_amount,bccomp($order->amount, $order->paid_amount, 2)]);
                 if($channelOrderNo && !$order->channel_order_no) $order->channel_order_no = $channelOrderNo;
                 if($finalChannelOrderNo && !$order->final_channel_order_no) $order->final_channel_order_no = $finalChannelOrderNo;
                 $order->status = Order::STATUS_PAID;
                 $order->paid_at = time();
-                $bak.=date('Ymd H:i:s');
+                $rawBak.=date('Ymd H:i:s');
                 if($opUsername){
-                    $bak.=" {$opUsername}设置为订单状态成功\n";
+                    $rawBak.=" {$opUsername}设置为订单状态成功\n";
                 }else{
-                    $bak.="订单回调成功\n";
+                    $rawBak.="订单回调成功\n";
                 }
 
-                if($bak) $order->bak.=$bak;
+                if($bak) $rawBak.=$bak;
+                if($rawBak) $order->bak.=$rawBak;
+
                 $order->save();
 
                 //更新待结算金额

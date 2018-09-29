@@ -229,7 +229,9 @@ class OrderController extends BaseInnerController
         $orders = Order::findAll($filter);
         foreach ($orders as $order){
             $bak = $opOrderList[$order->order_no]['bak']??'';
-            LogicOrder::paySuccess($order,$order->amount,$bak,$this->allParams['op_uid'],$this->allParams['op_username']);
+            $channel_order = $opOrderList[$order->order_no]['channel_order']??'';
+            $final_channel_order = $opOrderList[$order->order_no]['final_channel_order']??'';
+            LogicOrder::paySuccess($order,$order->amount,$channel_order,$this->allParams['op_username'], $bak, $final_channel_order);
             LogicOrder::notify($order);
         }
 

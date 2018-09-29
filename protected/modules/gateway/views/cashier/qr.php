@@ -83,7 +83,7 @@
             // $('#goPay').click();
             //window.location = qrString;
             //设置有效期
-            expire = 300;
+            if(!expire) expire = 300;
         }
 
         let expireInterval = null;

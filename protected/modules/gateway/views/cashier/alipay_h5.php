@@ -23,14 +23,12 @@
         <li class="list-group-item d-flex justify-content-between lh-condensed">
           <div>
             <h6 class="my-0">订单号</h6>
-            <!--                        <small class="text-muted">Brief description</small>-->
           </div>
           <span class="text-muted"><span><?php echo $data['order']['order_no']; ?></span>
         </li>
         <li class="list-group-item d-flex justify-content-between lh-condensed">
           <div>
             <h6 class="my-0">金额</h6>
-            <!--                        <small class="text-muted">Brief description</small>-->
           </div>
           <span class="text-muted">￥<span><?php echo $data['order']['amount']; ?>元</span>
         </li>
@@ -48,21 +46,21 @@
         <a id="btn-go-pay" href="<?php  echo $qrLinkUrl; ?>" class="btn btn-success btn-lg btn-block" style="display: none">不用扫码,点击支付</a>
         </li>
         <li class="list-group-item d-flex justify-content-between lh-condensed">
-          <div class="alert alert-warning" role="alert">二维码只能使用一次,请不要多次支付</div>
+          <div class="alert alert-warning btn btn-lg btn-block" role="alert">二维码只能使用一次,请不要多次支付</div>
         </li>
       </ul>
     </div>
     <div class="col-md-2"></div>
   </div>
 
-  <footer class="my-5 pt-5 text-muted text-center text-small">
-    <p class="mb-1">&copy; <?php echo date('Y') ?> <a href="<?php echo $data['data']['qr']; ?>" id="qr_link"
-                                                      target="_blank" style=""></a></p>
+  <footer class="text-muted text-center text-small">
+    <p class="mb-1">&copy; <?php echo date('Y') ?></p>
   </footer>
 </div>
 <style>
 .list-group-item{
   border: none !important;
+  padding: 5px 5px;
 }
 </style>
 <script src="/assets/js/jr-qrcode.js"></script>
@@ -114,6 +112,7 @@
                     if (expireInterval) clearInterval(expireInterval)
                     $('.pay-btn').removeClass('btn-primary').addClass('btn-success').text('付款已成功');
                     $("#qrcode canvas").css("opacity", "0.02")
+                    $('#btn-go-pay').hide()
                 }
             });
         }, 15000)
@@ -126,6 +125,7 @@
             // $("#qrcode canvas").css("opacity","0.02")
             if (expireInterval) clearInterval(expireInterval);
             $('#qrcode-img').attr('src', '/assets/imgs/qr_expired.png');
+            $('#btn-go-pay').hide()
         }
 
         if (expire > 0) {

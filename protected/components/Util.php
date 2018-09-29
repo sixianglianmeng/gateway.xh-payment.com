@@ -391,10 +391,10 @@ class Util
 
                     if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6|FILTER_FLAG_IPV4) === false) {// FILTER_FLAG_NO_PRIV_RANGE|FILTER_FLAG_NO_RES_RANGE
 //                        $ip = '';
-                        Yii::info("get error ip: ".$ip." ".Util::json_encode($_SERVER));
+                        //Yii::info("get error ip: ".$ip." ".Util::json_encode($_SERVER));
                     }
                     if(strlen($ip)>30){
-                        Yii::info("get ipv6: ".$ip." ".Util::json_encode($_SERVER));
+                        //Yii::info("get ipv6: ".$ip." ".Util::json_encode($_SERVER));
                     }
                 }
             }
@@ -1157,7 +1157,7 @@ class Util
 
     /**
      * json序列化数据
-     *
+     * 
      * @param $data
      * @return string
      */
