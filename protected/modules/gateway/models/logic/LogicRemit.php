@@ -522,8 +522,18 @@ class LogicRemit
      * @param Remit $remit
      */
     static public function onBankCommitFail(Remit $remit){
-        $interval = 30;//计数周期,秒
-        $alertCount = 100;//报警阀值
+
+        $alertCount = 10;//报警阀值
+        $interval = 5;//计数周期,秒
+        $rule = SiteConfig::cacheGetContent('remit_fail_auto_stop_commit_rule');
+        if($rule){
+            $ruleArr = explode($rule,'/');
+            if(count($ruleArr)==2 && $ruleArr[0] && $ruleArr[1]){
+                $alertCount = intval($ruleArr[0]);
+                $interval = intval($ruleArr[1]);
+            }
+        }
+
         $failCountKey = "remit:commit_fail:{$remit->channel_id}";
         $ts = time();
         $failCount = 0;
