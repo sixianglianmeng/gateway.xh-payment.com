@@ -574,7 +574,7 @@ class LogicRemit
     static public function stopBankCommit(){
         $key = 'enable_remit_commit';
         $config = SiteConfig::findOne(['title'=>$key]);
-        $config->setContent('1');
+        $config->setContent('0');
         $config->save();
     }
 
