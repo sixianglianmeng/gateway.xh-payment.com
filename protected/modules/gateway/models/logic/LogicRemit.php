@@ -523,7 +523,7 @@ class LogicRemit
      */
     static public function onBankCommitFail(Remit $remit){
         $interval = 30;//计数周期,秒
-        $alertCount = 5;//报警阀值
+        $alertCount = 100;//报警阀值
         $failCountKey = "remit:commit_fail:{$remit->channel_id}";
         $ts = time();
         $failCount = 0;
