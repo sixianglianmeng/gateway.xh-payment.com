@@ -401,7 +401,8 @@ class LogicRemit
         ];
 
         if(!$force && !self::canCommitToBank()){
-            throw new OperationFailureException("系统目前关闭了自动提交,{$remit->order_no}");
+//            throw new OperationFailureException("系统目前关闭了自动提交,{$remit->order_no}");
+            return false;
         }
 
         //账户未扣款的先扣款
