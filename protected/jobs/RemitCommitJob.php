@@ -23,7 +23,7 @@ class RemitCommitJob extends BaseObject implements \yii\queue\JobInterface
             return true;
         }
 
-        $remit = LogicRemit::commitToBank($remit);
-        LogicRemit::updateToRedis($remit);
+        $ret = LogicRemit::commitToBank($remit);
+        if($ret) LogicRemit::updateToRedis($remit);
     }
 }
