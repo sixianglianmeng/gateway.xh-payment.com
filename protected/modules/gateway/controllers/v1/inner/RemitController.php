@@ -7,6 +7,7 @@ use app\common\models\model\SiteConfig;
 use app\common\models\model\User;
 use app\components\Macro;
 use app\components\Util;
+use app\jobs\RemitCommitJob;
 use app\jobs\RemitQueryJob;
 use app\lib\helpers\ControllerParameterValidator;
 use app\lib\helpers\ResponseHelper;
@@ -403,10 +404,24 @@ class RemitController extends BaseInnerController
 
         $filter['order_no'] = array_keys($opOrderList);
         $orders = Remit::findAll($filter);
+        $orderAmount = count($orders);
         foreach ($orders as $order){
-            $bak = $opOrderList[$order->order_no]['bak']??'';
             LogicRemit::setChecked($order,$this->allParams['op_uid'],$this->allParams['op_username'],"重置为已审核并提交.",true);
-            LogicRemit::commitToBank($order,true);
+            //低于10个,实时提交
+            if($orderAmount<=10){
+                Yii::info("actionReSubmitToBank realtime {$order->order_no}");
+                LogicRemit::commitToBank($order,true);
+            }
+            //高于10个,队列提交
+            else{
+                Yii::info("actionReSubmitToBank queue {$order->order_no}");
+                $job = new RemitCommitJob([
+                    'orderNo'=>$order->order_no,
+                    'force'=>true,
+                ]);
+                Yii::$app->remitBankCommitQueue->push($job);//->delay(10)
+            }
+
         }
 
         return ResponseHelper::formatOutput(Macro::SUCCESS);

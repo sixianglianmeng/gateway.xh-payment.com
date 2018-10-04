@@ -100,6 +100,7 @@ class RemitController extends BaseConsoleCommand
 
                     $job = new RemitCommitJob([
                         'orderNo'=>$remit['order_no'],
+                        'force'=>false,
                     ]);
                     Yii::$app->remitBankCommitQueue->push($job);//->delay(10)
                 }

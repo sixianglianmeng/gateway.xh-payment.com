@@ -414,6 +414,7 @@ class LogicRemit
             Yii::info('commit_to_bank_times '.$remit->order_no.' '.$remit->commit_to_bank_times);
             //非强制提交情况下,最大出款提交次数检测
             if(!$force && $remit->commit_to_bank_times>=self::MAX_TIME_COMMIT_TO_BANK){
+                Yii::info("max than commit_to_bank_times: {$remit->order_no}, now:$remit->commit_to_bank_times, setting: ".self::MAX_TIME_COMMIT_TO_BANK);
                 $remit->status = Remit::STATUS_NOT_REFUND;
                 $remit->bank_status =  Remit::BANK_STATUS_FAIL;
                 $remit->bank_ret = $remit->bank_ret.date('Ymd H:i:s')." 超过银行最大提交次数:".self::MAX_TIME_COMMIT_TO_BANK."\n";
@@ -431,8 +432,11 @@ class LogicRemit
             $lastCommitTs = Yii::$app->redis->get($commitProcessCacheKey);
             if($lastCommitTs){
                 Yii::$app->redis->expire($commitProcessCacheKey,30);
-                throw new OperationFailureException("出款订单{$remit->order_no}正在提交中,不能重复提交,上次提交时间:".date("Ymd H:i:s",$lastCommitTs));
+                Yii::info("出款订单{$remit->order_no}正在提交中,不能重复提交,上次提交时间:".date("Ymd H:i:s",$lastCommitTs));
+
+                return $remit;
             }
+
             Yii::$app->redis->set($commitProcessCacheKey,time());
             try{
                 $ret = $payment->remit();

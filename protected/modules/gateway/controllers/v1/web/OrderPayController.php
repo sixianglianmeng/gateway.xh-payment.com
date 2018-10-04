@@ -162,7 +162,10 @@
                 Yii::error("订单生成失败. 订单号:{$order->order_no}, 支付方式:{$order->pay_method_code}, 通道:{$order->channelAccount->channel_name}, 上游返回:{$ret['message']}");
                 LogicOrder::payFail($order,"上游订单生成失败:{$ret['message']}");
                 if($order->channel_id==10015 && SiteConfig::cacheGetContent('enable_notify_channel')){
-                    Util::sendTelegramMessage("充值订单生成失败,请排查\n订单号:{$order->order_no}\n支付方式:{$order->pay_method_code}\n商户号:{$order->channel_merchant_id}\n金额:{$order->amount}\n上游返回:{$ret['message']}",'-278804726',false);
+                    if(strpos($ret['message'],'重复')===false && strpos($ret['message'],'存在')===false){
+                        $telMsg = "充值订单生成失败,请排查\n订单号:{$order->order_no}\n支付方式:{$order->pay_method_code}\n商户号:{$order->channel_merchant_id}\n金额:{$order->amount}\n上游返回:{$ret['message']}";
+                        Util::sendTelegramMessage($telMsg,'-278804726',false);
+                    }
                 }
                 return ResponseHelper::formatOutput(Macro::ERR_UNKNOWN, "{$order->order_no}上游订单生成失败");
             }

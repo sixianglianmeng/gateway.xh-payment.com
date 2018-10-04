@@ -99,16 +99,24 @@ class LogicOrder
         //把自己也存进去
         $parentConfigModels[] = $rechargeMethod;
         $parentConfigs = [];
+        //代理下一级商户费率
+        $lastParentFee = $orderData['fee_rate'];
         foreach ($parentConfigModels as $pc){
             //跳过未设置费率或小于自身费率或小于渠道费率的上级
-            if($pc->fee_rate <= 0
+            if(
+                //未设置
+                $pc->fee_rate <= 0
+                //小于平台费率
                 || $pc->fee_rate < $orderData['plat_fee_rate']
+                //小于商户费率
                 || $pc->fee_rate > $orderData['fee_rate']
-
+                //小于下一级商户费率
+//                || $pc->fee_rate < $lastChildFee
             ){
-                Yii::info(['parent fee is less',$orderData['order_no'],$orderData['merchant_account'],$pc->merchant_account,'plat_fee_rate',$orderData['plat_fee_rate'],'pc fee_rate ',$pc->fee_rate,'order fee',$orderData['fee_rate']]);
-                continue;
+                Yii::error(['父级代理费率过低',$orderData['order_no'],'商户:'.$orderData['merchant_account'],'上级:'.$pc->merchant_account,'平台费率:'.$orderData['plat_fee_rate'],'上级费率:'.$pc->fee_rate,'上一级费率:'.$lastParentFee,'商户费率:'.$orderData['fee_rate']]);
+                throw new InValidRequestException("商户费率配置错误: ".$orderData['order_no']);
             }
+            $lastParentFee = $pc->fee_rate;
             $parentConfigs[] = [
                 'config_id'=>$pc->id,
                 'fee_rate'=>$pc->fee_rate,

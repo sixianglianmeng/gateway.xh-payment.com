@@ -12,6 +12,7 @@ use yii\base\BaseObject;
 class RemitCommitJob extends BaseObject implements \yii\queue\JobInterface
 {
     public $orderNo;
+    public $force = false;
 
     public function execute($queue)
     {
@@ -23,7 +24,7 @@ class RemitCommitJob extends BaseObject implements \yii\queue\JobInterface
             return true;
         }
 
-        $ret = LogicRemit::commitToBank($remit);
+        $ret = LogicRemit::commitToBank($remit, boolval($this->force));
         if($ret) LogicRemit::updateToRedis($remit);
     }
 }
