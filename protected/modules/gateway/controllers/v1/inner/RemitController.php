@@ -194,7 +194,7 @@ class RemitController extends BaseInnerController
         $orderAmount = count($remits);
         foreach ($remits as $remit){
             //低于10个,实时提交
-            if($orderAmount<=2){
+            if($orderAmount<=10){
                 Yii::info('remit status check realtime: '.$remit->order_no);
                 LogicRemit::queryChannelRemitStatus($remit);
             }

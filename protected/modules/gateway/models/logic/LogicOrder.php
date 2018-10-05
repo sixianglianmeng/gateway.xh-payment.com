@@ -824,7 +824,7 @@ class LogicOrder
      * 到第三方查询订单状态
      */
     static public function queryChannelOrderStatus(Order &$order){
-        Yii::info([(new \ReflectionClass(__CLASS__))->getShortName().':'.__FUNCTION__,$order->order_no]);
+        Yii::info(__FUNCTION__." :".$order->order_no);
 
         $paymentChannelAccount = $order->channelAccount;
 

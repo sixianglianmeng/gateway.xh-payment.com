@@ -6,6 +6,7 @@ use app\common\models\model\Order;
 use app\common\models\model\User;
 use app\components\Macro;
 use app\components\Util;
+use app\jobs\OrderQueryJob;
 use app\lib\helpers\ControllerParameterValidator;
 use app\lib\helpers\ResponseHelper;
 use app\lib\payment\ChannelPayment;
@@ -95,9 +96,22 @@ class OrderController extends BaseInnerController
             $query->andWhere(['order_no'=>$orderNoList]);
         }
         $orders = $query->all();
-
+        $orderAmount = count($orders);
         foreach ($orders as $order){
-            LogicOrder::queryChannelOrderStatus($order);
+
+            //低于10个,实时提交
+            if($orderAmount<=10){
+                Yii::info('order status check realtime: '.$order->order_no);
+                LogicOrder::queryChannelOrderStatus($order);
+            }
+            //多于10,加入队列
+            else{
+                Yii::info('order status check by queue: '.$order->order_no);
+                $job = new OrderQueryJob([
+                    'orderNo'=>$order->order_no,
+                ]);
+                Yii::$app->orderQueryQueue->push($job);
+            }
         }
 
         return ResponseHelper::formatOutput(Macro::SUCCESS,'');

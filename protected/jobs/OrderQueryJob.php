@@ -10,8 +10,6 @@ use yii\queue\RetryableJobInterface;
 class OrderQueryJob extends BaseObject implements RetryableJobInterface
 {
     public $orderNo;
-    public $url;
-    public $data;
 
     public function execute($queue)
     {
@@ -19,7 +17,7 @@ class OrderQueryJob extends BaseObject implements RetryableJobInterface
 
         $order = Order::findOne(['order_no'=>$this->orderNo]);
         if(!$order){
-            Yii::warning('JobOrderQuery error, empty remit:'.$this->orderNo);
+            Yii::warning('JobOrderQuery error, empty order:'.$this->orderNo);
             return true;
         }
 

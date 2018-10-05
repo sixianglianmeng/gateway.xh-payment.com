@@ -593,6 +593,13 @@ class LogicRemit
         $config->save();
     }
 
+    /**
+     * 到三方查询出款订单状态并处理业务
+     *
+     * @param Remit $remit
+     * @return Remit|mixed
+     * @throws OperationFailureException
+     */
     static public function queryChannelRemitStatus(Remit &$remit){
         Yii::info(__CLASS__ . ':' . __FUNCTION__ . ' ' . $remit->order_no);
         if($remit->status == Remit::STATUS_SUCCESS

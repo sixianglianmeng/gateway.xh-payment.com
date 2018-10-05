@@ -56,7 +56,15 @@
       "exec_mode": "fork",
       "max_memory_restart": "256M"
     },
-
+    {
+      "name": "order-query-queue",
+      "args": "order-query-queue/listen --verbose",
+      "script": "./protected/yii",
+      "exec_interpreter": "php",
+      "exec_mode": "fork",
+      "max_memory_restart": "256M",
+      "instances": 5
+    },
     {
       "name": "payment-notify-queue",
       "args": "payment-notify-queue/listen --verbose",
