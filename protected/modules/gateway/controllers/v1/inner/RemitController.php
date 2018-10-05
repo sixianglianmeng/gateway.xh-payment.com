@@ -191,14 +191,21 @@ class RemitController extends BaseInnerController
             $filter['order_no'] = $orderNoList;
         }
         $remits = Remit::findAll($filter);
+        $orderAmount = count($remits);
         foreach ($remits as $remit){
-            Yii::info('remit status check: '.$remit->order_no);
-
-//            $job = new RemitQueryJob([
-//                'orderNo'=>$remit->order_no,
-//            ]);
-//            Yii::$app->remitQueryQueue->push($job);
-            LogicRemit::queryChannelRemitStatus($remit);
+            //低于10个,实时提交
+            if($orderAmount<=2){
+                Yii::info('remit status check realtime: '.$remit->order_no);
+                LogicRemit::queryChannelRemitStatus($remit);
+            }
+            //多于10,加入队列
+            else{
+                Yii::info('remit status check by queue: '.$remit->order_no);
+                $job = new RemitQueryJob([
+                    'orderNo'=>$remit->order_no,
+                ]);
+                Yii::$app->remitQueryQueue->push($job);
+            }
         }
 
         return ResponseHelper::formatOutput(Macro::SUCCESS,'');
