@@ -114,7 +114,7 @@ class LogicOrder
 //                || $pc->fee_rate < $lastChildFee
             ){
                 Yii::error(['父级代理费率过低',$orderData['order_no'],'商户:'.$orderData['merchant_account'],'上级:'.$pc->merchant_account,'平台费率:'.$orderData['plat_fee_rate'],'上级费率:'.$pc->fee_rate,'上一级费率:'.$lastParentFee,'商户费率:'.$orderData['fee_rate']]);
-                throw new InValidRequestException("商户费率配置错误: ".$orderData['order_no']);
+                throw new OperationFailureException("商户费率配置错误: ".$orderData['order_no']);
             }
             $lastParentFee = $pc->fee_rate;
             $parentConfigs[] = [
@@ -137,7 +137,7 @@ class LogicOrder
 
             if($topestPrent['fee_rate']<$orderData['plat_fee_rate']){
                 Yii::error("商户费率配置错误,小于渠道最低费率: 顶级商户ID:{$topestPrent['merchant_id']},商户渠道账户ID:{$topestPrent['channel_account_id']},商户费率:{$topestPrent['fee_rate']},渠道名:{$rechargeMethod->channel_account_name},渠道费率:{$orderData['plat_fee_rate']}");
-                throw new InValidRequestException("商户费率配置错误,小于渠道最低费率!");
+                throw new OperationFailureException("商户费率配置错误,小于渠道最低费率!");
             }
         }
         //没有上级,平台利润为商户-渠道
