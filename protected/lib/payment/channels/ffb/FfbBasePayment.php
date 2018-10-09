@@ -132,37 +132,37 @@ class FfbBasePayment extends BasePayment
         $requestUrl = $this->paymentConfig['gateway_base_uri']."/Pay_Index.html";
 
 //        jump模式
-        $res['qrCodeUrl'] = $this->parseHtml($requestUrl,$params);
-        $ret = self::RECHARGE_WEBBANK_RESULT;
-        if ($res['qrCodeUrl']){
-            $ret['status'] = Macro::SUCCESS;
-            if(Util::isMobileDevice() && strtolower(substr($res['qrCodeUrl'],0,4)) == 'http'){
-
-//                $ret['data']['type'] = self::RENDER_TYPE_REDIRECT;
-//                $ret['data']['url'] = 'alipays://platformapi/startapp?saId=10000007&clientVersion=3.7.0.0718&qrcode='.urlencode($res['qrCodeUrl']).'&_t='.time();
-
-                //强制走支付宝特殊二维码流程
-                $ret['data']['type'] = self::RENDER_TYPE_QR;
-//                $ret['data']['qr'] = 'alipays://platformapi/startapp?saId=10000007&clientVersion=3.7.0.0718&qrcode='.urlencode($res['qrCodeUrl']).'&_t='.time();
-                $ret['data']['qr'] = $res['qrCodeUrl'];
-            }else{
-                $ret['data']['type'] = self::RENDER_TYPE_QR;
-                $ret['data']['qr'] = $res['qrCodeUrl'];
-            }
-        }else{
-            $ret['message'] = $res['msg']??'付款提交失败';
-        }
-        Yii::info("FFB jump alipay: ".json_encode($ret));
-        //form模式
-//        $getUrl = $requestUrl.'?'.http_build_query($params);
-//        $form = self::buildForm($params, $requestUrl);
+//        $res['qrCodeUrl'] = $this->parseHtml($requestUrl,$params);
 //        $ret = self::RECHARGE_WEBBANK_RESULT;
-//        $ret['status'] = Macro::SUCCESS;
-//        $ret['data']['type'] = self::RENDER_TYPE_REDIRECT;
-//        $ret['data']['url'] = $getUrl;
-//        $ret['data']['formHtml'] = $form;
+//        if ($res['qrCodeUrl']){
+//            $ret['status'] = Macro::SUCCESS;
+//            if(Util::isMobileDevice() && strtolower(substr($res['qrCodeUrl'],0,4)) == 'http'){
 //
-//        Yii::info("FFB from alipay: ".json_encode($ret));
+////                $ret['data']['type'] = self::RENDER_TYPE_REDIRECT;
+////                $ret['data']['url'] = 'alipays://platformapi/startapp?saId=10000007&clientVersion=3.7.0.0718&qrcode='.urlencode($res['qrCodeUrl']).'&_t='.time();
+//
+//                //强制走支付宝特殊二维码流程
+//                $ret['data']['type'] = self::RENDER_TYPE_QR;
+////                $ret['data']['qr'] = 'alipays://platformapi/startapp?saId=10000007&clientVersion=3.7.0.0718&qrcode='.urlencode($res['qrCodeUrl']).'&_t='.time();
+//                $ret['data']['qr'] = $res['qrCodeUrl'];
+//            }else{
+//                $ret['data']['type'] = self::RENDER_TYPE_QR;
+//                $ret['data']['qr'] = $res['qrCodeUrl'];
+//            }
+//        }else{
+//            $ret['message'] = $res['msg']??'付款提交失败';
+//        }
+//        Yii::info("FFB jump alipay: ".json_encode($ret));
+        //form模式
+        $getUrl = $requestUrl.'?'.http_build_query($params);
+        $form = self::buildForm($params, $requestUrl);
+        $ret = self::RECHARGE_WEBBANK_RESULT;
+        $ret['status'] = Macro::SUCCESS;
+        $ret['data']['type'] = self::RENDER_TYPE_REDIRECT;
+        $ret['data']['url'] = $getUrl;
+        $ret['data']['formHtml'] = $form;
+
+        Yii::info("FFB from alipay: ".json_encode($ret));
         //接口日志记录
         LogicApiRequestLog::rechargeAddLog($this->order, $requestUrl, json_encode($ret,JSON_UNESCAPED_UNICODE), $params);
 
