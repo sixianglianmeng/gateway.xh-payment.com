@@ -45,11 +45,6 @@ class RemitController extends BaseConsoleCommand
                 ->andWhere(['>=', 'created_at', $startTs])
                 ->limit($maxRecordInOneLoop)->all();
             Yii::info('find remit to check status: '.count($remits));
-            //没有可用订单了,或者订单量在最大值一半一下.重置上一个ID
-            if(count($remits)<($maxRecordInOneLoop/2)){
-                Yii::info('actionCheckStatusQueueProducer reset lastId to 0');
-                $lastId = 0;
-            }
             foreach ($remits as $remit){
                 $lastId = $remit['id'];
                 Yii::info('remit to check status: '.$remit['order_no'].' lastId: '.$lastId);
@@ -57,6 +52,11 @@ class RemitController extends BaseConsoleCommand
                     'orderNo'=>$remit['order_no'],
                 ]);
                 Yii::$app->remitQueryQueue->push($job);//->delay(10)
+            }
+            //没有可用订单了,或者订单量在最大值一半一下.重置上一个ID
+            if(count($remits)<($maxRecordInOneLoop/2)){
+                Yii::info('actionCheckStatusQueueProducer reset lastId to 0');
+                $lastId = 0;
             }
 
             sleep(5);
@@ -89,11 +89,7 @@ class RemitController extends BaseConsoleCommand
                     ->orderBy("id ASC")
                     ->limit($maxRecordInOneLoop)->all();
                 Yii::info('BankCommitQueueProducer find remit to commit bank: '.count($remits));
-                //没有可用订单了,重置上一个ID
-                if(count($remits)<($maxRecordInOneLoop/2)){
-                    Yii::info('BankCommitQueueProducer reset lastId to 0');
-                    $lastId = 0;
-                }
+
                 foreach ($remits as $remit){
                     $lastId = $remit['id'];
                     Yii::info('BankCommitQueueProducer: '.$remit['order_no'].' lastId: '.$lastId);
@@ -103,6 +99,12 @@ class RemitController extends BaseConsoleCommand
                         'force'=>false,
                     ]);
                     Yii::$app->remitBankCommitQueue->push($job);//->delay(10)
+                }
+
+                //没有可用订单了,重置上一个ID
+                if(count($remits)<($maxRecordInOneLoop/2)){
+                    Yii::info('BankCommitQueueProducer reset lastId to 0');
+                    $lastId = 0;
                 }
             }else{
                 Yii::info('system set stop commit to bank');
@@ -172,15 +174,15 @@ class RemitController extends BaseConsoleCommand
 
             $orders = $query->limit($maxRecordInOneLoop)->all();
             Yii::info('find remit to notify: '.count($orders));
-            //没有可用订单了,重置上一个ID
-            if(count($orders)<($maxRecordInOneLoop/2)){
-                Yii::info('notifyQueueProducer reset lastId to 0');
-                $lastId = 0;
-            }
             foreach ($orders as $order){
                 $lastId = $order->id;
                 Yii::info('remit notify: '.$order->order_no);
                 LogicRemit::notify($order);
+            }
+            //没有可用订单了,重置上一个ID
+            if(count($orders)<($maxRecordInOneLoop/2)){
+                Yii::info('notifyQueueProducer reset lastId to 0');
+                $lastId = 0;
             }
 
             sleep(mt_rand(10,20));

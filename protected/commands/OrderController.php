@@ -32,6 +32,8 @@ class OrderController extends BaseConsoleCommand
      */
     public function actionNotifyQueueProducer(){
         $doCheck = true;
+        $lastId = 0;
+        $maxRecordInOneLoop = 100;
         while ($doCheck) {
             //获取配置:出款多少分钟之后不再自动查询状态,默认半小时
             $expire = SiteConfig::cacheGetContent('order_notify_expire');
@@ -39,6 +41,7 @@ class OrderController extends BaseConsoleCommand
 
             $query = Order::find()
             ->where(['status'=>[Order::STATUS_PAID,Order::STATUS_SETTLEMENT],'notify_status'=>[Order::NOTICE_STATUS_NONE,Order::NOTICE_STATUS_FAIL]])
+            ->andWhere(['>', 'id', $lastId])
             ->andWhere(['!=', 'notify_url', ''])
             ->andWhere(['>=', 'paid_at', $startTs])
             //最多通知10次
@@ -46,11 +49,18 @@ class OrderController extends BaseConsoleCommand
             //已经到达通知时间
             ->andWhere(['or',['next_notify_time'=>0],['>=', 'next_notify_time', time()]]);
 
-            $orders = $query->limit(100)->all();
+            $orders = $query->limit($maxRecordInOneLoop)->all();
             Yii::info('find order to notify: '.count($orders));
             foreach ($orders as $order){
+                $lastId = $order->id;
                 Yii::info('order notify: '.$order->order_no);
                 LogicOrder::notify($order);
+            }
+
+            //没有可用订单了,重置上一个ID
+            if(count($orders)<($maxRecordInOneLoop/2)){
+                Yii::info('notifyQueueProducer reset lastId to 0');
+                $lastId = 0;
             }
 
             sleep(mt_rand(5,30));
