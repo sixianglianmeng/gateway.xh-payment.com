@@ -139,6 +139,7 @@ $config = [
                     'logFile' => '@runtime/log/common'.date('md').(ceil(date('H')/2)*2).'.log',
                     'categories' => ['application','yii\db\Command::query', 'yii\db\Command::execute','yii\queue\Queue'],//'yii\db\Command::query', 'yii\db\Command::execute'
 //                    'enableRotation' => true,
+//                    'maxLogFiles' => 100,
                     'maxFileSize' => 1024 * 100,
                     'logVars' => [],
                     'prefix' => function ($message) {
