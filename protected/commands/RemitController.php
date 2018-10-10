@@ -2,6 +2,7 @@
 namespace app\commands;
 use app\common\models\model\Remit;
 use app\common\models\model\SiteConfig;
+use app\components\Util;
 use app\jobs\RemitCommitJob;
 use app\jobs\RemitQueryJob;
 use app\modules\gateway\models\logic\LogicChannelAccount;
@@ -23,7 +24,7 @@ class RemitController extends BaseConsoleCommand
         return parent::beforeAction($event);
     }
 
-    /*
+    /**
      * 检测处于银行处理状态出款订单的最新状态
      */
     public function actionCheckStatusQueueProducer(){
@@ -63,7 +64,7 @@ class RemitController extends BaseConsoleCommand
         }
     }
 
-    /*
+    /**
      * 取出已审核出款并提交到银行待提交队列
      */
     public function actionBankCommitQueueProducer(){
@@ -114,7 +115,7 @@ class RemitController extends BaseConsoleCommand
         }
     }
 
-    /*
+    /**
      * 取出失败出款并提交到查询队列
      *
      * 某些出款渠道不稳定，失败情况下需要再次查询核实
@@ -145,7 +146,7 @@ class RemitController extends BaseConsoleCommand
     }
 
 
-    /*
+    /**
      * 查询出待通知订单并放到通知队列
      *
      * 队列本身已经有重试机制，这个地方不需要太频繁
@@ -187,5 +188,85 @@ class RemitController extends BaseConsoleCommand
 
             sleep(mt_rand(10,20));
         }
+    }
+
+    /**
+     * 检测出款自动停用/启用时间并进行对应配置
+     */
+    public function actionSetAutoCommitStatusCron()
+    {
+
+        $doCheck = true;
+        while ($doCheck) {
+            $_SERVER['LOG_ID'] = strval(uniqid());
+
+            $todayStr     = date("Y-m-d");
+            $nowTs        = time();
+            $inStopFrames = false;
+            $status       = intval(LogicRemit::canCommitToBank());
+            $framesConfig = SiteConfig::cacheGetContent('remit_stop_time_frames');
+            $errMsg       = '';
+
+            if ($framesConfig) {
+                $frames = explode("\n", $framesConfig);
+//                Yii::info(__FUNCTION__ . " get config : ".implode('; ',$frames).", now status: ".intval($status));
+                foreach ($frames as $f){
+//                    Yii::info(__FUNCTION__ . " get frames : {$f}");
+                    if(!$f){
+                        continue;
+                    }
+                    $fArr = explode("-", str_replace(' ', '', $f));
+                    if (count($fArr) != 2) {
+                        $errMsg .= "必须有开始结束时间且以'-'分割:{$f};";
+                    }
+                    $startStr = $todayStr . ' ' . $fArr[0];
+                    $endStr = $todayStr . ' ' . $fArr[1];
+                    $startTs = strtotime($startStr);
+                    $endTs   = strtotime($endStr);
+
+                    if (!$startTs || !$endTs || $startTs >= $endTs) {
+                        $errMsg .= "开始结束时间不合法:{$f};";
+                    }
+
+                    if ($errMsg) {
+                        Yii::error(__FUNCTION__ . " 自动启用停用出款提交上游配置错误: {$errMsg}");
+                        break;
+                    }
+
+                    //在禁用时间区间
+                    if ($nowTs >= $startTs && $nowTs <= $endTs) {
+                        $inStopFrames = true;
+                        //当前为启用的,进行停用
+                        if ($status) {
+                            $msg = "模拟测试,当前为禁用提交时间,将进行停用: {$f},now status:{$status},now ts:".date("Y-m-d H:i:s")."/{$nowTs},{$startStr},{$startTs},{$endStr},{$endTs}";
+                            Yii::info(__FUNCTION__ . $msg);
+                            $cacheKey = md5(__FUNCTION__ .$f);
+                            if(!Yii::$app->cache->get($cacheKey)){
+                                Util::sendTelegramMessage($msg);
+                                Yii::$app->cache->set($cacheKey,time(),86400);
+                            }
+//                            LogicRemit::stopBankCommit();
+                            break;
+                        }
+                    }
+//                    Yii::info(__FUNCTION__ . " not in");
+                }
+
+                //不处于停用区间,且当前状态为停用的,进行启用
+                if (!$errMsg && !$inStopFrames && !$status) {
+                    $msg = "模拟测试,当前为启用提交时间,将进行启用: now status:{$status},now time:".date("Y-m-d H:i:s").", ".implode('; ',$frames);
+                    Yii::info(__FUNCTION__ . $msg);
+                    $cacheKey = md5(__FUNCTION__);
+                    if(!Yii::$app->cache->get($cacheKey)){
+                        Util::sendTelegramMessage($msg);
+                        Yii::$app->cache->set($cacheKey,time(),7200);
+                    }
+//                    LogicRemit::startBankCommit();
+                }
+            }
+
+            sleep(2);
+        }
+
     }
 }

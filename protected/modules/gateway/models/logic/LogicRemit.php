@@ -594,6 +594,16 @@ class LogicRemit
     }
 
     /**
+     * 开始向上游提交出款订单请求
+     */
+    static public function startBankCommit(){
+        $key = 'enable_remit_commit';
+        $config = SiteConfig::findOne(['title'=>$key]);
+        $config->setContent('1');
+        $config->save();
+    }
+
+    /**
      * 到三方查询出款订单状态并处理业务
      *
      * @param Remit $remit
