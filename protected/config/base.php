@@ -26,6 +26,16 @@ $config = [
     'components' => [
         'response' => [
             'format'    => yii\web\Response::FORMAT_JSON,
+            //强制处理无法捕获的框架级别错误,例如NotFoundHttpException
+            'on beforeSend' => function ($event) {
+                $response = $event->sender;
+                if ($response->statusCode >= 400) {
+                    $response->data = [
+                        'code' => $response->data['code']==0?$response->statusCode:$response->data['code'],
+                        'message' => $response->data['message']??($response->data['name']??'系统错误: '.$_SERVER['LOG_ID']),
+                    ];
+                }
+            },
         ],
         'request'=>[
             'enableCookieValidation' => false,
