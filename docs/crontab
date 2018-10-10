@@ -4,3 +4,5 @@
 01 0 * * *  /www/wwwroot/gateway.payment.com/protected/yii account/reset-quota  2>&1
 #查询0点渠道账户余额
 0 0 * * *  /www/wwwroot/gateway.payment.com/protected/yii channel/update-account-balance 1 2>&1
+#只保留15天日志
+0 0 * * *  find /www/wwwroot/gateway.gd95516.com/runtime/log/ -mtime +15 -name "*.log*" -exec rm -rf {} \;
