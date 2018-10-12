@@ -327,7 +327,13 @@ class FfbBasePayment extends BasePayment
                     $ret['data']['bank_status'] = Remit::BANK_STATUS_PROCESSING;
                     $ret['message'] = $res['refMsg']??"未知状态，联系上游核实({".(json_decode($resTxt,true))."})";
                 }
-            } else {
+            }
+            elseif (isset($res['status']) && strtolower($res['status']) == 'error' &&  $res['refCode'] == '7') {
+                $ret['status'] = Macro::SUCCESS;
+                $ret['data']['bank_status'] = Remit::BANK_STATUS_FAIL;
+                $ret['message'] = $res['refMsg']??"出款查询失败({".(json_decode($resTxt,true))."})";
+            }
+            else {
                 $ret['message'] = $res['refMsg']??"出款查询失败({".(json_decode($resTxt,true))."})";
             }
         }
