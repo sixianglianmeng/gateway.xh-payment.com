@@ -304,7 +304,7 @@ class FfbBasePayment extends BasePayment
         $ret['data']['order_no'] = $this->remit->order_no;
         $ret['data']['rawMessage'] = $resTxt;
         if (!empty($resTxt)) {
-            $res = json_decode($resTxt, true);
+            $res = json_decode(json_encode(json_decode($resTxt, true),JSON_UNESCAPED_UNICODE),true);
             if (isset($res['status']) && strtolower($res['status']) == 'success') {
                 //仅代表请求成功,不代表业务成功
                 $ret['status'] = Macro::SUCCESS;
@@ -312,15 +312,22 @@ class FfbBasePayment extends BasePayment
                 // 1 成功  2 失败 3 处理中 4 待处理 5 审核驳回  6 待审核 7 交易不存在  8 未知状态
                 if($res['refCode'] == 1){
                     $ret['data']['bank_status'] = Remit::BANK_STATUS_SUCCESS;
-                    $ret['message'] = $res['message']??json_encode(json_decode($resTxt,true),JSON_UNESCAPED_UNICODE);
+                    $ret['message'] = $res['message']??(json_decode($resTxt,true));
                 }elseif (in_array($res['refCode'],[2,5])){
                     $ret['data']['bank_status'] = Remit::BANK_STATUS_FAIL;
-                    $ret['message'] = $res['refMsg']??"银行处理失败({".json_encode(json_decode($resTxt,true),JSON_UNESCAPED_UNICODE)."})";
+                    $ret['message'] = $res['refMsg']??"银行处理失败({".(json_decode($resTxt,true))."})";
                 }elseif (in_array($res['refMsg'],[3,4,6])){
                     $ret['data']['bank_status'] = Remit::BANK_STATUS_PROCESSING;
+                    $ret['message'] = $res['refMsg']??"银行处理中({".(json_decode($resTxt,true))."})";
+                }elseif(in_array($res['refMsg'],[7])){
+                    $ret['data']['bank_status'] = Remit::BANK_STATUS_PROCESSING;
+                    $ret['message'] = $res['refMsg']??"交易不存在({".(json_decode($resTxt,true))."})";
+                }elseif(in_array($res['refMsg'],[8])){
+                    $ret['data']['bank_status'] = Remit::BANK_STATUS_PROCESSING;
+                    $ret['message'] = $res['refMsg']??"未知状态，联系上游核实({".(json_decode($resTxt,true))."})";
                 }
             } else {
-                $ret['message'] = $res['errror_msg']??"出款查询失败({".json_encode(json_decode($resTxt,true),JSON_UNESCAPED_UNICODE)."})";
+                $ret['message'] = $res['refMsg']??"出款查询失败({".(json_decode($resTxt,true))."})";
             }
         }
         return  $ret;
