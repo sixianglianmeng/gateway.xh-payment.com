@@ -151,6 +151,7 @@ $config = [
 //                    'enableRotation' => true,
 //                    'maxLogFiles' => 100,
 //                    'maxFileSize' => 1024 * 100,
+                    'fileMode' => 755,
                     'logVars' => [],
                     'prefix' => function ($message) {
                         $request = Yii::$app->getRequest();
