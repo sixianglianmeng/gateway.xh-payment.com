@@ -304,7 +304,8 @@ class FfbBasePayment extends BasePayment
         $ret['data']['order_no'] = $this->remit->order_no;
         $ret['data']['rawMessage'] = $resTxt;
         if (!empty($resTxt)) {
-            $res = json_decode(json_encode(json_decode($resTxt, true),JSON_UNESCAPED_UNICODE),true);
+            $resTxt = json_encode(json_decode($resTxt,true),JSON_UNESCAPED_UNICODE);
+            $res = json_decode($resTxt,true);
             if (isset($res['status']) && strtolower($res['status']) == 'success') {
                 //仅代表请求成功,不代表业务成功
                 $ret['status'] = Macro::SUCCESS;
