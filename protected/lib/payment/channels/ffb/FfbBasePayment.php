@@ -331,7 +331,7 @@ class FfbBasePayment extends BasePayment
             elseif (isset($res['status']) && strtolower($res['status']) == 'error' &&  $res['refCode'] == '7') {
                 $ret['status'] = Macro::SUCCESS;
                 $ret['data']['bank_status'] = Remit::BANK_STATUS_FAIL;
-                $ret['message'] = $res['refMsg']??"出款查询失败({".(json_decode($resTxt,true))."})";
+                $ret['message'] = $res['refMsg']??"交易不存在({".(json_decode($resTxt,true))."})";
             }
             else {
                 $ret['message'] = $res['refMsg']??"出款查询失败({".(json_decode($resTxt,true))."})";
