@@ -229,6 +229,12 @@ class LogicOrder
         if(!$feeCanBeZero && $channelAccountRechargeMethod->fee_rate <= 0){
             throw new OperationFailureException("商户号:".$order->merchant_id." 订单号:".' 费率不能设置为0',Macro::ERR_CHANNEL_FEE_CONFIG);
         }
+
+        //渠道出款状态检测
+        if(!$paymentChannelAccount->canRecharge()){
+            throw new OperationFailureException("商户号:".$order->merchant_id." 订单号:".$order->order_no."支付通道维护中.");
+        }
+
         //检测渠道单笔最低限额
         if($paymentChannelAccount->min_recharge_pertime && bccomp($order->amount, $paymentChannelAccount->min_recharge_pertime, 2)===-1){
             throw new OperationFailureException("商户号:".$order->merchant_id." 订单号:".$order->order_no." 单笔最低限额为:".bcadd(0,$paymentChannelAccount->min_recharge_pertime,2)." {$order->amount}");

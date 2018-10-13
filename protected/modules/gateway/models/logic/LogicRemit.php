@@ -251,6 +251,11 @@ class LogicRemit
             throw new OperationFailureException("商户号:".$remit->merchant_id." 订单号:".$remit->order_no.' 商户不支持手工出款',Macro::ERR_PAYMENT_MANUAL_NOT_ALLOWED);
         }
 
+        //渠道状态
+        if(!$paymentChannelAccount->canRemit()){
+            throw new OperationFailureException("商户号:".$remit->merchant_id." 订单号:".$remit->order_no."出款通道维护中.");
+        }
+
         //渠道费率检测
         if(!$feeCanBeZero && $paymentChannelAccount->remit_fee <= 0){
             throw new OperationFailureException("商户号:".$remit->merchant_id." 订单号:".$remit->order_no." 通道出款费率不能设置为0:".Macro::ERR_CHANNEL_FEE_CONFIG);
