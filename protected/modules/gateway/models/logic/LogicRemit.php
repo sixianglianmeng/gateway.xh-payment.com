@@ -168,6 +168,7 @@ class LogicRemit
         Yii::$app->params['apiRequestLog'] = [
             'event_id'=>$newRemit->order_no,
             'merchant_order_no'=>$newRemit->merchant_order_no,
+            'channel_order_no'=>$newRemit->channel_order_no,
             'event_type'=> LogApiRequest::EVENT_TYPE_IN_REMIT_ADD,
             'merchant_id'=>$newRemit->merchant_id??$merchant->id,
             'merchant_name'=>$newRemit->merchant_account??$merchant->username,
@@ -398,6 +399,7 @@ class LogicRemit
         Yii::$app->params['apiRequestLog'] = [
             'event_id'=>$remit->order_no,
             'merchant_order_no'=>$remit->merchant_order_no,
+            'channel_order_no'=>$remit->channel_order_no,
             'event_type'=> LogApiRequest::EVENT_TYPE_OUT_REMIT_ADD,
             'merchant_id'=>$remit->channel_merchant_id,
             'merchant_name'=>$remit->channelAccount->merchant_account,
@@ -629,6 +631,7 @@ class LogicRemit
         Yii::$app->params['apiRequestLog'] = [
             'event_id'=>$remit->order_no,
             'merchant_order_no'=>$remit->merchant_order_no,
+            'channel_order_no'=>$remit->channel_order_no,
             'event_type'=> LogApiRequest::EVENT_TYPE_OUT_REMIT_QUERY,
             'merchant_id'=>$remit->channel_merchant_id,
             'merchant_name'=>$remit->channelAccount->merchant_account,
@@ -995,6 +998,7 @@ class LogicRemit
     {
         $data = [
             'merchant_order_no'=>$remit->merchant_order_no,
+            'channel_order_no'=>$remit->channel_order_no,
             'order_no'=>$remit->order_no,
             'bank_status'=>$remit->bank_status,
             'fail_msg'=>$remit->fail_msg,
@@ -1036,6 +1040,7 @@ class LogicRemit
         Yii::$app->params['apiRequestLog'] = [
             'event_id'=>$statusArr['order_no']??$orderNo,
             'merchant_order_no'=>$statusArr['merchant_order_no']??$merchantOrderNo,
+            'channel_order_no'=>$statusArr['channel_order_no']??'',
             'event_type'=> LogApiRequest::EVENT_TYPE_IN_REMIT_QUERY,
             'merchant_id'=>$merchant->id,
             'merchant_name'=>$merchant->username,

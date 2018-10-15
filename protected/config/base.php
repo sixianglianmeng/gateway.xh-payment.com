@@ -139,19 +139,20 @@ $config = [
                     'levels' => ['error', 'warning'],
                     'logFile' => '@runtime/log/err'.date('md').'.log',
                     'enableRotation' => true,
-                    'maxFileSize' => 1024 * 100,
+                    'maxFileSize' => 1024 * 300,
                     'logVars' => [],
+                    'fileMode' => 777,
                 ],
                 'notice' => [
                     'class' => '\power\yii2\log\FileTarget',
                     'levels' => ['notice', 'trace','info','warning','error'],//'profile',
 //                    'logFile' => '@runtime/log/common'.date('md').'.log',
-                    'logFile' => '@runtime/log/common'.date('md').(ceil(date('H')/2)*2).'.log',
+                    'logFile' => '@runtime/log/common'.date('md').(str_pad(ceil(date('H')/2)*2,2,'0')).'.log',
                     'categories' => ['application','yii\db\Command::query', 'yii\db\Command::execute','yii\queue\Queue'],//'yii\db\Command::query', 'yii\db\Command::execute'
                     'enableRotation' => false,
 //                    'maxLogFiles' => 100,
 //                    'maxFileSize' => 1024 * 100,
-//                    'fileMode' => 755,
+                    'fileMode' => 777,
                     'logVars' => [],
                     'prefix' => function ($message) {
                         $request = Yii::$app->getRequest();
@@ -187,7 +188,7 @@ $config = [
                     //配置已移到系统配置表
                     'telegram'=>[],
                     //邮件报警
-		    //配置已移到系统配置表
+		            //配置已移到系统配置表
                     'email' => [],
                 ],
             ],

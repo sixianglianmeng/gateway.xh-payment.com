@@ -34,17 +34,30 @@ class LogicApiRequestLog
             if(isset($logData['post_data']) && !is_string($logData['post_data'])){
                 $logData['post_data'] = Util::json_encode($logData['post_data']);
             }
-            $logData['request_url'] = Yii::$app->request->hostInfo.Yii::$app->request->getUrl();
-            $logData['request_method'] = Yii::$app->request->method=='GET'?1:2;
-            $logData['post_data'] = $logData['post_data']??Util::json_encode(Yii::$app->getRequest()->getBodyParams());
-            $logData['response_data'] = Util::json_encode($logResponse);
-            $logData['http_status'] = Yii::$app->response->statusCode;
-            $logData['remote_ip'] = Util::getClientIp();
-            $logData['referer'] = Yii::$app->request->referrer??'';
-            $logData['useragent'] = Yii::$app->request->userAgent??'';
-            $cookies = Yii::$app->request->cookies;
-            $uuid = empty($cookies[PaymentRequest::CLIENT_ID_IN_COOKIE])?'':$cookies[PaymentRequest::CLIENT_ID_IN_COOKIE]->value;
-            $logData['device_id'] = $uuid;
+
+            if(Yii::$app->request->isConsoleRequest){
+                $logData['request_url']  = '';
+                $logData['request_method'] = '';
+                $logData['post_data'] =  '';
+                $logData['http_status'] =  '';
+                $logData['device_id'] = '';
+                $logData['remote_ip'] = '';
+                $logData['referer'] = '';
+                $logData['useragent'] = '';
+            }else{
+                $logData['request_url'] = Yii::$app->request->hostInfo.Yii::$app->request->getUrl();
+                $logData['request_method'] = Yii::$app->request->method=='GET'?1:2;
+                $logData['post_data'] = $logData['post_data']??Util::json_encode(Yii::$app->getRequest()->getBodyParams());
+            	$logData['response_data'] = Util::json_encode($logResponse);
+                $logData['http_status'] = Yii::$app->response->statusCode;
+                $logData['remote_ip'] = Util::getClientIp();
+                $logData['referer'] = Yii::$app->request->referrer??'';
+                $logData['useragent'] = Yii::$app->request->userAgent??'';
+                $cookies = Yii::$app->request->cookies;
+                $uuid = empty($cookies[PaymentRequest::CLIENT_ID_IN_COOKIE])?'':$cookies[PaymentRequest::CLIENT_ID_IN_COOKIE]->value;
+                $logData['device_id'] = $uuid;
+            }
+
             $logData['cost_time'] = ceil(Yii::getLogger()->getElapsedTime()*1000);
             $logData['channel_account_id'] = $logData['channel_account_id']??0;
             $logData['channel_name'] = $logData['channel_name']??'';
@@ -68,14 +81,14 @@ class LogicApiRequestLog
      * @param float $costTime 请求消耗时间
      * @param array $logRequest 请求数据
      */
-    public static function outLog($url, $method, $logResponse, $httpStatus, $costTime = 0, $logRequest=[])
+    public static function outLog($url, $method, $logResponse, $httpStatus, $costTime = 0, $logRequest=[], $force=false)
     {
         //设置了请求日志，写入日志表
         if(!empty(Yii::$app->params['apiRequestLog'])){
             $logData = Yii::$app->params['apiRequestLog'];
 
             $logCheckKey = 'apiRequestLogWrited'.$logData['event_type'].$logData['event_id'];
-            if(!empty(Yii::$app->params[$logCheckKey])){
+            if(!$force && !empty(Yii::$app->params[$logCheckKey])){
                 return true;
             }
 
@@ -96,6 +109,7 @@ class LogicApiRequestLog
             $logData['cost_time'] = $costTime;
             $logData['channel_name'] = $logData['channel_name']??'';
             $logData['merchant_order_no'] = $logData['merchant_order_no']??'';
+            $logData['channel_order_no'] = $logData['channel_order_no']??'';
 
             $apiRequestLog = new LogApiRequest();
             $apiRequestLog->setAttributes($logData,false);
@@ -124,6 +138,6 @@ class LogicApiRequestLog
             'channel_name'=>$order->channelAccount->channel_name,
         ];
 
-        LogicApiRequestLog::outLog($url, 'POST', $response, 200,0, $requestData);
+        LogicApiRequestLog::outLog($url, 'POST', $response, 200,0, $requestData, true);
     }
 }

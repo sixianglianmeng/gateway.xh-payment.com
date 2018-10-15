@@ -5,6 +5,7 @@ namespace app\modules\gateway\models\logic;
 
 use app\common\exceptions\InValidRequestException;
 use app\common\exceptions\OperationFailureException;
+use app\common\models\logic\LogicApiRequestLog;
 use app\common\models\logic\LogicUser;
 use app\common\models\model\AccountOpenFee;
 use app\common\models\model\ChannelAccount;
@@ -230,7 +231,7 @@ class LogicOrder
             throw new OperationFailureException("商户号:".$order->merchant_id." 订单号:".' 费率不能设置为0',Macro::ERR_CHANNEL_FEE_CONFIG);
         }
 
-        //渠道出款状态检测
+        //渠道收款状态检测
         if(!$paymentChannelAccount->canRecharge()){
             throw new OperationFailureException("商户号:".$order->merchant_id." 订单号:".$order->order_no."支付通道维护中.");
         }
