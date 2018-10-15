@@ -141,7 +141,7 @@ $config = [
                     'enableRotation' => true,
                     'maxFileSize' => 1024 * 300,
                     'logVars' => [],
-                    'fileMode' => 777,
+//                    'fileMode' => 777,
                 ],
                 'notice' => [
                     'class' => '\power\yii2\log\FileTarget',
@@ -152,7 +152,7 @@ $config = [
                     'enableRotation' => false,
 //                    'maxLogFiles' => 100,
 //                    'maxFileSize' => 1024 * 100,
-                    'fileMode' => 777,
+//                    'fileMode' => 777,
                     'logVars' => [],
                     'prefix' => function ($message) {
                         $request = Yii::$app->getRequest();
