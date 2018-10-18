@@ -529,7 +529,8 @@ class SfBasePayment extends BasePayment
             $res = json_decode($resTxt, true);
             if (isset($res['is_success']) && strtoupper($res['is_success'])== 'TRUE') {
                 $ret['status']         = Macro::SUCCESS;
-                $ret['data']['balance'] = $res['money'];
+                //返回的余额中已经包含了冻结余额
+                $ret['data']['balance'] = bcsub($res['money'],$res['freeze_money'],2);
                 $ret['data']['frozen_balance'] = $res['freeze_money'];
             } else {
                 $ret['message'] = $res['errror_msg']??'余额查询失败';
