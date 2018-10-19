@@ -5,9 +5,9 @@ use app\common\exceptions\OperationFailureException;
 use app\common\models\logic\LogicApiRequestLog;
 use app\common\models\model\Channel;
 use app\components\Macro;
+use app\components\Util;
 use app\components\WebAppController;
 use app\lib\helpers\ControllerParameterValidator;
-use app\modules\gateway\controllers\BaseController;
 use app\modules\gateway\models\logic\LogicOrder;
 use app\modules\gateway\models\logic\LogicRemit;
 use Yii;
@@ -34,6 +34,16 @@ class CallbackController extends WebAppController
     public function actionRechargeNotify()
     {
         $channelId = ControllerParameterValidator::getRequestParam($this->allParams, 'channelId', null, Macro::CONST_PARAM_TYPE_INT, '错误的渠道参数：'.($this->allParams['channelId']??''));
+
+        //加锁,防止三方并发回调
+        $callbakcCacheKey = 'recharge_notify:'.md5(json_encode($this->allParams));
+        $isProcessing = Yii::$app->cache->get($callbakcCacheKey);
+        if(!$isProcessing){
+            Yii::$app->cache->set($callbakcCacheKey,time(),10);
+        }else{
+            LogicOrder::processChannelNotice('订单处理中');
+            throw new OperationFailureException("callback订单处理中: ".Util::json_encode($this->allParams));
+        }
 
         $channel = Channel::findOne(['id'=>$channelId]);
         if(!$channel){
