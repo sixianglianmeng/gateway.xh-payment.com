@@ -53,7 +53,7 @@ class CallbackController extends WebAppController
 
         Yii::info("parseReturnRequest: {$channel->channel_code} ".\GuzzleHttp\json_encode($noticeResult));
 
-        if(empty($noticeResult['data']['order'])){
+        if(!isset($noticeResult['data']) || !is_array($noticeResult['data']) || empty($noticeResult['data']['order'])){
             throw new OperationFailureException("无法解析订单信息：".$noticeResult['message']);
         }
 
