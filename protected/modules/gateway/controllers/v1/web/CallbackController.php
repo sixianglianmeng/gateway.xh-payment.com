@@ -41,7 +41,6 @@ class CallbackController extends WebAppController
         if(!$isProcessing){
             Yii::$app->cache->set($callbakcCacheKey,time(),10);
         }else{
-            LogicOrder::processChannelNotice('订单处理中');
             throw new OperationFailureException("callback订单处理中: ".Util::json_encode($this->allParams));
         }
 
