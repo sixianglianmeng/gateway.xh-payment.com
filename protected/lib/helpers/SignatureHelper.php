@@ -32,7 +32,7 @@ class SignatureHelper extends SecurityHelper
             $a      = $params;
             $params = array();
             foreach ($a as $key => $value) {
-                if($value=='') continue;
+                if($value==='') continue;
                 $params[] = "$key=$value";
             }
             sort($params,SORT_STRING);
