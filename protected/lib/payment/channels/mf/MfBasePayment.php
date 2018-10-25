@@ -155,9 +155,12 @@ class MfBasePayment extends BasePayment
                 $ret['status'] = Macro::SUCCESS;
                 $ret['data']['channel_order_no'] = $res['trade_no'];
 
-                if(!empty($res['url'])){
+                if(Util::isMobileDevice() && substr($res['url'],0,4)=='http'){
                     $ret['data']['type'] = self::RENDER_TYPE_REDIRECT;
                     $ret['data']['url'] = $res['url'];
+                }else{
+                    $ret['data']['type'] = self::RENDER_TYPE_QR;
+                    $ret['data']['qr'] = $res['url'];
                 }
             } else {
                 $ret['message'] = $res['msg']??'付款提交失败';
