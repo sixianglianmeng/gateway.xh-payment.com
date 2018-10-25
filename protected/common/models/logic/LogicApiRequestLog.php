@@ -47,7 +47,7 @@ class LogicApiRequestLog
             }else{
                 $logData['request_url'] = Yii::$app->request->hostInfo.Yii::$app->request->getUrl();
                 $logData['request_method'] = Yii::$app->request->method=='GET'?1:2;
-                $logData['post_data'] = $logData['post_data']??Util::json_encode(Yii::$app->getRequest()->getBodyParams());
+                $logData['post_data'] = $logData['post_data']??json_encode(Yii::$app->getRequest()->getBodyParams(),JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES);
             	$logData['response_data'] = Util::json_encode($logResponse);
                 $logData['http_status'] = Yii::$app->response->statusCode;
                 $logData['remote_ip'] = Util::getClientIp();
