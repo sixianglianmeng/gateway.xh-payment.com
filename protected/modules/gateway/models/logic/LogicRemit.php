@@ -427,8 +427,9 @@ class LogicRemit
             if(!$force && $remit->commit_to_bank_times>=self::MAX_TIME_COMMIT_TO_BANK){
                 Yii::info("max than commit_to_bank_times: {$remit->order_no}, now:$remit->commit_to_bank_times, setting: ".self::MAX_TIME_COMMIT_TO_BANK);
                 $remit->status = Remit::STATUS_NOT_REFUND;
-                $remit->bank_status =  Remit::BANK_STATUS_FAIL;
+                $remit->bank_status =  Remit::BANK_STATUS_PROCESSING;
                 $remit->bank_ret = $remit->bank_ret.date('Ymd H:i:s')." 超过银行最大提交次数:".self::MAX_TIME_COMMIT_TO_BANK."\n";
+                $remit->save();
 
                 return $remit;
             }
@@ -473,15 +474,15 @@ class LogicRemit
                         break;
                     case  Remit::BANK_STATUS_FAIL:
                         $remit->status = Remit::STATUS_NOT_REFUND;
-                        $remit->bank_status =  Remit::BANK_STATUS_FAIL;
-                        $remit->bank_ret.date('Ymd H:i:s').'银行提交失败:'.($ret['message']??'上游无返回');
-                        $remit->fail_msg = date('Ymd H:i:s').'银行提交失败:'.($ret['message']??'上游无返回');
+                        $remit->bank_status =  Remit::BANK_STATUS_PROCESSING;
+                        $remit->bank_ret.date('Ymd H:i:s').' 银行提交失败:'.($ret['message']??'上游无返回');
+                        $remit->fail_msg = date('Ymd H:i:s').' 银行提交失败:'.($ret['message']??'上游无返回');
                         break;
                     default:
                         $remit->status = Remit::STATUS_BANK_NET_FAIL;
                         $remit->bank_status =  Remit::BANK_STATUS_PROCESSING;
-                        $remit->bank_ret.date('Ymd H:i:s').'错误的银行返回值:'.($ret['message']??'错误的银行返回值');
-                        $remit->fail_msg = date('Ymd H:i:s').'错误的银行返回值:'.($ret['message']??'错误的银行返回值');
+                        $remit->bank_ret.date('Ymd H:i:s').' 错误的银行返回值:'.($ret['message']??'错误的银行返回值');
+                        $remit->fail_msg = date('Ymd H:i:s').' 错误的银行返回值:'.($ret['message']??'错误的银行返回值');
                         break;
                 }
 
