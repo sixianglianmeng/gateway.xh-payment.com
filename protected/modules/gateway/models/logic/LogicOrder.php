@@ -536,7 +536,7 @@ class LogicOrder
      * @param Order $order 订单对象
      * @param String $bak 备注
      */
-    static public function frozen(Order &$order, $opUid, $opUsername, $bak='', $ip=''){
+    static public function frozen(Order &$order, $opUid, $opUsername, $bak='', $ip='',$track_type=0){
         Yii::info(__FUNCTION__.' '.$order->order_no.' '.$bak);
         if($order->status !== Order::STATUS_SETTLEMENT){
             throw new OperationFailureException('订单状态错误，已结算订单才能冻结:'.$order->status);
@@ -553,6 +553,13 @@ class LogicOrder
 //        $order->op_username = $opUsername;
         //            $order->op_uid = $opUid;
         //            $order->op_username = $opUsername;
+        $tmp = [];
+        if(!empty($order->track_note)){
+            $tmp = json_decode($order->track_note,true);
+        }
+        $tmp[] = $opUsername.' set track type form '.Order::ARR_TRACK_TYPE[$order->track_type] .' to ' .Order::ARR_TRACK_TYPE[$track_type] . ' time:' .date('Ymd H:i:s');
+        $order->track_type = $track_type;
+        $order->track_note = json_encode($tmp,JSON_UNESCAPED_UNICODE);
         if(empty($bak) && $opUsername) $bak="{$opUsername} set frozen at ".date('Ymd H:i:s')."\n";
         $order->bak .=$bak;
         $order->save();
