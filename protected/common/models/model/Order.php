@@ -97,6 +97,15 @@ class Order extends BaseModel
         self::TYPE_ACCOUNT_OPEN=>'开户订单',
     ];
 
+    const TRACK_TPYE_ZORE = 0;
+    const TRACK_TPYE_ONE = 1;
+    const TRACK_TPYE_TWO = 2;
+
+    const ARR_TRACK_TYPE = [
+        self::TRACK_TPYE_ZORE => '正常',
+        self::TRACK_TPYE_ONE => '涉案订单',
+        self::TRACK_TPYE_TWO => '关联订单',
+    ];
     const FINANCIAL_STATUS_NONE = 0;
     const FINANCIAL_STATUS_SUCCESS = 10;
 

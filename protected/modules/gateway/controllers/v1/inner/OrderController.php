@@ -258,11 +258,11 @@ class OrderController extends BaseInnerController
     public function actionFrozen()
     {
         $rawOrderList = ControllerParameterValidator::getRequestParam($this->allParams, 'orderNoList', '',Macro::CONST_PARAM_TYPE_ARRAY,'订单号列表错误');
-
         if(empty($rawOrderList)){
             Util::throwException(Macro::PARAMETER_VALIDATION_FAILED);
         }
-
+        $track_type = $rawOrderList['track_type'];
+        unset($rawOrderList['track_type']);
         $opOrderList = [];
         foreach ($rawOrderList as $k=>$on){
             if(Util::validate($on['order_no'],Macro::CONST_PARAM_TYPE_ORDER_NO)){
@@ -275,7 +275,7 @@ class OrderController extends BaseInnerController
         $orders = Order::findAll($filter);
         foreach ($orders as $order){
             $bak = $opOrderList[$order->order_no]['bak']??'';
-            LogicOrder::frozen($order,$this->allParams['op_uid'],$this->allParams['op_username'],$bak,$this->allParams['op_ip']);
+            LogicOrder::frozen($order,$this->allParams['op_uid'],$this->allParams['op_username'],$bak,$this->allParams['op_ip'],$track_type);
         }
 
         return ResponseHelper::formatOutput(Macro::SUCCESS);
