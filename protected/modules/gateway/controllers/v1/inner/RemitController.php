@@ -331,17 +331,19 @@ class RemitController extends BaseInnerController
             Util::throwException(Macro::PARAMETER_VALIDATION_FAILED);
         }
 
-        $opOrderList = [];
+        $opOrderList = $filter = [];
         foreach ($rawOrderList as $k=>$on){
             if(Util::validate($on['order_no'],Macro::CONST_PARAM_TYPE_ORDER_NO)){
                 $opOrderList[$on['order_no']] = $on;
+                $filter['order_no'][] = "{$on['order_no']}";
             }
         }
-        if(empty($opOrderList)){
+        if(empty($opOrderList) || empty($filter)){
             Util::throwException(Macro::PARAMETER_VALIDATION_FAILED,json_encode($rawOrderList));
         }
 
-        $filter['order_no'] = array_keys($opOrderList);
+        //NOTICE: !!!array_keys出来的订单号会被识别为int类型,卡SQL
+//        $filter['order_no'] = array_keys($opOrderList);
 
         $orders = Remit::findAll($filter);
         foreach ($orders as $order){
