@@ -43,7 +43,7 @@ class LogicOrder
 
         $orderData                      = [];
         $orderData['app_id']              = $request['app_id'] ?? $merchant->id;
-        $orderData['merchant_order_no'] = '89137442';//$request['order_no'];
+        $orderData['merchant_order_no'] = $request['order_no'];
         $hasOrder = Order::findOne(['app_id' => $orderData['app_id'], 'merchant_order_no' => $orderData['merchant_order_no']]);
         if ($hasOrder) {
               throw new OperationFailureException("订单{$orderData['merchant_order_no']}已存在,请不要重复提交!");
