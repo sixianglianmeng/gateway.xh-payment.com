@@ -23,6 +23,7 @@ use app\lib\payment\ChannelPayment;
 use app\lib\payment\channels\BasePayment;
 use Yii;
 use app\lib\helpers\SignatureHelper;
+use yii\db\IntegrityException;
 use yii\db\Query;
 
 class LogicRemit
@@ -163,10 +164,9 @@ class LogicRemit
         try{
             self::beforeAddRemit($newRemit, $merchant, $paymentChannelAccount);
         }catch (\Exception $e) {
-            Yii::error('beforeAddRemit error:'.$e->getMessage());
+            Yii::info("beforeAddRemit error:{$remitData['order_no']},{$remitData['merchant_order_no']},{$remitData['merchant_id']}, ".$e->getMessage());
             $saveCheckError = $e;
         }
-        $newRemit->save();
 
         //接口日志埋点
         Yii::$app->params['apiRequestLog'] = [
@@ -179,6 +179,15 @@ class LogicRemit
             'channel_account_id'=>$paymentChannelAccount->id,
             'channel_name'=>$paymentChannelAccount->channel_name,
         ];
+
+        try{
+            $newRemit->save();
+        }catch (IntegrityException $e){
+            throw new OperationFailureException("订单{$remitData['merchant_order_no']}已存在,请不要重复提交!",$e->getCode());
+        } catch (\Exception $e){
+            Yii::error("出款订单保存失败: {$remitData['order_no']},{$remitData['merchant_order_no']},{$remitData['merchant_id']}: ".$e->getMessage());
+            throw new OperationFailureException("服务器繁忙,请稍候再试!",$e->getCode());
+        }
 
         //根据订单前置检测结果决定是扣款还是设置为失败
         if($saveCheckError){

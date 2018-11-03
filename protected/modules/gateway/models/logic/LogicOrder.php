@@ -23,6 +23,7 @@ use app\jobs\PaymentNotifyJob;
 use app\lib\helpers\SignatureHelper;
 use app\lib\payment\ChannelPayment;
 use Yii;
+use yii\db\IntegrityException;
 
 class LogicOrder
 {
@@ -42,10 +43,10 @@ class LogicOrder
 
         $orderData                      = [];
         $orderData['app_id']              = $request['app_id'] ?? $merchant->id;
-        $orderData['merchant_order_no'] = $request['order_no'];
+        $orderData['merchant_order_no'] = '89137442';//$request['order_no'];
         $hasOrder = Order::findOne(['app_id' => $orderData['app_id'], 'merchant_order_no' => $orderData['merchant_order_no']]);
         if ($hasOrder) {
-              throw new OperationFailureException('请不要重复下单');
+              throw new OperationFailureException("订单{$orderData['merchant_order_no']}已存在,请不要重复提交!");
 //            return $hasOrder;
         }
 
@@ -152,7 +153,6 @@ class LogicOrder
 
         $newOrder = new Order();
         $newOrder->setAttributes($orderData, false);
-        $newOrder->save();
 
         //接口日志埋点
         if(empty($orderData['op_uid']) && empty($orderData['op_username'])){
@@ -165,6 +165,15 @@ class LogicOrder
                 'channel_account_id'=>$rechargeMethod->id,
                 'channel_name'=>$rechargeMethod->channel_account_name,
             ];
+        }
+
+        try{
+            $newOrder->save();
+        }catch (IntegrityException $e){
+            throw new OperationFailureException("订单{$orderData['merchant_order_no']}已存在,请不要重复提交!",$e->getCode());
+        } catch (\Exception $e){
+            Yii::error("充值订单保存失败: {$orderData['order_no']},{$orderData['merchant_order_no']},{$orderData['merchant_id']}: ".$e->getMessage());
+            throw new OperationFailureException("服务器繁忙,请稍候再试!",$e->getCode());
         }
 
         try{
