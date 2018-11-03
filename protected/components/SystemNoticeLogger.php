@@ -124,14 +124,14 @@ class SystemNoticeLogger extends Target
             }
         }
 
-        $mailAddr = SiteConfig::cacheGetContent('sys_notice_mail_to');
-        if(!empty($mailAddr)){
-            Yii::$app->mailer->compose()
-                ->setTo($mailAddr)
-                ->setSubject($title)
-                ->setTextBody($messages)
-                ->send();
-        }
+//        $mailAddr = SiteConfig::cacheGetContent('sys_notice_mail_to');
+//        if(!empty($mailAddr)){
+//            Yii::$app->mailer->compose()
+//                ->setTo($mailAddr)
+//                ->setSubject($title)
+//                ->setTextBody($messages)
+//                ->send();
+//        }
     }
 
     /**
