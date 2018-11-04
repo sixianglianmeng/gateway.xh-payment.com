@@ -203,8 +203,6 @@ class LogicOrder
     static public function beforeAddOrder(Order &$order, User $merchant, ChannelAccount $paymentChannelAccount, MerchantRechargeMethod $rechargeMethod,
                                           ChannelAccountRechargeMethod $channelAccountRechargeMethod){
         $userPaymentConfig = $merchant->paymentInfo;
-        //站点是否允许费率设置为0
-        $feeCanBeZero = SiteConfig::cacheGetContent('recharge_fee_can_be_zero');
 
         //账户支付方式开关检测
         if($rechargeMethod->status != MerchantRechargeMethod::STATUS_ACTIVE){
@@ -212,7 +210,9 @@ class LogicOrder
         }
 
         //账户费率检测
-        if(!$feeCanBeZero && $rechargeMethod->fee_rate <= 0){
+        //站点是否允许费率设置为0
+//        $feeCanBeZero = SiteConfig::cacheGetContent('recharge_fee_can_be_zero');
+        if($rechargeMethod->fee_rate <= 0){//!$feeCanBeZero &&
             throw new OperationFailureException("商户号:".$order->merchant_id." 订单号:".$order->order_no.' 费率不能设置为0',Macro::ERR_MERCHANT_FEE_CONFIG);
         }
 
@@ -298,7 +298,13 @@ class LogicOrder
             Yii::$app->cache->set('recharge_notify_process:'.$order->order_no,time(),10);
         }else{
 //            Yii::error("充值订单并发回调:{$order->order_no}");
+            //释放过期锁
+            if($isProcessing<(time()-60)){
+                Yii::$app->cache->delete('recharge_notify_process:'.$order->order_no);
+            }
+
             throw new OperationFailureException("订单处理中:{$order->order_no}");
+            return $order;
         }
 
         //接口日志埋点
@@ -368,8 +374,8 @@ class LogicOrder
         }
 
         $order->status = Order::STATUS_FAIL;
-        $order->fail_msg .= $failMsg."\n";
-        $order->bak .= $failMsg."\n";
+        $order->fail_msg .= date('Ymd H:i:s')." {$failMsg}\n";
+        $order->bak .= date('Ymd H:i:s')." {$failMsg}\n";
         $order->save();
 
         return $order;
@@ -384,7 +390,7 @@ class LogicOrder
      * @param String $finalChannelOrderNo 最终的渠道流水号
      */
     static public function paySuccess(Order &$order,$paidAmount,$channelOrderNo, $opUsername='',$bak='',$finalChannelOrderNo = ''){
-        Yii::info([__FUNCTION__.' '.$order->order_no.','.$paidAmount.','.$channelOrderNo]);
+        Yii::info(__FUNCTION__.' '.$order->order_no.','.$paidAmount.','.$channelOrderNo);
         if(
             $order->status != Order::STATUS_PAID
             && $order->status !== Order::STATUS_SETTLEMENT
@@ -404,7 +410,7 @@ class LogicOrder
                 elseif(bccomp($order->amount, $order->paid_amount, 2)===-1){
                     $rawBak.=date('Ymd H:i:s')." 更新订单金额：付款金额{$order->paid_amount}大于订单金额{$order->amount}\n";
                 }
-                Yii::info([$order->amount,$order->paid_amount,bccomp($order->amount, $order->paid_amount, 2)]);
+                //Yii::info([$order->amount,$order->paid_amount,bccomp($order->amount, $order->paid_amount, 2)]);
                 if($channelOrderNo && !$order->channel_order_no) $order->channel_order_no = $channelOrderNo;
                 if($finalChannelOrderNo && !$order->final_channel_order_no) $order->final_channel_order_no = $finalChannelOrderNo;
                 $order->status = Order::STATUS_PAID;
@@ -431,7 +437,7 @@ class LogicOrder
                 //D0,T0结算，自动进行结算
                 //或者系统启用自动结算
                 $autoSettlemement = SiteConfig::cacheGetContent('recharge_auto_settlement');
-                Yii::info([__FUNCTION__.' '.$order->order_no.',settlement ',$autoSettlemement,date('Ymd H:i:s',$order->settlement_at),$order->settlement_type]);
+                Yii::info(Util::json_encode([__FUNCTION__.' '.$order->order_no.',settlement ',$autoSettlemement,date('Ymd H:i:s',$order->settlement_at),$order->settlement_type]));
                 if($autoSettlemement
                      &&
                     ($order->settlement_at<=time() && substr($order->settlement_type,1)=='0')
@@ -440,18 +446,15 @@ class LogicOrder
                 }
 
                 //开户费订单处理
-                Yii::info([__FUNCTION__.' '.$order->order_no.',AccountOpenFee ',$order->type]);
                 if(isset($order->type) && $order->type == Order::TYPE_ACCOUNT_OPEN){
                     $accountOpenInfo = AccountOpenFee::findOne(['order_no'=>$order->order_no]);
                     if(!$accountOpenInfo){
                         Yii::error("未找到商户开户费订单对应用户:{$order->merchant_id}");
                     }else{
-                        Yii::info([__FUNCTION__.' '.$order->order_no.',AccountOpenFee user',$accountOpenInfo->username]);
                         $accountOpenInfo->status = AccountOpenFee::STATUS_PAID;
                         $accountOpenInfo->paid_at = time();
                         $accountOpenInfo->fee_paid = $order->paid_amount;
                         $accountOpenInfo->save();
-                        Yii::info([__FUNCTION__.' '.$order->order_no.',AccountOpenFee updated',$accountOpenInfo->user_id,$accountOpenInfo->status ]);
                         User::updateAll(['account_open_fee_status' => AccountOpenFee::STATUS_PAID], ['id'=>$accountOpenInfo->user_id]);
                     }
                 }
@@ -650,7 +653,7 @@ class LogicOrder
      * 订单分红
      */
     static public function bonus(Order &$order){
-        Yii::info([__CLASS__.':'.__FUNCTION__.' '.$order->order_no]);
+        Yii::info(__CLASS__.':'.__FUNCTION__.' '.$order->order_no);
         if($order->financial_status === Order::FINANCIAL_STATUS_SUCCESS){
             Yii::warning([__FUNCTION__.' order has been bonus,will return, '.$order->order_no]);
             return $order;
@@ -662,21 +665,21 @@ class LogicOrder
         for($i=$parentRechargeConfigMaxIdx; $i>=0; $i--){
             $rechargeConfig = $parentRechargeConfig[$i];
 
-            Yii::info(["order bonus, find config",json_encode($rechargeConfig)]);
+            Yii::info( "order bonus, find config ".Util::json_encode($rechargeConfig));
             //parent_recharge_rebate_rate
             if ($rechargeConfig['parent_rebate_rate']<=0) {
-                Yii::info(["order bonus, parent_rebate_rate empty",$order->order_no]);
+                Yii::info("order bonus, parent_rebate_rate empty ".$order->order_no);
                 continue;
             }
 
             $pUser = User::findActive($rechargeConfig['merchant_id']);
             //没有上级可以直接中断了
             if(!$pUser->parentAgent){
-                Yii::info(["order bonus, has no parent",$pUser->id,$pUser->username]);
+                Yii::info("order bonus, has no parent ".$pUser->id.' '.$pUser->username);
                 break;
             }
             //有上级的才返，余额操作对象是上级代理
-            Yii::info(["order bonus parent",$pUser->id,$pUser->username,$pUser->parentAgent->id,$pUser->parentAgent->username]);
+            Yii::info(Util::json_encode(["order bonus parent",$pUser->id,$pUser->username,$pUser->parentAgent->id,$pUser->parentAgent->username]));
             $logicUser =  new LogicUser($pUser->parentAgent);
             $rechargeFee =  bcmul($rechargeConfig['parent_rebate_rate'],$order->paid_amount);
             $logicUser->changeUserBalance($rechargeFee, Financial::EVENT_TYPE_RECHARGE_BONUS, $order->order_no, $order->amount, Yii::$app->request->userIP);
@@ -780,7 +783,7 @@ class LogicOrder
      * 异步通知商户
      */
     static public function notify(Order &$order){
-        Yii::trace((new \ReflectionClass(__CLASS__))->getShortName().'-'.__FUNCTION__.' '.$order->order_no);
+        Yii::info(__FUNCTION__.' '.$order->order_no);
         if(!$order->notify_url
             || !in_array($order->status,[Order::STATUS_PAID,Order::STATUS_SETTLEMENT])
         ){
@@ -792,7 +795,6 @@ class LogicOrder
             $format = $order->userPaymentInfo->api_response_rule;
             Yii::$app->cache->set('api_response_rule:'.$order->merchant_id,$format);
         }
-        Yii::info(['$format$format',$format]);
         $arrParams = self::createNotifyParameters($order);
         $job = new PaymentNotifyJob([
             'orderNo'=>$order->order_no,
@@ -855,7 +857,7 @@ class LogicOrder
         //RECHARGE_QUERY_RESULT
         $ret = $payment->orderStatus();
 
-        Yii::info('order status check: '.json_encode($ret,JSON_UNESCAPED_UNICODE));
+        Yii::info('order status check: '.Util::json_encode($ret));
         if($ret['status'] === 0){
 
             if(!empty($ret['data']['channel_order_no']) && empty($order->channel_order_no)){
