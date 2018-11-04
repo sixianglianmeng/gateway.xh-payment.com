@@ -297,7 +297,7 @@ class LogicRemit
     {
         Yii::info(__CLASS__ . ':' . __FUNCTION__ . ' ' . $remit->order_no);
         if ($remit->financial_status === Remit::FINANCIAL_STATUS_SUCCESS) {
-            Yii::warning(__FUNCTION__ . ' remit has been bonus,will return, ' . $remit->order_no);
+            Yii::info(__FUNCTION__ . ' remit has been bonus,will return, ' . $remit->order_no);
             Yii::info(print_r(debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS),true));
             return $remit;
         }

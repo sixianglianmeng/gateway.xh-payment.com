@@ -83,7 +83,7 @@ class LogicUser
                 Yii::info("changeUserBalance: uid:{$this->user->id},{$amount},{$financial->balance_before},{$financial->balance}");
 
             }else{
-                Yii::warning("changeUserBalance already has record: uid:{$this->user->id},{$amount},{$eventType},{$eventId}");
+                Yii::info("changeUserBalance already has record: uid:{$this->user->id},{$amount},{$eventType},{$eventId}");
             }
 
             if($financial->status == Financial::STATUS_UNFINISHED){
