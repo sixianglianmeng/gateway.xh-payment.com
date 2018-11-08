@@ -114,7 +114,7 @@ class LogicUser
                     throw new OperationFailureException($msg);
                 }
             }else{
-                Yii::warning("changeUserBalance already done: uid:{$this->user->id},{$amount},{$eventType},{$eventId}");
+                Yii::info("changeUserBalance already done: uid:{$this->user->id},{$amount},{$eventType},{$eventId}");
             }
 
             $transaction->commit();
@@ -153,12 +153,12 @@ class LogicUser
         }
         //冻结金额，冻结字段+，余额字段-
         if(!$balanceCanBeNegative && $amount>0 && $this->user->balance<$amount){
-            Yii::warning("changeUserFrozenBalance balance not enough: uid:{$this->user->id},{$amount},{$eventType},{$eventId}");
+            Yii::info("changeUserFrozenBalance balance not enough: uid:{$this->user->id},{$amount},{$eventType},{$eventId}");
             throw new OperationFailureException("余额不足",Macro::ERR_BALANCE_NOT_ENOUGH);
         }
         //解冻金额，冻结字段-，余额字段+
         if(!$balanceCanBeNegative && $amount<0 && $this->user->frozen_balance<abs($amount)){
-            Yii::warning("changeUserFrozenBalance balance not enough: uid:{$this->user->id},{$amount},{$eventType},{$eventId}");
+            Yii::info("changeUserFrozenBalance balance not enough: uid:{$this->user->id},{$amount},{$eventType},{$eventId}");
             throw new OperationFailureException("冻结余额小余要解冻的金额",Macro::ERR_BALANCE_NOT_ENOUGH);
         }
         $usableAmount = 0-$amount;
@@ -193,7 +193,7 @@ class LogicUser
                 $financial->all_parent_agent_id   = $this->user->all_parent_agent_id;
                 $financial->save();
             } else {
-                Yii::warning("changeUserFrozenBalance already has record: uid:{$this->user->id},{$amount},{$eventType},{$eventId}");
+                Yii::info("changeUserFrozenBalance already has record: uid:{$this->user->id},{$amount},{$eventType},{$eventId}");
             }
 
             if ($financial->status == Financial::STATUS_UNFINISHED) {
@@ -211,7 +211,7 @@ class LogicUser
                 }
             }else{
 //                throw new OperationFailureException("已经有相同类型且事件ID相同的成功帐变记录,无法更新账户余额!",Macro::ERR_UNKNOWN);
-                Yii::warning("changeUserFrozenBalance already done: uid:{$this->user->id},{$amount},{$eventType},{$eventId}");
+                Yii::info("changeUserFrozenBalance already done: uid:{$this->user->id},{$amount},{$eventType},{$eventId}");
             }
 
             $transaction->commit();
