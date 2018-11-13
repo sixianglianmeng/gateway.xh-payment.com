@@ -8,10 +8,6 @@
         "poweryii2": {
             "type": "git",
             "url": "https://bootmall@github.com/sixianglianmeng/yii2.git"
-        },
-        "packagist": {
-            "type": "composer",
-            "url": "https://packagist.phpcomposer.com"
         }
     },
     "require": {

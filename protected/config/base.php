@@ -63,6 +63,10 @@ $config = [
             'port' => 6379,
             'database' => 0,
         ],
+        'mongodb' => [
+            'class' => '\yii\mongodb\Connection',
+            'dsn'    => 'mongodb://sh:sh@127.0.0.1/sh'
+        ],
         'formatter' => [
             'dateFormat' => 'yyyy-mm-dd',
             'datetimeFormat' => 'yyyy-mm-dd H:i:s',
