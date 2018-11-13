@@ -38,7 +38,8 @@ class Remit extends BaseModel
 {
     //默认单次最大提款金额
     const MAX_REMIT_PER_TIME = 49999;
-    //0未处理 10 已审核 20账户已扣款 30银行处理中 40 成功已出款 50处理失败已退款 60处理失败未退款 -10 提交银行失败 -20 银行处理失败
+    //0未处理 10 已审核 20账户已扣款 30银行处理中 40 成功已出款 50处理失败已退款 60处理失败未退款 -10 提交银行失败 -20 银行处理失败  -30未受理
+    const STATUS_REJECTED=-30;
     const STATUS_BANK_PROCESS_FAIL=-20;
     const STATUS_BANK_NET_FAIL=-10;
     const STATUS_NONE=0;
@@ -58,15 +59,23 @@ class Remit extends BaseModel
     const FINANCIAL_STATUS_SUCCESS = 10;
 
     const ARR_STATUS = [
-        self::STATUS_NONE              => '待审核',
+        self::STATUS_REJECTED          => '未受理',
+        self::STATUS_NONE              => '未扣款',
+        self::STATUS_DEDUCT            => '已扣款未审核',
         self::STATUS_CHECKED           => '已审核',
-        self::STATUS_DEDUCT            => '账户已扣款',
         self::STATUS_BANK_PROCESSING   => '银行处理中',
         self::STATUS_SUCCESS           => '成功已出款',
-        self::STATUS_REFUND            => '失败已退款',
-        self::STATUS_NOT_REFUND        => '银行出款失败',
         self::STATUS_BANK_NET_FAIL     => '提交银行失败',
+        self::STATUS_NOT_REFUND        => '银行出款失败',
+        self::STATUS_REFUND            => '失败已退款',
 //        self::STATUS_BANK_PROCESS_FAIL => '银行处理失败',
+    ];
+
+    const ARR_BANK_STATUS = [
+        self::BANK_STATUS_NONE => '已受理',
+        self::BANK_STATUS_PROCESSING => '处理中',
+        self::BANK_STATUS_SUCCESS => '出款成功',
+        self::BANK_STATUS_FAIL => '出款失败',
     ];
 
     //订单通知状态
@@ -88,9 +97,17 @@ class Remit extends BaseModel
         self::TYPE_API=>'API接口订单',
         self::TYPE_BACKEND=>'后台订单',
     ];
-
-    const STATUS_LIST_PROCESSING = [self::STATUS_CHECKED,self::STATUS_DEDUCT,self::STATUS_BANK_PROCESSING];
-    const STATUS_LIST_FAIL = [self::STATUS_NOT_REFUND,self::STATUS_BANK_NET_FAIL,self::STATUS_BANK_PROCESS_FAIL];
+    
+    const STATUS_LIST_PROCESSING = [
+        self::STATUS_NONE,
+        self::STATUS_NOT_REFUND,
+        self::STATUS_CHECKED,
+        self::STATUS_DEDUCT,
+        self::STATUS_BANK_PROCESSING,
+        self::STATUS_BANK_NET_FAIL,
+        self::STATUS_BANK_PROCESS_FAIL
+    ];
+    const STATUS_LIST_FAIL = [self::STATUS_REJECTED,self::STATUS_REFUND];
 
     const MERCHANT_CHECK_STATUS_NONE = 0;
     const MERCHANT_CHECK_STATUS_CHECKED = 1;
@@ -99,6 +116,13 @@ class Remit extends BaseModel
         self::MERCHANT_CHECK_STATUS_NONE => '未审核',
         self::MERCHANT_CHECK_STATUS_CHECKED => '通过',
         self::MERCHANT_CHECK_STATUS_DENIED => '拒绝',
+    ];
+
+    const ORDER_TYPE_API = 1;
+    const ORDER_TYPE_MANUAL = 2;
+    const ARR_ORDER_TYPES = [
+        self::ORDER_TYPE_API => 'API',
+        self::ORDER_TYPE_MANUAL => '后台',
     ];
 
     /**
@@ -177,13 +201,29 @@ class Remit extends BaseModel
      */
     public function showStatusStr()
     {
-        if(in_array($this->status,array(self::STATUS_CHECKED,self::STATUS_DEDUCT,self::STATUS_BANK_PROCESSING))){
+        if(in_array($this->status,self::STATUS_LIST_PROCESSING)){
             return '处理中';
-        }elseif (in_array($this->status,array(self::STATUS_REFUND,self::STATUS_NOT_REFUND,self::STATUS_BANK_NET_FAIL,self::STATUS_BANK_PROCESS_FAIL))){
-            return '出款失败';
+        }
+//        elseif (in_array($this->status,self::STATUS_LIST_FAIL)){
+//            return '出款失败';
+//        }
+        elseif (in_array($this->status,[self::STATUS_REFUND])){
+            return '失败已退款';
         }else{
             return self::ARR_STATUS[$this->status]??'-';
         }
+    }
+
+
+    /**
+     * 获取订单类型描述
+     *
+     * @return string
+     * @author bootmall@gmail.com
+     */
+    public static function getTypeStr($type)
+    {
+        return self::ARR_ORDER_TYPES[$type]??'-';
     }
 
     /**
@@ -236,6 +276,10 @@ class Remit extends BaseModel
             $remitQuery->select('count(id) as total,sum(amount) as amount');
         }
         $order = $remitQuery->asArray()->all();
-        return $order;
+
+        if(empty($order)){
+            return [];
+        }
+        return $order[0];
     }
 }

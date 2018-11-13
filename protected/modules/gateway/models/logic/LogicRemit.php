@@ -191,7 +191,7 @@ class LogicRemit
 
         //根据订单前置检测结果决定是扣款还是设置为失败
         if($saveCheckError){
-            $newRemit = self::setFail($newRemit, $saveCheckError->getMessage(),0,'',true);
+            $newRemit = self::setFail($newRemit, $saveCheckError->getMessage(),0,'',Remit::STATUS_REJECTED);
         }else{
             //下单成功后立即扣款
             $newRemit = self::deduct($newRemit);
@@ -635,7 +635,6 @@ class LogicRemit
         Yii::info(__CLASS__ . ':' . __FUNCTION__ . ' ' . $remit->order_no);
         if($remit->status == Remit::STATUS_SUCCESS
             || $remit->status == Remit::STATUS_REFUND
-            || $remit->status == Remit::STATUS_NOT_REFUND
             || $remit->bank_status == Remit::BANK_STATUS_SUCCESS
         ){
             Yii::info("remit {$remit->order_no}(status $remit->status) is already success, will not queryChannelRemitStatus");
@@ -678,7 +677,6 @@ class LogicRemit
         ){
             if($remitRet['data']['remit']->status == Remit::STATUS_SUCCESS
               || $remitRet['data']['remit']->status == Remit::STATUS_REFUND
-              || $remitRet['data']['remit']->status == Remit::STATUS_NOT_REFUND
               || $remitRet['data']['remit']->bank_status == Remit::BANK_STATUS_SUCCESS
             ){
                 Yii::info("remit {$remitRet['data']['remit']->order_no}(status {$remitRet['data']['remit']->status}) is already success, will not processRemitQueryStatus");
@@ -893,20 +891,22 @@ class LogicRemit
      *
      * @param Remit $remit 订单对象
      * @param String $failMsg 失败描述信息
-     * @param status $setToRefoundStatus 是否直接设置为失败已退款状态
+     * @param int $failStatus 失败状态值
      */
-    public static function setFail(Remit &$remit, $failMsg='', $opUid=0, $opUsername='', $setToRefundStatus=false)
+    public static function setFail(Remit &$remit, $failMsg='', $opUid=0, $opUsername='', $failStatus=Remit::STATUS_NOT_REFUND)
     {
         Yii::info(__CLASS__ . ':' . __FUNCTION__ . ' ' . $remit->order_no . ' ' .$remit->status);
-        if(!in_array($remit->status,[Remit::STATUS_DEDUCT,Remit::STATUS_CHECKED,Remit::STATUS_BANK_PROCESSING,Remit::STATUS_SUCCESS,Remit::STATUS_NONE])){
+        if(!in_array($remit->status,[Remit::STATUS_REJECTED, Remit::STATUS_DEDUCT,Remit::STATUS_CHECKED,
+            Remit::STATUS_BANK_PROCESSING,Remit::STATUS_SUCCESS,Remit::STATUS_NONE])
+        ){
             return $remit;
         }
 
         if($failMsg) $remit->fail_msg = $remit->fail_msg."; ".date('Ymd H:i:s').' '.$failMsg;
-        $remit->status = Remit::STATUS_NOT_REFUND;
-        $remit->bank_status =  Remit::BANK_STATUS_FAIL;
-        if($setToRefundStatus){
-            $remit->status = Remit::STATUS_REFUND;
+        $remit->status = $failStatus;
+        $remit->bank_status =  Remit::BANK_STATUS_PROCESSING;
+        if($failStatus === Remit::STATUS_REFUND || $failStatus === Remit::STATUS_REJECTED ){
+            $remit->bank_status = Remit::BANK_STATUS_FAIL;
         }
         if($opUsername) $failMsg=date('Ymd H:i:s')." {$opUsername}设置为失败状态\n";
         $remit->bak .=$failMsg;
