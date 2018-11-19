@@ -419,6 +419,10 @@ class LogicRemit
             'channel_account_id'=>$remit->channel_account_id,
             'channel_name'=>$remit->channelAccount->channel_name,
         ];
+        if(!in_array($remit->status,Remit::STATUS_LIST_CAN_COMMIT_TO_BANK)){
+            Yii::error("remit {$remit->order_no} status error: ".(Remit::ARR_STATUS[$remit->status]??'')."($remit->status), will not commitToBank");
+            return $remit;
+        }
 
         if(!$force && !self::canCommitToBank()){
 //            throw new OperationFailureException("系统目前关闭了自动提交,{$remit->order_no}");

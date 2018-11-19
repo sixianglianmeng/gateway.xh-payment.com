@@ -411,6 +411,7 @@ class RemitController extends BaseInnerController
             Util::throwException(Macro::PARAMETER_VALIDATION_FAILED,json_encode($rawOrderList));
         }
 
+        $filter['status'] = Remit::STATUS_LIST_CAN_COMMIT_TO_BANK;
         $filter['order_no'] = array_keys($opOrderList);
         $orders = Remit::findAll($filter);
         $orderAmount = count($orders);
