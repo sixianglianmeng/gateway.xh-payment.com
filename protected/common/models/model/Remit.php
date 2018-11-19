@@ -109,7 +109,8 @@ class Remit extends BaseModel
     ];
     const STATUS_LIST_FAIL = [self::STATUS_REJECTED,self::STATUS_REFUND];
     //可以提交到上游的出款状态值列表
-    const STATUS_LIST_CAN_COMMIT_TO_BANK = [Remit::STATUS_NONE,Remit::STATUS_DEDUCT,Remit::STATUS_BANK_PROCESSING,
+    const STATUS_LIST_CAN_COMMIT_TO_BANK = [
+        Remit::STATUS_NONE,Remit::STATUS_CHECKED,Remit::STATUS_DEDUCT,Remit::STATUS_BANK_PROCESSING,
         Remit::STATUS_BANK_PROCESS_FAIL,Remit::STATUS_BANK_NET_FAIL,Remit::STATUS_NOT_REFUND
     ];
 
