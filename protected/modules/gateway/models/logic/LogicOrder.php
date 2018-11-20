@@ -600,6 +600,7 @@ class LogicOrder
         $order->status = Order::STATUS_SETTLEMENT;
         if(empty($bak) && $opUsername) $bak="{$opUsername} set unfrozen at ".date('Ymd H:i:s')."\n";
         $order->bak .=$bak;
+        $order->track_type = Order::TRACK_TPYE_ZORE;
         $order->save();
 
         return $order;
