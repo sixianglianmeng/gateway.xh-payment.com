@@ -140,7 +140,7 @@ class BfBasePayment extends BasePayment
 
         $params['sign'] = self::md5Sign($params,$this->paymentConfig['key']);
 
-        $requestUrl = $this->paymentConfig['gateway_base_uri'].'/api/v1/order-sync';
+        $requestUrl = $this->paymentConfig['gateway_base_uri'].'/order.html';
         $formTxt = self::buildForm($params,$requestUrl);
         //接口日志记录
         LogicApiRequestLog::rechargeAddLog($this->order, $requestUrl, $formTxt, $params);
