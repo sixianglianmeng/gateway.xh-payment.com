@@ -168,7 +168,7 @@ class BfBasePayment extends BasePayment
 //
 //        return $ret;
 
-        $requestUrl = $this->paymentConfig['gateway_base_uri'].'/order.html';
+        $requestUrl = $this->paymentConfig['gateway_base_uri'].'/api/v1/order';
         $getUrl = $requestUrl.'?'.http_build_query($params);
 
         //是否跳过宝付
