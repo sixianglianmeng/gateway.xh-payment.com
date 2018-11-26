@@ -140,74 +140,73 @@ class BfBasePayment extends BasePayment
 
         $params['sign'] = self::md5Sign($params,$this->paymentConfig['key']);
 
-        $requestUrl = $this->paymentConfig['gateway_base_uri'].'/api/v1/order';
-        $resTxt = self::post($requestUrl,$params,[],25);
-        //接口日志记录
-        LogicApiRequestLog::rechargeAddLog($this->order, $requestUrl, $resTxt, $params);
-
-        $ret = self::RECHARGE_WEBBANK_RESULT;
-        if (!empty($resTxt)) {
-            $res = json_decode($resTxt, true);
-
-            if (isset($res['is_success']) && $res['is_success'] == 'TRUE') {
-                $ret['status'] = Macro::SUCCESS;
-                $ret['data']['channel_order_no'] = $res['trade_no'];
-
-                if(Util::isMobileDevice() && substr($res['url'],0,4)=='http'){
-                    $ret['data']['type'] = self::RENDER_TYPE_REDIRECT;
-                    $ret['data']['url'] = $res['url'];
-                }else{
-                    $ret['data']['type'] = self::RENDER_TYPE_QR;
-                    $ret['data']['qr'] = $res['url'];
-                }
-            } else {
-                $ret['message'] = $res['msg']??'付款提交失败';
-            }
-        }
-
-        return $ret;
-
-//        $requestUrl = $this->paymentConfig['gateway_base_uri'].'/order.html';
-//        $getUrl = $requestUrl.'?'.http_build_query($params);
-//
-//        //是否跳过宝付
-//        $skipHt = true;
-//        $formTxt = '';
-//        if($skipHt){
-//            //跳过上游第一个地址,达到隐藏上游目的.
-//            $htmlTxt = self::httpGet($getUrl);
-//            //接口日志记录
-//            LogicApiRequestLog::rechargeAddLog($this->order, $requestUrl, $htmlTxt, $params);
-//            $crawler = new Crawler($htmlTxt);
-//            $jumpUrl = '';
-//            foreach ($crawler->filter('form') as $n){
-//                $jumpUrl = $n->getAttribute('action');
-//            }
-//            $jumpParams = [];
-//            foreach ($crawler->filter('form > input') as $input) {
-//                $field = $input->getAttribute('name');
-//                if(!$field) continue;
-//                $jumpParams[$field] = $input->getAttribute('value');
-//
-//            }
-//            Yii::info(['bf jump: '.$jumpUrl,$jumpParams]);
-//            if($jumpUrl && $jumpParams){
-//                //第二跳
-//                $formTxt = self::buildForm( $jumpParams, $jumpUrl);
-//            }
-//        }
-//        else{
-//            Yii::info("do not skip payment redirect");
-//            $formTxt = self::buildForm($params, $requestUrl);
-//        }
-//        $formTxt = self::buildForm($params,$requestUrl);
+//        $requestUrl = $this->paymentConfig['gateway_base_uri'].'/api/v1/order';
+//        $resTxt = self::post($requestUrl,$params,[],25);
 //        //接口日志记录
-//        LogicApiRequestLog::rechargeAddLog($this->order, $requestUrl, $formTxt, $params);
-//        $ret = self::RECHARGE_CASHIER_RESULT;
-//        $ret['status'] = Macro::SUCCESS;
-//        $ret['data']['type'] = self::RENDER_TYPE_REDIRECT;
-//        $ret['data']['formHtml'] = $formTxt;
+//        LogicApiRequestLog::rechargeAddLog($this->order, $requestUrl, $resTxt, $params);
+//
+//        $ret = self::RECHARGE_WEBBANK_RESULT;
+//        if (!empty($resTxt)) {
+//            $res = json_decode($resTxt, true);
+//
+//            if (isset($res['is_success']) && $res['is_success'] == 'TRUE') {
+//                $ret['status'] = Macro::SUCCESS;
+//                $ret['data']['channel_order_no'] = $res['trade_no'];
+//
+//                if(Util::isMobileDevice() && substr($res['url'],0,4)=='http'){
+//                    $ret['data']['type'] = self::RENDER_TYPE_REDIRECT;
+//                    $ret['data']['url'] = $res['url'];
+//                }else{
+//                    $ret['data']['type'] = self::RENDER_TYPE_QR;
+//                    $ret['data']['qr'] = $res['url'];
+//                }
+//            } else {
+//                $ret['message'] = $res['msg']??'付款提交失败';
+//            }
+//        }
+//
 //        return $ret;
+
+        $requestUrl = $this->paymentConfig['gateway_base_uri'].'/order.html';
+        $getUrl = $requestUrl.'?'.http_build_query($params);
+
+        //是否跳过宝付
+        $skipHt = true;
+        $formTxt = '';
+        if($skipHt){
+            //跳过上游第一个地址,达到隐藏上游目的.
+            $htmlTxt = self::httpGet($getUrl);
+            //接口日志记录
+            LogicApiRequestLog::rechargeAddLog($this->order, $requestUrl, $htmlTxt, $params);
+            $crawler = new Crawler($htmlTxt);
+            $jumpUrl = '';
+            foreach ($crawler->filter('form') as $n){
+                $jumpUrl = $n->getAttribute('action');
+            }
+            $jumpParams = [];
+            foreach ($crawler->filter('form > input') as $input) {
+                $field = $input->getAttribute('name');
+                if(!$field) continue;
+                $jumpParams[$field] = $input->getAttribute('value');
+
+            }
+            Yii::info(['bf jump: '.$jumpUrl,$jumpParams]);
+            if($jumpUrl && $jumpParams){
+                //第二跳
+                $formTxt = self::buildForm( $jumpParams, $jumpUrl);
+            }
+        } else{
+            Yii::info("do not skip payment redirect");
+            $formTxt = self::buildForm($params, $requestUrl);
+        }
+        $formTxt = self::buildForm($params,$requestUrl);
+        //接口日志记录
+//        LogicApiRequestLog::rechargeAddLog($this->order, $requestUrl, $formTxt, $params);
+        $ret = self::RECHARGE_CASHIER_RESULT;
+        $ret['status'] = Macro::SUCCESS;
+        $ret['data']['type'] = self::RENDER_TYPE_REDIRECT;
+        $ret['data']['formHtml'] = $formTxt;
+        return $ret;
     }
 
 
@@ -501,5 +500,36 @@ class BfBasePayment extends BasePayment
         $signStr = md5($strToSign . '&key=' . $signKey);
         Yii::info('md5Sign string: '.$signStr.' raw: '.$strToSign . '&key=' . $signKey);
         return $signStr;
+    }
+
+    /**
+     *
+     * 发送http get 请求
+     *
+     * @param sttring $url 请求地址
+     * @param array $headers http header
+     *
+     * @return bool|string
+     */
+    public static function httpGet($url, $headers = [], $timeout = 20)
+    {
+        try {
+            $client   = new \GuzzleHttp\Client();
+            $response = $client->get($url,['timeout' => $timeout]);
+            $httpCode = $response->getStatusCode();
+            $body     = (string)$response->getBody();
+        } catch (\Exception $e) {
+            if ($e->hasResponse()) {
+                $httpCode = $e->getResponse()->getStatusCode();
+                $body = (string)$e->getResponse()->getBody();
+            } else {
+                $body = $e->getMessage();
+                $httpCode = 403;
+            }
+        }
+
+        Yii::info('request to channel: ' . $url . ' ' . $httpCode . ' ' . $body);
+
+        return $body;
     }
 }
