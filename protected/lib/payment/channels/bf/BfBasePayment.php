@@ -14,6 +14,7 @@ use app\lib\payment\channels\BasePayment;
 use app\modules\gateway\models\logic\LogicOrder;
 use power\yii2\net\exceptions\SignatureNotMatchException;
 use app\common\models\model\Order;
+use Symfony\Component\DomCrawler\Crawler;
 use Yii;
 
 /**
