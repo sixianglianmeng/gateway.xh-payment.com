@@ -1,22 +1,17 @@
 <?php
-
 namespace app\lib\payment\channels\bf;
-
 use app\common\exceptions\OperationFailureException;
 use app\common\models\logic\LogicApiRequestLog;
 use app\common\models\model\BankCodes;
 use app\common\models\model\LogApiRequest;
 use app\common\models\model\Remit;
 use app\components\Macro;
-use app\components\Util;
 use app\lib\helpers\ControllerParameterValidator;
 use app\lib\payment\channels\BasePayment;
 use app\modules\gateway\models\logic\LogicOrder;
 use power\yii2\net\exceptions\SignatureNotMatchException;
 use app\common\models\model\Order;
-use Symfony\Component\DomCrawler\Crawler;
 use Yii;
-
 /**
  * 秒付
  * Class ShBasePayment
@@ -27,13 +22,10 @@ class BfBasePayment extends BasePayment
     const  TRADE_STATUS_SUCCESS = 'success';
     const  TRADE_STATUS_PROCESSING = 'paying';
     const  TRADE_STATUS_FAIL = 'failed';
-
     public function __construct(...$arguments)
     {
-
         parent::__construct(...$arguments);
     }
-
     /*
      * 解析异步通知请求，返回订单
      *
@@ -43,7 +35,6 @@ class BfBasePayment extends BasePayment
         //check sign
         return $this->parseReturnRequest($request);
     }
-
     /*
      * 解析同步通知请求，返回订单
      * 返回订单对象表示请求验证成功且已经支付成功，可进行下一步业务
@@ -52,18 +43,16 @@ class BfBasePayment extends BasePayment
      *
      * @return array self::RECHARGE_NOTIFY_RESULT
      */
-    public function parseReturnRequest(array $request){
-
+    public function parseReturnRequest(array $request)
+    {
         $requestJson = file_get_contents("php://input");
         if(empty($requestJson)){
             throw new OperationFailureException("回调json字符串为空");
         }
-
         $request = json_decode($requestJson,true);
         if(empty($request)){
             throw new OperationFailureException("回调json字符串转化为数组后为空");
         }
-
         $data['order_no'] = ControllerParameterValidator::getRequestParam($request, 'order_no',null,Macro::CONST_PARAM_TYPE_STRING, '订单号错误！');
         $data['order_amount'] = ControllerParameterValidator::getRequestParam($request, 'order_amount',null,Macro::CONST_PARAM_TYPE_DECIMAL, '订单金额错误！');
         $data['order_time'] = ControllerParameterValidator::getRequestParam($request, 'order_time',null,Macro::CONST_PARAM_TYPE_STRING, '订单时间错误！',[3]);
@@ -75,14 +64,12 @@ class BfBasePayment extends BasePayment
         $data['notify_type'] = ControllerParameterValidator::getRequestParam($request, 'notify_type',null,Macro::CONST_PARAM_TYPE_STRING, '通知类型错误！',[3]);
         $data['merchant_code'] = ControllerParameterValidator::getRequestParam($request, 'merchant_code',null,Macro::CONST_PARAM_TYPE_STRING, 'merchantId错误！',[3]);
         $data['return_params'] = ControllerParameterValidator::getRequestParam($request, 'return_params','',Macro::CONST_PARAM_TYPE_STRING, 'return_params错误！');
-
         $sign = ControllerParameterValidator::getRequestParam($request, 'sign',null,Macro::CONST_PARAM_TYPE_STRING, 'sign错误！',[3]);
         //修复某段时间订单号携带_的bug
         $orderNo = $data['order_no'];
         $order = LogicOrder::getOrderByOrderNo($orderNo);
         $this->setPaymentConfig($order->channelAccount);
         $this->setOrder($order);
-
         //接口日志埋点
         Yii::$app->params['apiRequestLog'] = [
             'event_id'=>$order->order_no,
@@ -93,12 +80,10 @@ class BfBasePayment extends BasePayment
             'channel_account_id'=>$order->channelAccount->id,
             'channel_name'=>$order->channelAccount->channel_name,
         ];
-
         $localSign = self::md5Sign($request,trim($this->paymentConfig['key']));
         if($sign != $localSign){
             throw new SignatureNotMatchException("签名验证失败");
         }
-
         $ret = self::RECHARGE_NOTIFY_RESULT;
         if(!empty($request['trade_status']) && $request['trade_status'] == self::TRADE_STATUS_SUCCESS) {
             $ret['data']['order'] = $order;
@@ -114,7 +99,6 @@ class BfBasePayment extends BasePayment
         else{
             $ret['status'] =  Macro::ERR_PAYMENT_PROCESSING;
         }
-
         //设置了请求日志，写入日志表
         LogicApiRequestLog::inLog($ret);
 
@@ -126,7 +110,6 @@ class BfBasePayment extends BasePayment
      */
     public function wechatQr()
     {
-
         $params = [
             'notify_url'=>str_replace('https','http',$this->getRechargeNotifyUrl()),
             'return_url'=>str_replace('https','http',$this->getRechargeReturnUrl()),
@@ -138,76 +121,65 @@ class BfBasePayment extends BasePayment
             'order_time'=>time(),
             'customer_ip'=>Yii::$app->request->remoteIP,
         ];
-
         $params['sign'] = self::md5Sign($params,$this->paymentConfig['key']);
+        $requestUrl = $this->paymentConfig['gateway_base_uri'].'/api/v1/order';
+        $resTxt = self::post($requestUrl,$params,[],25);
+        //接口日志记录
+        LogicApiRequestLog::rechargeAddLog($this->order, $requestUrl, $resTxt, $params);
+        $ret = self::RECHARGE_WEBBANK_RESULT;
+        if (!empty($resTxt)) {
+            $res = json_decode($resTxt, true);
+            if (isset($res['is_success']) && $res['is_success'] == 'TRUE') {
+                $ret['status'] = Macro::SUCCESS;
+                $ret['data']['channel_order_no'] = $res['trade_no'];
+                $ret['data']['type'] = self::RENDER_TYPE_REDIRECT;
+                $ret['data']['url'] = $res['url'];
+            } else {
+                $ret['message'] = $res['msg']??'付款提交失败';
+            }
+        }
+        return $ret;
 
 //        $requestUrl = $this->paymentConfig['gateway_base_uri'].'/api/v1/order';
-//        $resTxt = self::post($requestUrl,$params,[],25);
-//        //接口日志记录
-//        LogicApiRequestLog::rechargeAddLog($this->order, $requestUrl, $resTxt, $params);
+//        $getUrl = $requestUrl.'?'.http_build_query($params);
 //
-//        $ret = self::RECHARGE_WEBBANK_RESULT;
-//        if (!empty($resTxt)) {
-//            $res = json_decode($resTxt, true);
-//
-//            if (isset($res['is_success']) && $res['is_success'] == 'TRUE') {
-//                $ret['status'] = Macro::SUCCESS;
-//                $ret['data']['channel_order_no'] = $res['trade_no'];
-//
-//                if(Util::isMobileDevice() && substr($res['url'],0,4)=='http'){
-//                    $ret['data']['type'] = self::RENDER_TYPE_REDIRECT;
-//                    $ret['data']['url'] = $res['url'];
-//                }else{
-//                    $ret['data']['type'] = self::RENDER_TYPE_QR;
-//                    $ret['data']['qr'] = $res['url'];
-//                }
-//            } else {
-//                $ret['message'] = $res['msg']??'付款提交失败';
+//        //是否跳过宝付
+//        $skipHt = true;
+//        $formTxt = '';
+//        if($skipHt){
+//            //跳过上游第一个地址,达到隐藏上游目的.
+//            $htmlTxt = self::httpGet($getUrl);
+//            //接口日志记录
+//            LogicApiRequestLog::rechargeAddLog($this->order, $requestUrl, $htmlTxt, $params);
+//            $crawler = new Crawler($htmlTxt);
+//            $jumpUrl = '';
+//            foreach ($crawler->filter('form') as $n){
+//                $jumpUrl = $n->getAttribute('action');
 //            }
-//        }
+//            $jumpParams = [];
+//            foreach ($crawler->filter('form > input') as $input) {
+//                $field = $input->getAttribute('name');
+//                if(!$field) continue;
+//                $jumpParams[$field] = $input->getAttribute('value');
 //
+//            }
+//            Yii::info(['bf jump: '.$jumpUrl,$jumpParams]);
+//            if($jumpUrl && $jumpParams){
+//                //第二跳
+//                $formTxt = self::buildForm( $jumpParams, $jumpUrl);
+//            }
+//        } else{
+//            Yii::info("do not skip payment redirect");
+//            $formTxt = self::buildForm($params, $requestUrl);
+//        }
+//        $formTxt = self::buildForm($params,$requestUrl);
+//        //接口日志记录
+////        LogicApiRequestLog::rechargeAddLog($this->order, $requestUrl, $formTxt, $params);
+//        $ret = self::RECHARGE_CASHIER_RESULT;
+//        $ret['status'] = Macro::SUCCESS;
+//        $ret['data']['type'] = self::RENDER_TYPE_REDIRECT;
+//        $ret['data']['formHtml'] = $formTxt;
 //        return $ret;
-
-        $requestUrl = $this->paymentConfig['gateway_base_uri'].'/api/v1/order';
-        $getUrl = $requestUrl.'?'.http_build_query($params);
-
-        //是否跳过宝付
-        $skipHt = true;
-        $formTxt = '';
-        if($skipHt){
-            //跳过上游第一个地址,达到隐藏上游目的.
-            $htmlTxt = self::httpGet($getUrl);
-            //接口日志记录
-            LogicApiRequestLog::rechargeAddLog($this->order, $requestUrl, $htmlTxt, $params);
-            $crawler = new Crawler($htmlTxt);
-            $jumpUrl = '';
-            foreach ($crawler->filter('form') as $n){
-                $jumpUrl = $n->getAttribute('action');
-            }
-            $jumpParams = [];
-            foreach ($crawler->filter('form > input') as $input) {
-                $field = $input->getAttribute('name');
-                if(!$field) continue;
-                $jumpParams[$field] = $input->getAttribute('value');
-
-            }
-            Yii::info(['bf jump: '.$jumpUrl,$jumpParams]);
-            if($jumpUrl && $jumpParams){
-                //第二跳
-                $formTxt = self::buildForm( $jumpParams, $jumpUrl);
-            }
-        } else{
-            Yii::info("do not skip payment redirect");
-            $formTxt = self::buildForm($params, $requestUrl);
-        }
-        $formTxt = self::buildForm($params,$requestUrl);
-        //接口日志记录
-//        LogicApiRequestLog::rechargeAddLog($this->order, $requestUrl, $formTxt, $params);
-        $ret = self::RECHARGE_CASHIER_RESULT;
-        $ret['status'] = Macro::SUCCESS;
-        $ret['data']['type'] = self::RENDER_TYPE_REDIRECT;
-        $ret['data']['formHtml'] = $formTxt;
-        return $ret;
     }
 
 
