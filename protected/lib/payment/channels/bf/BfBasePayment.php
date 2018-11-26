@@ -141,7 +141,39 @@ class BfBasePayment extends BasePayment
         $params['sign'] = self::md5Sign($params,$this->paymentConfig['key']);
 
         $requestUrl = $this->paymentConfig['gateway_base_uri'].'/order.html';
-        $formTxt = self::buildForm($params,$requestUrl);
+        $getUrl = $requestUrl.'?'.http_build_query($params);
+
+        //是否跳过汇通
+        $skipHt = true;
+        $form = '';
+        if($skipHt){
+            //跳过上游第一个地址,达到隐藏上游目的.
+            $htmlTxt = self::httpGet($getUrl);
+            //接口日志记录
+            LogicApiRequestLog::rechargeAddLog($this->order, $requestUrl, $htmlTxt, $params);
+            $crawler = new Crawler($htmlTxt);
+            $jumpUrl = '';
+            foreach ($crawler->filter('form') as $n){
+                $jumpUrl = $n->getAttribute('action');
+            }
+            $jumpParams = [];
+            foreach ($crawler->filter('form > input') as $input) {
+                $field = $input->getAttribute('name');
+                if(!$field) continue;
+                $jumpParams[$field] = $input->getAttribute('value');
+
+            }
+            Yii::info(['bf jump: '.$jumpUrl,$jumpParams]);
+            if($jumpUrl && $jumpParams){
+                //第二跳
+                $formTxt = self::buildForm( $jumpParams, $jumpUrl);
+            }
+        }
+        else{
+            Yii::info("do not skip payment redirect");
+            $formTxt = self::buildForm($params, $requestUrl);
+        }
+//        $formTxt = self::buildForm($params,$requestUrl);
         //接口日志记录
         LogicApiRequestLog::rechargeAddLog($this->order, $requestUrl, $formTxt, $params);
         $ret = self::RECHARGE_CASHIER_RESULT;
