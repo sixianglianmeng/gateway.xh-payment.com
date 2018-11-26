@@ -140,7 +140,34 @@ class BfBasePayment extends BasePayment
 
         $params['sign'] = self::md5Sign($params,$this->paymentConfig['key']);
 
-        $requestUrl = $this->paymentConfig['gateway_base_uri'].'/order.html';
+        $requestUrl = $this->paymentConfig['gateway_base_uri'].'/api/v1/order-sync';
+        $resTxt = self::post($requestUrl,$params,[],25);
+        //接口日志记录
+        LogicApiRequestLog::rechargeAddLog($this->order, $requestUrl, $resTxt, $params);
+
+        $ret = self::RECHARGE_WEBBANK_RESULT;
+        if (!empty($resTxt)) {
+            $res = json_decode($resTxt, true);
+
+            if (isset($res['is_success']) && $res['is_success'] == 'TRUE') {
+                $ret['status'] = Macro::SUCCESS;
+                $ret['data']['channel_order_no'] = $res['trade_no'];
+
+                if(Util::isMobileDevice() && substr($res['url'],0,4)=='http'){
+                    $ret['data']['type'] = self::RENDER_TYPE_REDIRECT;
+                    $ret['data']['url'] = $res['url'];
+                }else{
+                    $ret['data']['type'] = self::RENDER_TYPE_QR;
+                    $ret['data']['qr'] = $res['url'];
+                }
+            } else {
+                $ret['message'] = $res['msg']??'付款提交失败';
+            }
+        }
+
+        return $ret;
+
+//        $requestUrl = $this->paymentConfig['gateway_base_uri'].'/order.html';
 //        $getUrl = $requestUrl.'?'.http_build_query($params);
 //
 //        //是否跳过宝付
@@ -173,14 +200,14 @@ class BfBasePayment extends BasePayment
 //            Yii::info("do not skip payment redirect");
 //            $formTxt = self::buildForm($params, $requestUrl);
 //        }
-        $formTxt = self::buildForm($params,$requestUrl);
-        //接口日志记录
-        LogicApiRequestLog::rechargeAddLog($this->order, $requestUrl, $formTxt, $params);
-        $ret = self::RECHARGE_CASHIER_RESULT;
-        $ret['status'] = Macro::SUCCESS;
-        $ret['data']['type'] = self::RENDER_TYPE_REDIRECT;
-        $ret['data']['formHtml'] = $formTxt;
-        return $ret;
+//        $formTxt = self::buildForm($params,$requestUrl);
+//        //接口日志记录
+//        LogicApiRequestLog::rechargeAddLog($this->order, $requestUrl, $formTxt, $params);
+//        $ret = self::RECHARGE_CASHIER_RESULT;
+//        $ret['status'] = Macro::SUCCESS;
+//        $ret['data']['type'] = self::RENDER_TYPE_REDIRECT;
+//        $ret['data']['formHtml'] = $formTxt;
+//        return $ret;
     }
 
 
