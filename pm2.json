@@ -1,15 +1,6 @@
 {
   "apps": [
     {
-      "name": "remit-set-auto-commit-status-cron",
-      "args": "remit/set-auto-commit-status-cron",
-      "script": "./protected/yii",
-      "exec_interpreter": "php",
-      "exec_mode": "fork",
-      "max_memory_restart": "256M",
-      "user": "www"
-    },
-    {
       "name": "update-account-balance",
       "args": "channel/update-account-balance",
       "script": "./protected/yii",
